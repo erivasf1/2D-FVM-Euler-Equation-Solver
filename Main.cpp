@@ -28,18 +28,7 @@ int main() {
   bool cond; //true for subsonic & false for supersonic
 
   // ALGORITHM:
-  // Create Mesh
-  int cellnum = 10;
-  vector<double> xcoords;
-  MeshGen1D Mesh(xmin,xmax,cellnum);
-  Mesh.GenerateMesh(xcoords);
-
-  tool.print("Xcoords:\n");
-  tool.print("Xcoords size:%d\n",(int)xcoords.size());
-  for (int n=0;n<(int)xcoords.size();n++){
-    tool.print("%e\n",xcoords[n]);
-  }
-  
+  // Create Mesh (verified)
   // Set Initial Conditions
   // Calculate Exact Sol. for comparison  
   // Set Boundary Conditions (ghost node approach)
@@ -58,6 +47,20 @@ int main() {
   // Evaluate discreization for error norms for grid convergence (isentropic)
 
   //double M; //used for debugging M
+
+  //Mesh Specifications
+  int cellnum = 10;
+  vector<double> xcoords;
+  MeshGen1D Mesh(xmin,xmax,cellnum);
+  Mesh.GenerateMesh(xcoords);
+  
+  //debugging:
+  /*tool.print("Xcoords:\n");
+  tool.print("Xcoords size:%d\n",(int)xcoords.size());
+  for (int n=0;n<(int)xcoords.size();n++){
+    tool.print("%e\n",xcoords[n]);
+  }
+  */
 
   tool.print("---------\n");
   tool.print("RESULTS\n");
