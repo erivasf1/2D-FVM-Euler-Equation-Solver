@@ -29,12 +29,12 @@ int main() {
 
   // ALGORITHM:
   // Create Mesh (verified)
-  // Set Initial Conditions
-  // Calculate Exact Sol. for comparison  
-  // Set Boundary Conditions (ghost node approach)
-  // Output Initial Residual Norm
-  // Output Initial Solution
-  // Begin Main Loop to iteratively solve Euler Eqs.
+  // TODO: Set Initial Conditions
+  // TODO: Calculate Exact Sol. for comparison  
+  // TODO: Set Boundary Conditions (ghost node approach)
+  // TODO: Output Initial Residual Norm
+  // TODO: Output Initial Solution
+  // TODO: Begin Main Loop to iteratively solve Euler Eqs.
   //   Set Time Step
   //   Solve Flow quantity at the new time step
   //   Calc. primitive variables from conserved variables
@@ -43,8 +43,8 @@ int main() {
   //   calculate residual norms (normalized by initial value)
   //   check for convergence (if converged, exit main loop)
   // End Main Loop
-  // Output solution
-  // Evaluate discreization for error norms for grid convergence (isentropic)
+  // TODO: Output solution
+  // TODO: Evaluate discreization for error norms for grid convergence (isentropic)
 
   //double M; //used for debugging M
 

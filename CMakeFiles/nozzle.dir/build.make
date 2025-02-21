@@ -69,10 +69,38 @@ include CMakeFiles/nozzle.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/nozzle.dir/flags.make
 
+CMakeFiles/nozzle.dir/DataManager.cpp.o: CMakeFiles/nozzle.dir/flags.make
+CMakeFiles/nozzle.dir/DataManager.cpp.o: DataManager.cpp
+CMakeFiles/nozzle.dir/DataManager.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/nozzle.dir/DataManager.cpp.o"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/DataManager.cpp.o -MF CMakeFiles/nozzle.dir/DataManager.cpp.o.d -o CMakeFiles/nozzle.dir/DataManager.cpp.o -c /home/erivas/Adv_CFD/HW2/DataManager.cpp
+
+CMakeFiles/nozzle.dir/DataManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/DataManager.cpp.i"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/HW2/DataManager.cpp > CMakeFiles/nozzle.dir/DataManager.cpp.i
+
+CMakeFiles/nozzle.dir/DataManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/DataManager.cpp.s"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/HW2/DataManager.cpp -o CMakeFiles/nozzle.dir/DataManager.cpp.s
+
+CMakeFiles/nozzle.dir/EulerOperator.cpp.o: CMakeFiles/nozzle.dir/flags.make
+CMakeFiles/nozzle.dir/EulerOperator.cpp.o: EulerOperator.cpp
+CMakeFiles/nozzle.dir/EulerOperator.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/nozzle.dir/EulerOperator.cpp.o"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/EulerOperator.cpp.o -MF CMakeFiles/nozzle.dir/EulerOperator.cpp.o.d -o CMakeFiles/nozzle.dir/EulerOperator.cpp.o -c /home/erivas/Adv_CFD/HW2/EulerOperator.cpp
+
+CMakeFiles/nozzle.dir/EulerOperator.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/EulerOperator.cpp.i"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/HW2/EulerOperator.cpp > CMakeFiles/nozzle.dir/EulerOperator.cpp.i
+
+CMakeFiles/nozzle.dir/EulerOperator.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/EulerOperator.cpp.s"
+	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/HW2/EulerOperator.cpp -o CMakeFiles/nozzle.dir/EulerOperator.cpp.s
+
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: ExactNozzle.cpp
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/nozzle.dir/ExactNozzle.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/nozzle.dir/ExactNozzle.cpp.o"
 	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -MF CMakeFiles/nozzle.dir/ExactNozzle.cpp.o.d -o CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -c /home/erivas/Adv_CFD/HW2/ExactNozzle.cpp
 
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.i: cmake_force
@@ -86,7 +114,7 @@ CMakeFiles/nozzle.dir/ExactNozzle.cpp.s: cmake_force
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: MeshGen.cpp
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/nozzle.dir/MeshGen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/nozzle.dir/MeshGen.cpp.o"
 	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/MeshGen.cpp.o -MF CMakeFiles/nozzle.dir/MeshGen.cpp.o.d -o CMakeFiles/nozzle.dir/MeshGen.cpp.o -c /home/erivas/Adv_CFD/HW2/MeshGen.cpp
 
 CMakeFiles/nozzle.dir/MeshGen.cpp.i: cmake_force
@@ -100,7 +128,7 @@ CMakeFiles/nozzle.dir/MeshGen.cpp.s: cmake_force
 CMakeFiles/nozzle.dir/Main.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/Main.cpp.o: Main.cpp
 CMakeFiles/nozzle.dir/Main.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/nozzle.dir/Main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/nozzle.dir/Main.cpp.o"
 	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/Main.cpp.o -MF CMakeFiles/nozzle.dir/Main.cpp.o.d -o CMakeFiles/nozzle.dir/Main.cpp.o -c /home/erivas/Adv_CFD/HW2/Main.cpp
 
 CMakeFiles/nozzle.dir/Main.cpp.i: cmake_force
@@ -113,6 +141,8 @@ CMakeFiles/nozzle.dir/Main.cpp.s: cmake_force
 
 # Object files for target nozzle
 nozzle_OBJECTS = \
+"CMakeFiles/nozzle.dir/DataManager.cpp.o" \
+"CMakeFiles/nozzle.dir/EulerOperator.cpp.o" \
 "CMakeFiles/nozzle.dir/ExactNozzle.cpp.o" \
 "CMakeFiles/nozzle.dir/MeshGen.cpp.o" \
 "CMakeFiles/nozzle.dir/Main.cpp.o"
@@ -120,12 +150,14 @@ nozzle_OBJECTS = \
 # External object files for target nozzle
 nozzle_EXTERNAL_OBJECTS =
 
+nozzle: CMakeFiles/nozzle.dir/DataManager.cpp.o
+nozzle: CMakeFiles/nozzle.dir/EulerOperator.cpp.o
 nozzle: CMakeFiles/nozzle.dir/ExactNozzle.cpp.o
 nozzle: CMakeFiles/nozzle.dir/MeshGen.cpp.o
 nozzle: CMakeFiles/nozzle.dir/Main.cpp.o
 nozzle: CMakeFiles/nozzle.dir/build.make
 nozzle: CMakeFiles/nozzle.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable nozzle"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable nozzle"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/nozzle.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

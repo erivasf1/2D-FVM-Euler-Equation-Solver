@@ -9,6 +9,11 @@ class Euler1D {
 
   public:
   Euler1D(vector<double> &coords);
+
+  void SetBoundaryConditions();
+  void SetInitialConditions();
+  void FluxComputation();
+  void JamesonDamping();
  
 
   ~Euler1D();

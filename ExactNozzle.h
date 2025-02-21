@@ -10,6 +10,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdarg.h>
+#include <array>
 using namespace std;
 
 class Tools{

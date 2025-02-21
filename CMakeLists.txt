@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Define source files
 set(SOURCES
+    DataManager.cpp
+    EulerOperator.cpp
     ExactNozzle.cpp
     MeshGen.cpp
     Main.cpp
@@ -16,6 +18,8 @@ set(SOURCES
 
 # Define header files
 set(HEADERS
+    DataManager.h
+    EulerOperator.h
     ExactNozzle.h
     MeshGen.h
 )

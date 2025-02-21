@@ -1,4 +1,8 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/nozzle.dir/DataManager.cpp.o"
+  "CMakeFiles/nozzle.dir/DataManager.cpp.o.d"
+  "CMakeFiles/nozzle.dir/EulerOperator.cpp.o"
+  "CMakeFiles/nozzle.dir/EulerOperator.cpp.o.d"
   "CMakeFiles/nozzle.dir/ExactNozzle.cpp.o"
   "CMakeFiles/nozzle.dir/ExactNozzle.cpp.o.d"
   "CMakeFiles/nozzle.dir/Main.cpp.o"
