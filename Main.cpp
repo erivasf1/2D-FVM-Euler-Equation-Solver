@@ -11,6 +11,8 @@
 
 #include "ExactNozzle.h"
 #include "MeshGen.h"
+#include "EulerOperator.h"
+#include "DataManager.h"
 
 using namespace std;
 
@@ -28,10 +30,10 @@ int main() {
   bool cond; //true for subsonic & false for supersonic
 
   // ALGORITHM:
-  // Create Mesh (verified)
-  // TODO: Set Initial Conditions
+  // Create Mesh (verified) -- may have to add ghost cells
+  // TODO: Set Initial Conditions (In progress)
   // TODO: Calculate Exact Sol. for comparison  
-  // TODO: Set Boundary Conditions (ghost node approach)
+  // TODO: Set Boundary Conditions (ghost node approach) -- just setting values
   // TODO: Output Initial Residual Norm
   // TODO: Output Initial Solution
   // TODO: Begin Main Loop to iteratively solve Euler Eqs.
@@ -51,30 +53,23 @@ int main() {
   //Mesh Specifications
   int cellnum = 10;
   vector<double> xcoords;
-  MeshGen1D Mesh(xmin,xmax,cellnum);
-  Mesh.GenerateMesh(xcoords);
+
+  //Object Initializations
+  array<double,3>* field; //pointer to solution field solutions
+  MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
+  Euler1D Euler(xcoords); //for solving Euler eqs.
+  SpaceVariables1D Sols(cellnum,field); //for storing solutions
   
+  Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
   //debugging:
-  /*tool.print("Xcoords:\n");
-  tool.print("Xcoords size:%d\n",(int)xcoords.size());
-  for (int n=0;n<(int)xcoords.size();n++){
-    tool.print("%e\n",xcoords[n]);
-  }
+  /*array<double,3> init{10,50,100};
+  Euler.SetInitialConditions(init,field);
+  Tools::print("First,middle,& end pt. of rho: %f,%f,%f\n",field[0][0],field[cellnum/2-1][0],field[cellnum-1][0]);
+  Tools::print("First,middle,& end pt. of velocity: %f,%f,%f\n",field[0][1],field[cellnum/2-1][1],field[cellnum-1][1]);
+  Tools::print("First,middle,& end pt. of pressure: %f,%f,%f\n",field[0][2],field[cellnum/2-1][2],field[cellnum-1][2]);
+
   */
 
-  tool.print("---------\n");
-  tool.print("RESULTS\n");
-  tool.print("---------\n");
-  //SuperSonicNozzle nozzle(xmin,xmax,pt_num,stag_pressure,stag_temp);  
-
-  //nozzle.ComputeExactSol();
-  
-  //nozzle.RetrievePoints(); 
-  //debug compute mach number
-  /*nozzle.print("X. loc.: -1.0\n");
-  double a = nozzle.AreaVal(-1.0);
-  double m = nozzle.ComputeMachNumber(a);
-  nozzle.print("Area:%f & Mach #:%f\n",a,m);*/
 
 
 

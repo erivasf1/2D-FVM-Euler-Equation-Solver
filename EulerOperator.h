@@ -10,10 +10,10 @@ class Euler1D {
   public:
   Euler1D(vector<double> &coords);
 
-  void SetBoundaryConditions();
-  void SetInitialConditions();
-  void FluxComputation();
-  void JamesonDamping();
+  void SetBoundaryConditions(); //TODO
+  void SetInitialConditions(array<double,3> &init_val,array<double,3>* &field); //Complete (tested)
+  void FluxComputation();//TODO
+  void JamesonDamping();//TODO
  
 
   ~Euler1D();

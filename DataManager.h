@@ -1,23 +1,22 @@
 // Responsible for creating a Mesh (1D for now)
 #ifndef _DATAMANAGER_H_
 #define _DATAMANAGER_H_
-#include "ExactNozzle.h"
+#include "MeshGen.h"
 
 //SpaceVariable Class stores the values of ALL flow quantities at all points
-class SpaceVariable1D {
+class SpaceVariables1D {
   int cell_number;
 
   public:
 
-  //array<double,3>* field;
-
-  SpaceVariable1D(int &c);
+  SpaceVariables1D(int &c,array<double,3>* &field);
  
-  void Setup(); //sets up domain by assigning each point a 3D array to store conservative variables
-  void ConvertToPrimitive(); //converts conservative variable values to primitive variable values
+  //void Pointer(vector<array<double,3>> &Field); //sets up domain by assigning each point a 3D array to store conservative variables
+  void ConvertToConservative(); //converts conservative variable values to primitive variable values
+  void ConvertToPrimitive(); //converts primitive variable values to primitive variable values
   void OutputSolution();
 
-  ~SpaceVariable1D();
+  ~SpaceVariables1D();
 
 
 };

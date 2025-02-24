@@ -3,22 +3,26 @@
 
 // SPACEVARIABLE1D DEFINITIONS
 
-SpaceVariable1D::SpaceVariable1D(int &c)
+SpaceVariables1D::SpaceVariables1D(int &c,array<double,3>* &field)
   : cell_number(c) {
 
-  //TODO:
+  //TODO: Account for ghost cells!
   vector<array<double,3>> Field(c); //creating vector that stores all values of conservative variables
-  //Setup();
+  field = Field.data(); //assinging array pointer (field) to point to 1st array element of the 1st point 
 }
 //---------------------------------------------------------
 
-void SpaceVariable1D::Setup() {
+void SpaceVariables1D::ConvertToConservative() {
 
-  //vector<array<double,3>> Field(cell_number); //creating vector that stores all values of conservative variables
-  //field = Field.data(); //assigning pointer to point to each coord
+
 
 }
 
+//---------------------------------------------------------
+void SpaceVariables1D::ConvertToPrimitive() {
+
+
+}
 
 //---------------------------------------------------------
-SpaceVariable1D::~SpaceVariable1D(){}
+SpaceVariables1D::~SpaceVariables1D(){}
