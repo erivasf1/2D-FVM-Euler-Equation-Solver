@@ -9,6 +9,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/nozzle.dir/Main.cpp.o.d"
   "CMakeFiles/nozzle.dir/MeshGen.cpp.o"
   "CMakeFiles/nozzle.dir/MeshGen.cpp.o.d"
+  "CMakeFiles/nozzle.dir/Output.cpp.o"
+  "CMakeFiles/nozzle.dir/Output.cpp.o.d"
   "nozzle"
   "nozzle.pdb"
 )

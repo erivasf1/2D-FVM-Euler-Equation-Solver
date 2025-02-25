@@ -14,6 +14,7 @@ set(SOURCES
     ExactNozzle.cpp
     MeshGen.cpp
     Main.cpp
+    Output.cpp
 )
 
 # Define header files
@@ -22,6 +23,7 @@ set(HEADERS
     EulerOperator.h
     ExactNozzle.h
     MeshGen.h
+    Output.h
 )
 
 # Create the executable

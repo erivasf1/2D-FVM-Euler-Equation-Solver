@@ -13,6 +13,7 @@
 #include "MeshGen.h"
 #include "EulerOperator.h"
 #include "DataManager.h"
+#include "Output.h"
 
 using namespace std;
 
@@ -64,7 +65,9 @@ int main() {
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
 
   
+  // Generating Mesh
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
+
   //debugging:
   /*array<double,3> init{10,50,100};
   Euler.SetInitialConditions(init,field);
@@ -75,6 +78,8 @@ int main() {
   */
 
   //!!! Solution format: [rho,velocity,pressure]^T
+  // Setting Initial Conditions
+  array<double,3> init{0.0,0.0,0.0}; // zero for now; can be varied
 
   // Computing Exact Solution
   array<double,3> sol;
@@ -93,6 +98,7 @@ int main() {
   //area = tool.AreaVal(xcoord[i]);
 
   // Setting Boundary Conditions
+  Euler.SetBoundaryConditions(Field,init);
 
   //debug
   /*
@@ -101,6 +107,15 @@ int main() {
   Euler.SetBoundaryConditions(Field,init);
   Tools::print("Size of Field after set BC: %d\n",Field.size());
   */
+
+  // Printing Initial Residual norms
+
+
+
+
+
+
+
 
 
 
