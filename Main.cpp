@@ -31,16 +31,15 @@ int main() {
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
-  // TODO: Set Initial Conditions (In progress)
-  // TODO: Calculate Exact Sol. for comparison  
-  // TODO: Set Boundary Conditions (ghost node approach) -- just setting values
+  // Set Initial Conditions (verified)
+  // Calculate Exact Sol. for comparison (verified)
+  // Set Boundary Conditions (verified)
   // TODO: Output Initial Residual Norm
   // TODO: Output Initial Solution
   // TODO: Begin Main Loop to iteratively solve Euler Eqs.
   //   Set Time Step
   //   Solve Flow quantity at the new time step
-  //   Calc. primitive variables from conserved variables
-  //   Reset boundary conditions (ghost node approach)
+  //   Calc. primitive variables from conserved variables //   Reset boundary conditions (ghost node approach)
   //   Output sol. at every "iterout" iterations
   //   calculate residual norms (normalized by initial value)
   //   check for convergence (if converged, exit main loop)
@@ -51,14 +50,19 @@ int main() {
   //double M; //used for debugging M
 
   //Mesh Specifications
-  int cellnum = 10;
+  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords;
 
   //Object Initializations
-  array<double,3>* field; //pointer to solution field solutions
+  vector<array<double,3>> Field(cellnum);
+  vector<array<double,3>> ExactField(cellnum);
+  array<double,3>* field; //pointer to Field solutions
+  array<double,3>* exact_sols; //pointer to exact solution field values
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
   Euler1D Euler(xcoords); //for solving Euler eqs.
-  SpaceVariables1D Sols(cellnum,field); //for storing solutions
+  SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
+  SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
+
   
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
   //debugging:
@@ -70,6 +74,33 @@ int main() {
 
   */
 
+  //!!! Solution format: [rho,velocity,pressure]^T
+
+  // Computing Exact Solution
+  array<double,3> sol;
+  for (int i=0;i<cellnum;i++) {
+    area = tool.AreaVal(xcoords[i]);
+    cond = (xcoords[i] < 0) ? true:false; 
+    SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
+    Nozzle.ComputeExactSol(sol);
+ 
+    exact_sols[i] = sol; //storing solution values to exact sol.
+    
+    Tools::print("Point %f\n",xcoords[i]);
+    Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
+
+  }
+  //area = tool.AreaVal(xcoord[i]);
+
+  // Setting Boundary Conditions
+
+  //debug
+  /*
+  array<double,3> init{10,50,100};
+  Tools::print("Size of Field before set BC: %d\n",Field.size());
+  Euler.SetBoundaryConditions(Field,init);
+  Tools::print("Size of Field after set BC: %d\n",Field.size());
+  */
 
 
 

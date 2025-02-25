@@ -148,9 +148,9 @@ double SuperSonicNozzle::ComputeMachNumber(){
 
 }
 
-void SuperSonicNozzle::ComputeExactSol(){
+void SuperSonicNozzle::ComputeExactSol(array<double,3> &sol){
 
-  vector<double> sol;
+  //vector<double> sol;
   double T,P,Rho,V;
   double M,Psi;
   double R = Ru/MolMass; //specific gas constant
@@ -163,36 +163,39 @@ void SuperSonicNozzle::ComputeExactSol(){
   //Temperature
   // Psi = 1 + (gamma-1/2)M^2
    T = stag_temp/Psi;
-   print("Temperature ratio: %f\n",T/stag_temp);
+   //print("Temperature ratio: %f\n",T/stag_temp);
   
   //Pressure
   // P = P0/[Psi^(gamma/gamma-1)] 
    P = stag_pressure / pow(Psi,gamma/(gamma-1.0));
-   print("Pressure ratio: %f\n",P/stag_pressure);
+   //print("Pressure ratio: %f\n",P/stag_pressure);
 
   //Density
   // Rho = P / (RT)
    Rho = P / (R*T);
    double Rho_t = stag_pressure / (R*stag_temp);
-   print("Density ratio: %f\n",Rho/Rho_t);
+   //print("Density ratio: %f\n",Rho/Rho_t);
   
   //Velocity
   // V = sqrt(gamma*R*T)*M
    V = abs(M * sqrt(gamma*R*T));
 
   //Appending flow quantities sol. vector of point
-  sol.push_back(Rho);
+  /*sol.push_back(Rho);
   sol.push_back(V);
   sol.push_back(P);
   sol.push_back(M);
-
+  */
+  sol[0] = Rho;
+  sol[1] = V;
+  sol[2] = P;
     //debug:
     //print("Point: %f\n",pts[n]);
     //print("Rho[kg/m^3] = %f,Velocity[m/s] = %f,Pressure[kPa] = %f,Mach Number = %f\n",Rho,V,P,M);
 
   
   
-  PrintResults(sol);
+  //PrintResults(sol);
 }
 
 void SuperSonicNozzle::PrintResults(vector<double> &sol) {

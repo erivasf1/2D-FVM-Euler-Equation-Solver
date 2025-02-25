@@ -20,5 +20,18 @@ void Euler1D::SetInitialConditions(array<double,3> &init_val,array<double,3>* &f
 
 }
 //-----------------------------------------------------------
+void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3> &init){
+
+  //Inserting ghost cells for inflow and outflow locations
+  //iterator it = Field.begin();
+  Field.insert(Field.begin(),init); //!< setting ghost cells to initial conditions 
+  Field.push_back(init); 
+  
+}
+
+
+
+
+//-----------------------------------------------------------
 
 Euler1D::~Euler1D(){}

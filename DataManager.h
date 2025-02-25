@@ -9,7 +9,7 @@ class SpaceVariables1D {
 
   public:
 
-  SpaceVariables1D(int &c,array<double,3>* &field);
+  SpaceVariables1D(int &c,vector<array<double,3>> &Field,array<double,3>* &field);
  
   //void Pointer(vector<array<double,3>> &Field); //sets up domain by assigning each point a 3D array to store conservative variables
   void ConvertToConservative(); //converts conservative variable values to primitive variable values

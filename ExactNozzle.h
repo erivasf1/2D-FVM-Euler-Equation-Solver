@@ -49,7 +49,7 @@ class SuperSonicNozzle : public Tools{
 
 
   double ComputeMachNumber(); //Computes mach number using area-mach number relationship via Newton's method
-  void ComputeExactSol(); //Computes the exact solution for density,pressure, velocity & Mach Number
+  void ComputeExactSol(array<double,3> &sol); //Computes the exact solution for density,pressure, velocity & Mach Number
   void PrintResults(vector<double> &sol); //Used for printing out results
 
 

@@ -3,12 +3,12 @@
 
 // SPACEVARIABLE1D DEFINITIONS
 
-SpaceVariables1D::SpaceVariables1D(int &c,array<double,3>* &field)
+SpaceVariables1D::SpaceVariables1D(int &c,vector<array<double,3>> &Field,array<double,3>* &field)
   : cell_number(c) {
 
   //TODO: Account for ghost cells!
-  vector<array<double,3>> Field(c); //creating vector that stores all values of conservative variables
-  field = Field.data(); //assinging array pointer (field) to point to 1st array element of the 1st point 
+  //Field(cell_number); //creating vector that stores all values of conservative variables
+  field = Field.data(); //assinging array pointer (field) to point to 1st element of vector which is an array
 }
 //---------------------------------------------------------
 
