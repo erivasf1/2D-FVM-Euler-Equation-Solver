@@ -40,10 +40,12 @@ void Euler1D::SetInitialConditions(array<double,3>* &field){
 
 }
 //-----------------------------------------------------------
-void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3> &init){
+void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3>* &field,bool &cond){
 
   //Inserting 4 ghost cells for inflow and outflow locations (2 for each)
   //iterator it = Field.begin();
+  array<double,3> init{0.0,0.0,0.0};
+  //Inserting empty solution vectors into inflow and outflow ghost cells
   //Inflow
   Field.insert(Field.begin(),init); //!< setting ghost cells to initial conditions 
   Field.insert(Field.begin(),init); 
@@ -52,8 +54,88 @@ void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,
   Field.push_back(init); 
   Field.push_back(init); 
 
+  //Calculating Boundary Condition values
+  ComputeTotalBoundaryConditions(field,cond);
+
   return;
   
+}
+
+//-----------------------------------------------------------
+void Euler1D::ComputeTotalBoundaryConditions(array<double,3>* &field,bool &cond){
+
+  //Combines setting the inflow and outflow boundary conditions
+  ComputeInflowBoundaryConditions(field);
+
+  ComputeOutflowBoundaryConditions(field,cond);
+
+  return;
+}
+//-----------------------------------------------------------
+void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
+
+  // Domain:
+  // [G1,G2,I1,...,Imax,G3,G4] --> READ THIS!!!
+  //Inflow -- linear extrapolation of Mach Number (refer to class notes section 3 slide 34)
+  // note: use the absolute velocity when computing Mach number to prevent negative velocities at the inflow
+  double M0,M1,M2; //temp. values
+  double psi;
+  double T,a;
+  for (int i=1;i>-1;i--){ //reverse for loop for ease of indexing!
+    // i=0 (G1) & i=1 (G2)
+    //acquiring Mach number from neighboring nodes
+    M1 = GetMachNumber(field,i+1);
+    M2 = GetMachNumber(field,i+2);
+    M0 = 2.0*M1 - M2;
+    psi = 1.0+(gamma-1.0)/2.0 * pow(M0,2.0);
+
+    //pressure calc.
+    field[i][2] = pow(psi,gamma/(gamma-1.0));
+    field[i][2] = stag_pressure / field[i][2]; 
+    
+    //density calc.
+    T = stag_temperature / psi; // local temperature
+    field[i][0] = field[i][2] / (R*T); 
+
+    //velocity calc.
+    a = sqrt(gamma*R*T); //local speed of sound
+    field[i][1] = abs(M0*a);
+    }
+   
+
+  return;
+}
+
+//-----------------------------------------------------------
+void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond){
+
+  int n = (int)xcoords.size();
+  if (cond == false){ //supersonic case 
+    //using simple extrapolation from class notes section 3 slide 36
+    for (int i=n;i<n+2;i++){ //for both outflow ghost cells
+      field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
+      field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
+      field[i][2] = 2.0*field[i-1][2] - field[i-2][2]; //pressure
+    }
+
+  }
+
+  else { //subsonic
+    //fixing back pressure at boundary, not at ghost cell
+    double Pb = 120.0; //kPa
+    field[n][2] = 2.0*Pb - field[n-1][2]; //pressure at G3
+    field[n+1][2] = 2.0*field[n][2] - field[n-1][2]; //extrapolated pressure for G4
+    for (int i=n;i<n+2;i++){ //veloctiy and pressure extrapolations for both outflow ghost cells
+      field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
+      field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
+    }
+
+
+
+  }
+
+
+  return;
 }
 
 //-----------------------------------------------------------
@@ -115,7 +197,7 @@ double Euler1D::GetNu(array<double,3>* &field,int loc){
 
 
 //-----------------------------------------------------------
-double Euler1D::GetMachNumber(array<double,3>* field,int &loc){
+double Euler1D::GetMachNumber(array<double,3>* field,int loc){
 
   // Using isentropic conditions
   double psi = (stag_pressure/field[loc][2]);

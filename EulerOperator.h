@@ -21,8 +21,10 @@ class Euler1D {
 
   // Boundary + Initial Conditions Fcns.
   void SetInitialConditions(array<double,3>* &field); //Complete (tested)
-  void SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3> &init); 
-  void ComputeBoundaryConditions(vector<array<double,3>> &Field,array<double,3> &init); 
+  void SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3>* &field,bool &cond); //ADDS ghost cells nodes and computes their values
+  void ComputeTotalBoundaryConditions(array<double,3>* &field,bool &cond); //only computes their values
+  void ComputeInflowBoundaryConditions(array<double,3>* &field); //only computes their values
+  void ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond); //only computes their values
 
   // Residual
   void ComputeResidual(); //TODO: Computes the residual vector (uses artificial viscosity and dampening
@@ -40,7 +42,7 @@ class Euler1D {
  
   double GetLambda(array<double,3>* &field,int &loc);
   double GetNu(array<double,3>* &field,int loc); //switching fcn.
-  double GetMachNumber(array<double,3>* field,int &loc);
+  double GetMachNumber(array<double,3>* field,int loc); //used for GetLambda fcn.
   
 
   ~Euler1D();
