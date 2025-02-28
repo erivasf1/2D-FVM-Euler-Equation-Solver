@@ -17,6 +17,8 @@
 
 using namespace std;
 
+Euler1D* Euler1D::instance = nullptr; //used to assign the static pointer member variable, so that static functions can access non static functions
+
 int main() {
 
   // Initializing Parameters
@@ -25,6 +27,7 @@ int main() {
   double xmax = 1.0;
   double stag_pressure = 300.0; //kPa
   double stag_temp = 600.0; //K
+  double gamma = 1.4; //specific heat ratio
   int pt_num = 5; //# of evenly-spaced requested points (including xmin and xmax)
   double area;
   double area_star = tool.AreaVal(0.0); //area at throat
@@ -60,7 +63,7 @@ int main() {
   array<double,3>* field; //pointer to Field solutions
   array<double,3>* exact_sols; //pointer to exact solution field values
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
-  Euler1D Euler(xcoords); //for solving Euler eqs.
+  Euler1D Euler(xcoords,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
   SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
 
@@ -79,7 +82,7 @@ int main() {
 
   //!!! Solution format: [rho,velocity,pressure]^T
   // Setting Initial Conditions
-  array<double,3> init{0.0,0.0,0.0}; // zero for now; can be varied
+  Euler.SetInitialConditions(field);
 
   // Computing Exact Solution
   array<double,3> sol;
@@ -97,8 +100,8 @@ int main() {
   }
   //area = tool.AreaVal(xcoord[i]);
 
-  // Setting Boundary Conditions
-  Euler.SetBoundaryConditions(Field,init);
+  //TODO: Setting Boundary Conditions
+  //Euler.SetBoundaryConditions(Field,init);
 
   //debug
   /*

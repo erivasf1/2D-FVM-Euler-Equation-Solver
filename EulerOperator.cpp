@@ -3,32 +3,56 @@
 
 // EULER1D DEFINITIONS
 
-Euler1D::Euler1D(vector<double> &coords)
-  : xcoords(coords) {
+Euler1D::Euler1D(vector<double> &coords,double &P0,double &T0,double &g)
+  : xcoords(coords) , stag_pressure(P0) , stag_temperature(T0) 
+  , gamma(g) {
 
   dx = abs(xcoords[1] - xcoords[0]); //computing dx (assuming uniform mesh)
+  instance = this; //assings the instance to the object
 }
 
 //-----------------------------------------------------------
-void Euler1D::SetInitialConditions(array<double,3> &init_val,array<double,3>* &field){
+void Euler1D::SetInitialConditions(array<double,3>* &field){
+
+  // Mach number is set to vary linearly via M(x) = 9/10(x) + 1
+  // And flow quantities are calculated using isentropic conditions
+  double M,psi,T,a;
 
   for (int i=0;i<(int)xcoords.size();i++){
-    for (int n=0;n<(int)init_val.size();n++) {
-      field[i][n] = init_val[n]; //setting the flow quantities (primitive) to the initial conditions
+    M = (9.0/10.0)*xcoords[i] + 1.0; //local Mach number
+    psi = 1.0+(gamma-1.0)/2.0 * pow(M,2.0);
+    
+    //pressure calc.
+    field[i][2] = pow(psi,gamma/(gamma-1.0));
+    field[i][2] = stag_pressure / field[i][2]; 
+    
+    //density calc.
+    T = stag_temperature / psi; // local temperature
+    field[i][0] = field[i][2] / (R*T); 
 
-    }    
-  }
-
+    //velocity calc.
+    a = sqrt(gamma*R*T); //local speed of sound
+    field[i][1] = abs(M*a);
+     
+  }    
+  
   return;
 
 }
 //-----------------------------------------------------------
 void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3> &init){
 
-  //Inserting ghost cells for inflow and outflow locations
+  //Inserting 4 ghost cells for inflow and outflow locations (2 for each)
   //iterator it = Field.begin();
+  //Inflow
   Field.insert(Field.begin(),init); //!< setting ghost cells to initial conditions 
+  Field.insert(Field.begin(),init); 
+
+  //Outflow
   Field.push_back(init); 
+  Field.push_back(init); 
+
+  return;
   
 }
 
@@ -91,15 +115,32 @@ double Euler1D::GetNu(array<double,3>* &field,int loc){
 
 
 //-----------------------------------------------------------
+double Euler1D::GetMachNumber(array<double,3>* field,int &loc){
+
+  // Using isentropic conditions
+  double psi = (stag_pressure/field[loc][2]);
+  psi = pow(psi,(gamma-1.0)/gamma);
+  
+  double M = (2.0*(psi-1.0)) / (gamma-1.0);
+  M = sqrt(M);
+
+  return M;
+
+}
+
+
+//-----------------------------------------------------------
 double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 
   //\bar{lambda_i}
-  //double M = sqrt(gamma*R*T); //TODO:speed of sound
-  double M;
-  double lambda_i = abs(field[loc][1]) + M;
+  //double a = sqrt(gamma*R*T); //TODO:speed of sound (define a fcn. for this)
+  // T
+  double M = GetMachNumber(field,loc);
+  double a = field[loc][1];
+  double lambda_i = abs(field[loc][1]) + a;
 
   //\bar{lambda_i+1}
-  double lambda_iright = abs(field[loc+1][1]) + M;
+  double lambda_iright = abs(field[loc+1][1]) + a;
 
   double res = (lambda_i + lambda_iright) / 2.0;
   return res;
@@ -110,8 +151,8 @@ double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 //-----------------------------------------------------------
 array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc){
 
-  double lambda = GetLambda(field,loc);
-  double epsilon = GetEpsilon2(field,loc);
+  double lambda = instance->GetLambda(field,loc);
+  double epsilon = instance->GetEpsilon2(field,loc);
 
   double res_rho = lambda*epsilon*(field[loc+1][0] + field[loc+1][0]);
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
