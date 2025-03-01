@@ -5,7 +5,7 @@
 #include "MeshGen.h"
 
 class Euler1D {
-  vector<double> &xcoords;
+  //vector<double> &xcoords;
   double dx; //cell thickness
   double stag_pressure; //stagnation pressure
   double stag_temperature; //stagnation temperature
@@ -17,27 +17,27 @@ class Euler1D {
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions)
 
-  static Euler1D* instance; //static pointer to hold instance so static function can use non-static functions
-
   public:
-  Euler1D(vector<double> &coords,int &cellnum,double &P0,double &T0,double &g);
+  Euler1D(); //empty constructor for unit testing
+
+  Euler1D(int &cellnum,double &P0,double &T0,double &g); //constructor for Main file
 
   // Boundary + Initial Conditions Fcns.
-  void SetInitialConditions(array<double,3>* &field); //Complete (tested)
+  void SetInitialConditions(array<double,3>* &field,vector<double> &xcoords); //Complete (tested)
   void SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3>* &field,bool &cond); //ADDS ghost cells nodes and computes their values
   void ComputeTotalBoundaryConditions(array<double,3>* &field,bool &cond); //only computes their values
   void ComputeInflowBoundaryConditions(array<double,3>* &field); //only computes their values
   void ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond); //only computes their values
 
   // Residual
-  void ComputeResidual(array<double,3>* &resid,array<double,3>* &field); //TODO: Computes the residual vector (uses artificial viscosity and dampening
+  void ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx); //TODO: Computes the residual vector (uses artificial viscosity and dampening
 
   // Spatial Fluxes Fcns. (including source term)
   array<double,3> ComputeSpatialFlux(array<double,3>* &field,int &loc,int nbor);//TODO
-  double ComputeSourceTerm(array<double,3>* &field,int &loc);//TODO: May have to look into Pi
+  double ComputeSourceTerm(array<double,3>* &field,int &loc,vector<double> &xcoords);//TODO: May have to look into Pi
 
   // Artificial Dissipaton Fcns. (using JST Dampening)
-  static array<double,3> Compute2ndOrderDamping(array<double,3>* &field,int loc); // viscous term for shocks (c(2))
+  array<double,3> Compute2ndOrderDamping(array<double,3>* &field,int loc); // viscous term for shocks (c(2))
   array<double,3> Compute4thOrderDamping(array<double,3>* &field,int loc); // prevents odd-even decoupling (c(4))
   
   double GetEpsilon2(array<double,3>* &field,int &loc); //sensor that detects "sharp" gradients

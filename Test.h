@@ -13,7 +13,7 @@ class Test {
   
   void Test2ndOrderDamping(array<double,3>* field,int& loc);
   void Test4thOrderDamping();
-  void TestComputeResidual();
+  void TestComputeResidual(vector<array<double,3>> &Test);
  
 
   ~Test();

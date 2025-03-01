@@ -3,16 +3,17 @@
 
 // EULER1D DEFINITIONS
 
-Euler1D::Euler1D(vector<double> &coords,int& cellnum,double &P0,double &T0,double &g)
-  : xcoords(coords) , interior_cellnum(cellnum), stag_pressure(P0) , stag_temperature(T0) 
-  , gamma(g) {
+Euler1D::Euler1D(int& cellnum,double &P0,double &T0,double &g)
+  : interior_cellnum(cellnum), stag_pressure(P0) , stag_temperature(T0) 
+  , gamma(g) {}
 
-  dx = abs(xcoords[1] - xcoords[0]); //computing dx (assuming uniform mesh)
-  instance = this; //assings the instance to the object
-}
 
 //-----------------------------------------------------------
-void Euler1D::SetInitialConditions(array<double,3>* &field){
+Euler1D::Euler1D() {}
+
+
+//-----------------------------------------------------------
+void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoords){
 
   // Mach number is set to vary linearly via M(x) = 9/10(x) + 1
   // And flow quantities are calculated using isentropic conditions
@@ -168,7 +169,7 @@ array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int &loc,int
 }
 
 //-----------------------------------------------------------
-double Euler1D::ComputeSourceTerm(array<double,3>* &field,int &loc) {
+double Euler1D::ComputeSourceTerm(array<double,3>* &field,int &loc,vector<double> &xcoords) {
 
   //Get area for i+1/2 and i-1/2 locations (refer to read me for data indexing)
   double A_rface = Tools::AreaVal(xcoords[loc-1]);
@@ -256,8 +257,8 @@ array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc)
   //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
   // seems correct for now
-  double lambda = instance->GetLambda(field,loc); //at cell face (i+1/2)
-  double epsilon = instance->GetEpsilon2(field,loc); //sensor for detecting shocks (will have to tweak the constant later)
+  double lambda = GetLambda(field,loc); //at cell face (i+1/2)
+  double epsilon = GetEpsilon2(field,loc); //sensor for detecting shocks (will have to tweak the constant later)
 
   double res_rho = lambda*epsilon*(field[loc+1][0] - field[loc][0]);
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
@@ -299,7 +300,7 @@ array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc)
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ //TODO
+void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx){ //TODO
 
   //following nomenclature from class notes
   array<double,3> F_right,F_left; //left and right face spatial fluxes 
@@ -318,7 +319,7 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ 
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
-    S = ComputeSourceTerm(field,i);
+    S = ComputeSourceTerm(field,i,xcoords);
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!

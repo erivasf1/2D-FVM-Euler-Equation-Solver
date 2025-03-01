@@ -17,7 +17,6 @@
 
 using namespace std;
 
-Euler1D* Euler1D::instance = nullptr; //used to assign the static pointer member variable, so that static functions can access non static functions
 
 int main() {
 
@@ -76,7 +75,8 @@ int main() {
   
   // Generating Mesh
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
-  Euler1D Euler(xcoords,cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
+  double dx = (xcoords[0]-xcoords[1]); //delta x distance
+  Euler1D Euler(cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
 
   //debugging:
   /*array<double,3> init{10,50,100};
@@ -90,7 +90,7 @@ int main() {
   //!!! Solution format: [rho,velocity,pressure]^T
 
   // SETTING INITIAL CONDITIONS
-  Euler.SetInitialConditions(field);
+  Euler.SetInitialConditions(field,xcoords);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   array<double,3> sol;
@@ -124,7 +124,7 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> Norms;
-  Euler.ComputeResidual(resid,field);
+  Euler.ComputeResidual(resid,field,xcoords,dx);
   Norms = ResidSols.ComputeSolutionNorms(resid);
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",Norms[0]);
