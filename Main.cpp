@@ -31,7 +31,7 @@ int main() {
   int pt_num = 5; //# of evenly-spaced requested points (including xmin and xmax)
   double area;
   double area_star = tool.AreaVal(0.0); //area at throat
-  bool cond; //true for subsonic & false for supersonic
+  bool cond{false}; //true for subsonic & false for supersonic
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -55,17 +55,21 @@ int main() {
 
   //Mesh Specifications
   int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
-  vector<double> xcoords;
+  vector<double> xcoords; //!< coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Object Initializations
   vector<array<double,3>> Field(cellnum);
   vector<array<double,3>> ExactField(cellnum);
+  vector<array<double,3>> Residual(cellnum);
+
   array<double,3>* field; //pointer to Field solutions
   array<double,3>* exact_sols; //pointer to exact solution field values
+  array<double,3>* resid; //pointer to residual field values per cell
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
-  Euler1D Euler(xcoords,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
+  Euler1D Euler(xcoords,cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
   SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
+  SpaceVariables1D ResidSols(cellnum,Residual,resid); //for storing residuals for every cell
 
   
   // Generating Mesh
@@ -81,10 +85,11 @@ int main() {
   */
 
   //!!! Solution format: [rho,velocity,pressure]^T
-  // Setting Initial Conditions
+
+  // SETTING INITIAL CONDITIONS
   Euler.SetInitialConditions(field);
 
-  // Computing Exact Solution
+  // COMPUTING EXACT SOLUTION
   array<double,3> sol;
   for (int i=0;i<cellnum;i++) {
     area = tool.AreaVal(xcoords[i]);
@@ -100,8 +105,8 @@ int main() {
   }
   //area = tool.AreaVal(xcoord[i]);
 
-  //TODO: Setting Boundary Conditions
-  //Euler.SetBoundaryConditions(Field,init);
+  // SETTING BOUNDARY CONDITIONS
+  Euler.SetBoundaryConditions(Field,field,cond);
 
   //debug
   /*
@@ -111,16 +116,8 @@ int main() {
   Tools::print("Size of Field after set BC: %d\n",Field.size());
   */
 
-  // Printing Initial Residual norms
-
-
-
-
-
-
-
-
-
+  // COMPUTING INITIAL RESIDUAL NORMS
+  // using ResidSols spacevariable
 
 
   return 0;

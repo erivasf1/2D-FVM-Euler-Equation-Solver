@@ -13,11 +13,14 @@ class Euler1D {
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   
   const double MolMass = 28.96; // kg/kmol
   double R = Ru / MolMass; //specific gas constant
+ 
+  int interior_cellnum; //holds the cell num (interior only)
+  int total_cellnum; //holds the total cell num (including boundary conditions)
 
   static Euler1D* instance; //static pointer to hold instance so static function can use non-static functions
 
   public:
-  Euler1D(vector<double> &coords,double &P0,double &T0,double &g);
+  Euler1D(vector<double> &coords,int &cellnum,double &P0,double &T0,double &g);
 
   // Boundary + Initial Conditions Fcns.
   void SetInitialConditions(array<double,3>* &field); //Complete (tested)
@@ -27,10 +30,10 @@ class Euler1D {
   void ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond); //only computes their values
 
   // Residual
-  void ComputeResidual(); //TODO: Computes the residual vector (uses artificial viscosity and dampening
+  void ComputeResidual(array<double,3>* &resid,array<double,3>* &field); //TODO: Computes the residual vector (uses artificial viscosity and dampening
 
   // Spatial Fluxes Fcns. (including source term)
-  array<double,3> ComputeSpatialFlux(array<double,3>* &field,int &loc,int &nbor);//TODO
+  array<double,3> ComputeSpatialFlux(array<double,3>* &field,int &loc,int nbor);//TODO
   double ComputeSourceTerm(array<double,3>* &field,int &loc);//TODO: May have to look into Pi
 
   // Artificial Dissipaton Fcns. (using JST Dampening)

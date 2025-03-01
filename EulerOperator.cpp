@@ -3,8 +3,8 @@
 
 // EULER1D DEFINITIONS
 
-Euler1D::Euler1D(vector<double> &coords,double &P0,double &T0,double &g)
-  : xcoords(coords) , stag_pressure(P0) , stag_temperature(T0) 
+Euler1D::Euler1D(vector<double> &coords,int& cellnum,double &P0,double &T0,double &g)
+  : xcoords(coords) , interior_cellnum(cellnum), stag_pressure(P0) , stag_temperature(T0) 
   , gamma(g) {
 
   dx = abs(xcoords[1] - xcoords[0]); //computing dx (assuming uniform mesh)
@@ -16,9 +16,10 @@ void Euler1D::SetInitialConditions(array<double,3>* &field){
 
   // Mach number is set to vary linearly via M(x) = 9/10(x) + 1
   // And flow quantities are calculated using isentropic conditions
+  // ASSUMPTION: Mach number at left face is equal to the cell averaged Mach number of a given cell (may be fine as an initial condition)
   double M,psi,T,a;
 
-  for (int i=0;i<(int)xcoords.size();i++){
+  for (int i=0;i<interior_cellnum;i++){
     M = (9.0/10.0)*xcoords[i] + 1.0; //local Mach number
     psi = 1.0+(gamma-1.0)/2.0 * pow(M,2.0);
     
@@ -44,15 +45,17 @@ void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,
 
   //Inserting 4 ghost cells for inflow and outflow locations (2 for each)
   //iterator it = Field.begin();
-  array<double,3> init{0.0,0.0,0.0};
+  array<double,3> empty{0.0,0.0,0.0};
   //Inserting empty solution vectors into inflow and outflow ghost cells
   //Inflow
-  Field.insert(Field.begin(),init); //!< setting ghost cells to initial conditions 
-  Field.insert(Field.begin(),init); 
+  Field.insert(Field.begin(),empty); //!< setting ghost cells to emptyial conditions 
+  Field.insert(Field.begin(),empty); 
 
   //Outflow
-  Field.push_back(init); 
-  Field.push_back(init); 
+  Field.push_back(empty); 
+  Field.push_back(empty); 
+
+  total_cellnum = Field.size(); //!< saving the new total num. of cells (w/ ghost cells)
 
   //Calculating Boundary Condition values
   ComputeTotalBoundaryConditions(field,cond);
@@ -109,10 +112,9 @@ void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
 //-----------------------------------------------------------
 void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond){
 
-  int n = (int)xcoords.size();
   if (cond == false){ //supersonic case 
     //using simple extrapolation from class notes section 3 slide 36
-    for (int i=n;i<n+2;i++){ //for both outflow ghost cells
+    for (int i=total_cellnum-2;i<total_cellnum;i++){ //for both outflow ghost cells
       field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
       field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
       field[i][2] = 2.0*field[i-1][2] - field[i-2][2]; //pressure
@@ -122,14 +124,15 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
 
   else { //subsonic
     //fixing back pressure at boundary, not at ghost cell
+    int G3 = total_cellnum-2; //index for 1st outflow ghost cell
     double Pb = 120.0; //kPa
-    field[n][2] = 2.0*Pb - field[n-1][2]; //pressure at G3
-    field[n+1][2] = 2.0*field[n][2] - field[n-1][2]; //extrapolated pressure for G4
-    for (int i=n;i<n+2;i++){ //veloctiy and pressure extrapolations for both outflow ghost cells
+    field[G3][2] = 2.0*Pb - field[G3-1][2]; //pressure at G3
+    field[G3+1][2] = 2.0*field[G3][2] - field[G3-2][2]; //extrapolated pressure for G4
+
+    for (int i=total_cellnum-2;i<total_cellnum;i++){ //reg. extrapolation
       field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
       field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
     }
-
 
 
   }
@@ -139,29 +142,41 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int &loc,int &nbor){
+array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int &loc,int nbor){
 
-  // flux computed using central quadrature
-  double res_rho = (field[loc][0]+field[nbor][0]) / 2.0;
-  double res_velocity = (field[loc][1]+field[nbor][1]) / 2.0;
-  double res_pressure = (field[loc][2]+field[nbor][2]) / 2.0;
+  // Conversion into conservative variables(cv)
+  //Rho * U conserved variable
+  double cv1 = field[loc][0]*field[loc][1]; 
+  double cv1_nbor = field[nbor][0]*field[nbor][1]; 
+  //Rho * U^2 + P conserved variable
+  double cv2 = field[loc][0]*pow(field[loc][1],2) + field[loc][2];
+  double cv2_nbor = field[nbor][0]*pow(field[nbor][1],2) + field[nbor][2];
+  //Rho*U*h_t conserved variable
+  double h_t = gamma/(gamma-1.0) * (field[loc][2]/field[loc][0]) + (pow(field[loc][1],2)/2.0);
+  double cv3 = field[loc][0]*field[loc][1]*h_t;
+  h_t = gamma/(gamma-1.0) * (field[nbor][2]/field[nbor][0]) + (pow(field[nbor][1],2)/2.0);
+  double cv3_nbor = field[nbor][0]*field[nbor][1]*h_t;
 
-  array<double,3> res = {res_rho,res_velocity,res_pressure};
-  return res; 
+  // Value at interface interpolated using central quadrature
+  double flux_continuity = (cv1+cv1_nbor) / 2.0;
+  double flux_xmom = (cv2+cv2_nbor) / 2.0;
+  double flux_energy = (cv3+cv3_nbor) / 2.0;
 
+  array<double,3> flux = {flux_continuity,flux_xmom,flux_energy};
+  return flux; 
 
 }
 
 //-----------------------------------------------------------
 double Euler1D::ComputeSourceTerm(array<double,3>* &field,int &loc) {
 
-  //Get area for i+1/2 and i-1/2 locations (really just area at i=loc and i=loc-1)
-  double A_rface = Tools::AreaVal(xcoords[loc]);
-  double A_lface = Tools::AreaVal(xcoords[loc-1]);
+  //Get area for i+1/2 and i-1/2 locations (refer to read me for data indexing)
+  double A_rface = Tools::AreaVal(xcoords[loc-1]);
+  double A_lface = Tools::AreaVal(xcoords[loc-2]);
   // pressure at i = loc
   double p = field[loc][2];
   // source = P_i * (A_i+1/2 - A_i-1/2) / dx * dx
-  double res = p * A_rface - A_lface;
+  double res = p * (A_rface - A_lface);
 
   return res;
 
@@ -233,6 +248,7 @@ double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 //-----------------------------------------------------------
 array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc){
 
+  //look into applying damping terms to boundary?
   double lambda = instance->GetLambda(field,loc);
   double epsilon = instance->GetEpsilon2(field,loc);
 
@@ -276,12 +292,48 @@ array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc)
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(){ //TODO
+void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ //TODO
 
+  //following nomenclature from class notes
+  array<double,3> F_right,F_left,D2,D4; //spatial flux and damping terms, respectively (vectors)
+  double S; //source term (only for x-mom. eq.)
+  double A_left,A_right; //Area of corresponding faces
 
+  for (int i=0;i<total_cellnum;i++){ //looping through all interior nodes
+    if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
+      continue;
+
+    //Spatial Flux Term
+    F_right = ComputeSpatialFlux(field,i,i+1);
+    F_left = ComputeSpatialFlux(field,i,i-1);
+
+    //Source Term (external pressure) ONLY for x-mom. eq.
+    // also, area already evaluated, but may need to be multiplied dx?
+    S = ComputeSourceTerm(field,i);
+
+    //JST Damping Terms 
+    D2 = Compute2ndOrderDamping(field,i);
+    D4 = Compute4thOrderDamping(field,i);
+
+    //Area Evaluations
+    A_left = Tools::AreaVal(xcoords[i-2]);
+    A_right = Tools::AreaVal(xcoords[i-1]);
+
+    //Residual cal.
+    
+    //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) TODO: Need to evaluate areas & check damping terms
+    resid[i-2][0] = (F_right[0]*A_right - F_left[0]*A_left) - (D2[0]-D4[0]);
+    
+    //x-mom. residual (w/ source term)
+    resid[i-2][1] =  (F_right[1]*A_right - F_left[1]*A_left) - S*dx - (D2[1]-D4[1]);
+
+    //energy residual
+    resid[i-2][2] =  (F_right[2]*A_right - F_left[2]*A_left)- (D2[2]-D4[2]);
+
+  }
+  return;
 
 }
-
 
 //-----------------------------------------------------------
 

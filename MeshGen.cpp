@@ -10,7 +10,8 @@ void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
 
   //TODO: Need to add ghost cells here
   Tools::print("1D EULER EQ. SOLVER\n");
-  xcoords = Tools::RetrievePoints(xmin,xmax,cellnumber);  
+  double facenum = cellnumber + 1; //number of faces
+  xcoords = Tools::RetrievePoints(xmin,xmax,facenum);  
   Tools::print("- Mesh Statistics:\n");
   Tools::print("XCoords: [%e,%e]\n",xmin,xmax);
   Tools::print("Number of Cells: %d\n",cellnumber);
