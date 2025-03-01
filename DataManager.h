@@ -14,7 +14,7 @@ class SpaceVariables1D {
   //void Pointer(vector<array<double,3>> &Field); //sets up domain by assigning each point a 3D array to store conservative variables
   void ConvertToConservative(); //converts conservative variable values to primitive variable values -- probably not needed
   void ConvertToPrimitive(); //converts primitive variable values to primitive variable values -- probably not needed
-  void OutputSolutionNorms();
+  array<double,3> ComputeSolutionNorms(array<double,3>* &field);
 
   ~SpaceVariables1D();
 

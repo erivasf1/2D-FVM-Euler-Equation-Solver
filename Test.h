@@ -3,6 +3,7 @@
 #define _TEST_H_
 #include "ExactNozzle.h"
 #include "MeshGen.h"
+#include "EulerOperator.h"
 
 class Test {
   array<double,3>* &field;
@@ -12,6 +13,7 @@ class Test {
   
   void Test2ndOrderDamping(array<double,3>* field,int& loc);
   void Test4thOrderDamping();
+  void TestComputeResidual();
  
 
   ~Test();

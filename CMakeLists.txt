@@ -7,6 +7,15 @@ project(1DQuasiSteadyNozzle)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Set the default build type to Debug if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# Enable debug symbols
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_DEBUG "-g")
+
 # Define source files
 set(SOURCES
     DataManager.cpp
@@ -15,6 +24,7 @@ set(SOURCES
     MeshGen.cpp
     Main.cpp
     Output.cpp
+    Test.cpp
 )
 
 # Define header files
@@ -24,6 +34,7 @@ set(HEADERS
     ExactNozzle.h
     MeshGen.h
     Output.h
+    Test.h
 )
 
 # Create the executable

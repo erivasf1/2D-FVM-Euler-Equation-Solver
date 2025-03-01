@@ -192,7 +192,7 @@ double Euler1D::GetEpsilon2(array<double,3>* &field,int &loc) {
 
   double kappa2 = 0.35; //typically from 1/4<kappa2<1/2
   
-  double max = std::max({Nu,Nuleft,Nuright,Nuright2}); 
+  double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
   return res;
 
@@ -202,8 +202,9 @@ double Euler1D::GetEpsilon2(array<double,3>* &field,int &loc) {
 //-----------------------------------------------------------
 double Euler1D::GetNu(array<double,3>* &field,int loc){
 
-  double res = field[loc][2] - (2.0*field[loc][2]) +  field[loc][2];
-  res /= field[loc][2] + (2.0*field[loc][2]) +  field[loc][2];
+  //Now changed to look at neighbors, originally everything was "loc"
+  double res = field[loc+1][2] - (2.0*field[loc][2]) +  field[loc-1][2];
+  res /= field[loc+1][2] + (2.0*field[loc][2]) +  field[loc-1][2];
   res = abs(res);
 
   return res;
@@ -229,14 +230,17 @@ double Euler1D::GetMachNumber(array<double,3>* field,int loc){
 //-----------------------------------------------------------
 double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 
-  //\bar{lambda_i}
+  double M,a; //cell-averaged Mach number and speed of sound, respectively
+  //\bar{lambda_i} at current cell
   //double a = sqrt(gamma*R*T); //TODO:speed of sound (define a fcn. for this)
   // T
-  double M = GetMachNumber(field,loc);
-  double a = field[loc][1];
+  M = GetMachNumber(field,loc); 
+  a = field[loc][1] * M;
   double lambda_i = abs(field[loc][1]) + a;
 
-  //\bar{lambda_i+1}
+  //\bar{lambda_i+1} at neighboring cell to the right
+  M = GetMachNumber(field,loc+1); //cell-averaged Mach Number
+  a = field[loc+1][1] * M;
   double lambda_iright = abs(field[loc+1][1]) + a;
 
   double res = (lambda_i + lambda_iright) / 2.0;
@@ -248,11 +252,14 @@ double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 //-----------------------------------------------------------
 array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc){
 
+  //following Roy's class notes nomenclature (section 3 slide 31)
+  //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
-  double lambda = instance->GetLambda(field,loc);
-  double epsilon = instance->GetEpsilon2(field,loc);
+  // seems correct for now
+  double lambda = instance->GetLambda(field,loc); //at cell face (i+1/2)
+  double epsilon = instance->GetEpsilon2(field,loc); //sensor for detecting shocks (will have to tweak the constant later)
 
-  double res_rho = lambda*epsilon*(field[loc+1][0] + field[loc+1][0]);
+  double res_rho = lambda*epsilon*(field[loc+1][0] - field[loc][0]);
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
   double res_pressure = lambda*epsilon*(field[loc+1][2] + field[loc+1][2]);
   array<double,3> res = {res_rho,res_vel,res_pressure};
@@ -279,7 +286,7 @@ double Euler1D::GetEpsilon4(array<double,3>* &field,int &loc){
 array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc){
 
   double lambda = GetLambda(field,loc);
-  double epsilon = GetEpsilon4(field,loc);
+  double epsilon = GetEpsilon4(field,loc); //looks for gradients that cause odd-even decoupling (will have to tweak the constant later)
 
   double res_rho = lambda*epsilon*(field[loc+2][0] - 3.0*field[loc+1][0] + 3.0*field[loc][0] - field[loc-1][0]);
   double res_vel = lambda*epsilon*(field[loc+2][1] - 3.0*field[loc+1][1] + 3.0*field[loc][1] - field[loc-1][1]);
@@ -295,7 +302,9 @@ array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc)
 void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ //TODO
 
   //following nomenclature from class notes
-  array<double,3> F_right,F_left,D2,D4; //spatial flux and damping terms, respectively (vectors)
+  array<double,3> F_right,F_left; //left and right face spatial fluxes 
+  array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
+  array<double,3> TotalF_right,TotalF_left; //left and right total fluxes (spatial + damping)
   double S; //source term (only for x-mom. eq.)
   double A_left,A_right; //Area of corresponding faces
 
@@ -311,9 +320,25 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ 
     // also, area already evaluated, but may need to be multiplied dx?
     S = ComputeSourceTerm(field,i);
 
-    //JST Damping Terms 
-    D2 = Compute2ndOrderDamping(field,i);
-    D4 = Compute4thOrderDamping(field,i);
+    //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
+    //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
+    // right face
+    D2_right = Compute2ndOrderDamping(field,i);
+    D4_right = Compute4thOrderDamping(field,i);
+    // left face
+    D2_left = Compute2ndOrderDamping(field,i-1);
+    D4_left = Compute4thOrderDamping(field,i-1);
+
+    //Total Flux Terms
+    //continuity
+    TotalF_right[0] = F_right[0] - (D2_right[0]+D4_right[0]);
+    TotalF_left[0] = F_left[0] - (D2_left[0]+D4_left[0]);
+    //x-mom.
+    TotalF_right[1] = F_right[1] - (D2_right[1]+D4_right[1]);
+    TotalF_left[1] = F_left[1] - (D2_left[1]+D4_left[1]);
+    //energy
+    TotalF_right[2] = F_right[2] - (D2_right[2]+D4_right[2]);
+    TotalF_left[2] = F_left[2] - (D2_left[2]+D4_left[2]);
 
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[i-2]);
@@ -322,13 +347,13 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field){ 
     //Residual cal.
     
     //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) TODO: Need to evaluate areas & check damping terms
-    resid[i-2][0] = (F_right[0]*A_right - F_left[0]*A_left) - (D2[0]-D4[0]);
+    resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
     
     //x-mom. residual (w/ source term)
-    resid[i-2][1] =  (F_right[1]*A_right - F_left[1]*A_left) - S*dx - (D2[1]-D4[1]);
+    resid[i-2][1] =  (TotalF_right[1]*A_right - TotalF_left[1]*A_left) - S*dx;
 
     //energy residual
-    resid[i-2][2] =  (F_right[2]*A_right - F_left[2]*A_left)- (D2[2]-D4[2]);
+    resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
 
   }
   return;

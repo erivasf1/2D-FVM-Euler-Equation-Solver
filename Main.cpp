@@ -22,7 +22,6 @@ Euler1D* Euler1D::instance = nullptr; //used to assign the static pointer member
 int main() {
 
   // Initializing Parameters
-  Tools tool;
   double xmin = -1.0;
   double xmax = 1.0;
   double stag_pressure = 300.0; //kPa
@@ -30,8 +29,12 @@ int main() {
   double gamma = 1.4; //specific heat ratio
   int pt_num = 5; //# of evenly-spaced requested points (including xmin and xmax)
   double area;
-  double area_star = tool.AreaVal(0.0); //area at throat
+  double area_star; //area at throat
   bool cond{false}; //true for subsonic & false for supersonic
+
+  //Mesh Specifications
+  int cellnum = 6; //recommending an even number for cell face at the throat of nozzle
+  vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -53,9 +56,6 @@ int main() {
 
   //double M; //used for debugging M
 
-  //Mesh Specifications
-  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
-  vector<double> xcoords; //!< coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Object Initializations
   vector<array<double,3>> Field(cellnum);
@@ -66,14 +66,17 @@ int main() {
   array<double,3>* exact_sols; //pointer to exact solution field values
   array<double,3>* resid; //pointer to residual field values per cell
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
-  Euler1D Euler(xcoords,cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
   SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
   SpaceVariables1D ResidSols(cellnum,Residual,resid); //for storing residuals for every cell
+  Tools tool;
 
+
+  Tools::print("Specs and Objects created %f\n");
   
   // Generating Mesh
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
+  Euler1D Euler(xcoords,cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
 
   //debugging:
   /*array<double,3> init{10,50,100};
@@ -89,8 +92,10 @@ int main() {
   // SETTING INITIAL CONDITIONS
   Euler.SetInitialConditions(field);
 
-  // COMPUTING EXACT SOLUTION
+  // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   array<double,3> sol;
+  area_star = tool.AreaVal(0.0); //area at throat
+  //Tools::print("Exact Solution Output\n");
   for (int i=0;i<cellnum;i++) {
     area = tool.AreaVal(xcoords[i]);
     cond = (xcoords[i] < 0) ? true:false; 
@@ -99,8 +104,8 @@ int main() {
  
     exact_sols[i] = sol; //storing solution values to exact sol.
     
-    Tools::print("Point %f\n",xcoords[i]);
-    Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
+    //Tools::print("Point %f\n",xcoords[i]);
+    //Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
 
   }
   //area = tool.AreaVal(xcoord[i]);
@@ -118,6 +123,14 @@ int main() {
 
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
+  array<double,3> Norms;
+  Euler.ComputeResidual(resid,field);
+  Norms = ResidSols.ComputeSolutionNorms(resid);
+  Tools::print("-Initial Residual Norms\n");
+  Tools::print("--Continuity:%e\n",Norms[0]);
+  Tools::print("--X-Momentum:%e\n",Norms[1]);
+  Tools::print("--Energy:%e\n",Norms[2]);
+
 
 
   return 0;
