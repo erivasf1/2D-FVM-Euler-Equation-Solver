@@ -21,7 +21,12 @@ void Test::Test2ndOrderDamping(array<double,3>* field,int& loc){
 //-----------------------------------------------------------
 void Test::TestComputeResidual(vector<array<double,3>> &Test){
 
-
+  int cellnum = 10;
+  double T0 = 0.0;
+  double P0 = 0.0;
+  double g = 1.4;
+  Euler1D Euler(cellnum,P0,T0,g);
+  
 
 
 }

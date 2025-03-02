@@ -32,7 +32,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 6; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // ALGORITHM:
@@ -90,6 +90,7 @@ int main() {
   //!!! Solution format: [rho,velocity,pressure]^T
 
   // SETTING INITIAL CONDITIONS
+  Tools::print("At initial conditions\n");
   Euler.SetInitialConditions(field,xcoords);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
@@ -130,7 +131,7 @@ int main() {
   Tools::print("--Continuity:%e\n",Norms[0]);
   Tools::print("--X-Momentum:%e\n",Norms[1]);
   Tools::print("--Energy:%e\n",Norms[2]);
-
+  
 
 
   return 0;
