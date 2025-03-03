@@ -13,7 +13,6 @@ SpaceVariables1D::SpaceVariables1D(int &c,vector<array<double,3>> &Field,array<d
 void SpaceVariables1D::ConvertToConservative() {
 
 
-
 }
 
 //---------------------------------------------------------

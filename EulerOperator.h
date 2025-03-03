@@ -23,6 +23,9 @@ class Euler1D {
 
   Euler1D(int &cellnum,double &P0,double &T0,double &g); //constructor for Main file
 
+  // Calculating Conserved variables
+  array<double,3> ComputeConserved(array<double,3>* &field,int loc);
+
   // Boundary + Initial Conditions Fcns.
   void SetInitialConditions(array<double,3>* &field,vector<double> &xcoords); //Complete (tested)
   void SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3>* &field,bool &cond); //ADDS ghost cells nodes and computes their values

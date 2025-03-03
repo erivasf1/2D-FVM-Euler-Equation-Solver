@@ -13,6 +13,24 @@ Euler1D::Euler1D() {}
 
 
 //-----------------------------------------------------------
+array<double,3> Euler1D::ComputeConserved(array<double,3>* &field,int loc){
+
+  array<double,3> res; //to store conserved variables
+
+  //density
+  res[0] = field[loc][0]; 
+
+  //x-mom.
+  res[1] = field[loc][0]*field[loc][1]; 
+
+  //energy
+  res[2] = 1.0/(gamma-1.0) + (0.5)*field[loc][0]*pow(field[loc][2],2);
+
+  return res;
+
+}
+
+//-----------------------------------------------------------
 void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoords){
 
   // Mach number is set to vary linearly via M(x) = 9/10(x) + 1
@@ -286,14 +304,21 @@ array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc)
   //following Roy's class notes nomenclature (section 3 slide 31)
   //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
-  // seems correct for now
+  //TODO: Compute conservative variables HERE ONLY!
+  array<double,3> conserved = ComputeConserved(field,loc);
+  array<double,3> conserved_nbor = ComputeConserved(field,loc+1);
+  
   double lambda = GetLambda(field,loc); //at cell face (i+1/2)
   double epsilon = GetEpsilon2(field,loc); //sensor for detecting shocks (will have to tweak the constant later)
-
-  double res_rho = lambda*epsilon*(field[loc+1][0] - field[loc][0]);
+  double res_continuity = lambda*epsilon*(conserved_nbor[0]-conserved[0]);
+  double res_xmom = lambda*epsilon*(conserved_nbor[1]-conserved[1]);
+  double res_energy = lambda*epsilon*(conserved_nbor[2]-conserved[2]);
+  
+  /*double res_rho = lambda*epsilon*(field[loc+1][0] - field[loc][0]);
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
   double res_pressure = lambda*epsilon*(field[loc+1][2] + field[loc+1][2]);
-  array<double,3> res = {res_rho,res_vel,res_pressure};
+  */
+  array<double,3> res = {res_continuity,res_xmom,res_energy};
 
   return res;
 
@@ -318,19 +343,28 @@ array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc)
 
   double lambda = GetLambda(field,loc);
   double epsilon = GetEpsilon4(field,loc); //looks for gradients that cause odd-even decoupling (will have to tweak the constant later)
+  //TODO: Convert to conservative variables HERE ONLY!
+  array<double,3> conserved = ComputeConserved(field,loc);
+  array<double,3> conserved_leftnbor = ComputeConserved(field,loc-1);
+  array<double,3> conserved_rightnbor = ComputeConserved(field,loc+1);
+  array<double,3> conserved_right2nbor = ComputeConserved(field,loc+2);
 
-  double res_rho = lambda*epsilon*(field[loc+2][0] - 3.0*field[loc+1][0] + 3.0*field[loc][0] - field[loc-1][0]);
+  double res_continuity = lambda*epsilon*(conserved_right2nbor[0] - 3.0*conserved_rightnbor[0] + 3.0*conserved[0] - conserved_leftnbor[0]);
+  double res_xmom = lambda*epsilon*(conserved_right2nbor[1] - 3.0*conserved_rightnbor[1] + 3.0*conserved[1] - conserved_leftnbor[1]);
+  double res_energy = lambda*epsilon*(conserved_right2nbor[2] - 3.0*conserved_rightnbor[2] + 3.0*conserved[2] - conserved_leftnbor[2]);
+
+  /*double res_rho = lambda*epsilon*(field[loc+2][0] - 3.0*field[loc+1][0] + 3.0*field[loc][0] - field[loc-1][0]);
   double res_vel = lambda*epsilon*(field[loc+2][1] - 3.0*field[loc+1][1] + 3.0*field[loc][1] - field[loc-1][1]);
   double res_pressure = lambda*epsilon*(field[loc+2][2] - 3.0*field[loc+1][2] + 3.0*field[loc][2] - field[loc-1][2]);
-
-  array<double,3> res = {res_rho,res_vel,res_pressure};
+  */
+  array<double,3> res = {res_continuity,res_xmom,res_energy};
 
   return res;
 }
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx){ //TODO
+void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx){ 
 
   //following nomenclature from class notes
   array<double,3> F_right,F_left; //left and right face spatial fluxes 
