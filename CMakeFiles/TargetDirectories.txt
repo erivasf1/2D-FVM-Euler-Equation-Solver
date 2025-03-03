@@ -1,3 +1,4 @@
 /home/erivas/Adv_CFD/HW2/CMakeFiles/nozzle.dir
+/home/erivas/Adv_CFD/HW2/CMakeFiles/testnozzle.dir
 /home/erivas/Adv_CFD/HW2/CMakeFiles/edit_cache.dir
 /home/erivas/Adv_CFD/HW2/CMakeFiles/rebuild_cache.dir

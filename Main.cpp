@@ -68,20 +68,28 @@ int main() {
   vector<array<double,3>> Field(cellnum);
   vector<array<double,3>> ExactField(cellnum);
   vector<array<double,3>> Residual(cellnum);
+  vector<array<double,3>> InitResidual(cellnum);
 
   array<double,3>* field; //pointer to Field solutions
   array<double,3>* exact_sols; //pointer to exact solution field values
   array<double,3>* resid; //pointer to residual field values per cell
+  array<double,3>* init_resid; //pointer to residual field values per cell
+
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
+
   SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
   SpaceVariables1D ResidSols(cellnum,Residual,resid); //for storing residuals for every cell
+  SpaceVariables1D InitResidSols(cellnum,InitResidual,init_resid); //for storing initial residuals for every cell
+
   Tools tool; //used as utilities object
+
   EulerExplicit Time(cellnum); //for computing time steps
 
   // Generating Mesh
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
   double dx = abs(xcoords[0]-xcoords[1]); //delta x distance
+  Tools::print("dx:%f\n",dx);
   Euler1D Euler(cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
 
   // Printing out Temporal Stats
@@ -103,7 +111,7 @@ int main() {
   //!!! Solution format: [rho,velocity,pressure]^T
 
   // SETTING INITIAL CONDITIONS
-  Tools::print("At initial conditions\n");
+  //Tools::print("At initial conditions\n");
   Euler.SetInitialConditions(field,xcoords);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
@@ -137,26 +145,38 @@ int main() {
 
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
-  array<double,3> Norms;
-  Euler.ComputeResidual(resid,field,xcoords,dx);
-  Norms = ResidSols.ComputeSolutionNorms(resid);
+  array<double,3> InitNorms;
+  Euler.ComputeResidual(init_resid,field,xcoords,dx); //computing residuals per cell
+  InitNorms = InitResidSols.ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
-  Tools::print("--Continuity:%e\n",Norms[0]);
-  Tools::print("--X-Momentum:%e\n",Norms[1]);
-  Tools::print("--Energy:%e\n",Norms[2]);
+  Tools::print("--Continuity:%e\n",InitNorms[0]);
+  Tools::print("--X-Momentum:%e\n",InitNorms[1]);
+  Tools::print("--Energy:%e\n",InitNorms[2]);
 
 
   // BEGIN OF MAIN LOOP
-  vector<double> time_steps(cellnum);
-  time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
+  vector<double> time_steps;
+  resid = init_resid; //assining residuals to initial residuals
+
+  /*time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
   Tools::print("Local time step list:\n");
   for(int i=0;i<cellnum;i++)
     Tools::print("cell index:%d &time step: %f\n",i,time_steps[i]);
-  for (int iter=0;iter<iter_max;iter++){
+  */
+  for (int iter=1;iter<iter_max;iter++){
+
+    //debugging only
+    Tools::print("Iteration #: %d\n",iter);
   
     //COMPUTE TIME STEP
-    //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
-    //Compute new sol. values using EulerOperator
+    // if global time step, chosen then create a vector<double> of the smallest time step
+    time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
+
+    //COMPUTE NEW SOL. VALUES 
+    Time.FWDEulerAdvance(field,resid,time_steps,xcoords,dx);
+    Euler.ComputeResidual(resid,field,xcoords,dx); //computing residuals per cell
+    ResidSols.ComputeSolutionNorms(resid);
+
     //Compute new Boundary Conditions
     //Output sol. every "iterout" steps
 
@@ -166,7 +186,6 @@ int main() {
 
   //Output solution
   //Evaluate discretization norms for grid convergence
-
 
   return 0;
 }

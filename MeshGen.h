@@ -9,6 +9,8 @@ class MeshGen1D {
 
   public:
   MeshGen1D(double &a, double &b, int &c);
+
+  static double GetCellVolume(int &loc,double &dx,vector<double> &xcoords);
  
   void GenerateMesh(vector<double> &xcoords);
 

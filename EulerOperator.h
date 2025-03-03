@@ -50,6 +50,7 @@ class Euler1D {
   
   // Supplemental Fcns. (may be used for other fcns. of other classes)
   double GetLambdaMax(array<double,3>* &field,int &loc); //extracts largest eigenvalue for a given cell
+  static double GetCellAverageSol(double &A_left,double &A_right,double &dx,array<double,3> &sol_left,array<double,3>&sol_right); //testing x-velocity for now
 
   ~Euler1D();
 

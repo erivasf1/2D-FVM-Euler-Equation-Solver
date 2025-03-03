@@ -395,7 +395,7 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
 
     //Residual cal.
     
-    //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) TODO: Need to evaluate areas & check damping terms
+    //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) 
     resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
     
     //x-mom. residual (w/ source term)
@@ -420,6 +420,19 @@ double Euler1D::GetLambdaMax(array<double,3>* &field,int &loc){
   double lambda_max = abs(field[loc][1]) + a;
 
   return lambda_max;
+
+}
+
+//-----------------------------------------------------------
+double Euler1D::GetCellAverageSol(double &A_left,double &A_right,double &dx,array<double,3> &sol_left,array<double,3> &sol_right){
+
+  //using weighted geometric cell-average formula
+  double num = 0.5*(A_right + A_left) * (sol_right[1]+sol_left[1]);
+  double vol = 0.5*(A_right + A_left) * dx;
+
+  double sol = num / vol;
+
+  return sol;
 
 }
 
