@@ -14,6 +14,7 @@
 #include "EulerOperator.h"
 #include "DataManager.h"
 #include "Output.h"
+#include "TimeIntegrator.h"
 
 using namespace std;
 
@@ -34,6 +35,13 @@ int main() {
   //Mesh Specifications
   int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+
+
+  //Temporal Specifications
+  const int iter_max = 1000;
+  const int iterout = 5; //number of iterations per solution output
+  const double CFL = 0.8; //CFL number (must <= 1 for Euler Explicit integration)
+  bool timestep{true}; //true = local time stepping; false = global time stepping
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -68,15 +76,20 @@ int main() {
   SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
   SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
   SpaceVariables1D ResidSols(cellnum,Residual,resid); //for storing residuals for every cell
-  Tools tool;
+  Tools tool; //used as utilities object
+  EulerExplicit Time(cellnum); //for computing time steps
 
-
-  Tools::print("Specs and Objects created %f\n");
-  
   // Generating Mesh
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
-  double dx = (xcoords[0]-xcoords[1]); //delta x distance
+  double dx = abs(xcoords[0]-xcoords[1]); //delta x distance
   Euler1D Euler(cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
+
+  // Printing out Temporal Stats
+  Tools::print("-Temporal Statistics:\n");
+  Tools::print("--CFL: %f\n",CFL);
+  Tools::print("Time-stepping method: ");
+  (timestep == true) ? Tools::print("Local time-stepping\n") : Tools::print("Global time-stepping\n");  
+
 
   //debugging:
   /*array<double,3> init{10,50,100};
@@ -97,7 +110,7 @@ int main() {
   array<double,3> sol;
   area_star = tool.AreaVal(0.0); //area at throat
   //Tools::print("Exact Solution Output\n");
-  for (int i=0;i<cellnum;i++) {
+  /*for (int i=0;i<cellnum;i++) {
     area = tool.AreaVal(xcoords[i]);
     cond = (xcoords[i] < 0) ? true:false; 
     SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
@@ -108,7 +121,7 @@ int main() {
     //Tools::print("Point %f\n",xcoords[i]);
     //Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
 
-  }
+  }*/
   //area = tool.AreaVal(xcoord[i]);
 
   // SETTING BOUNDARY CONDITIONS
@@ -131,7 +144,28 @@ int main() {
   Tools::print("--Continuity:%e\n",Norms[0]);
   Tools::print("--X-Momentum:%e\n",Norms[1]);
   Tools::print("--Energy:%e\n",Norms[2]);
+
+
+  // BEGIN OF MAIN LOOP
+  vector<double> time_steps(cellnum);
+  time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
+  Tools::print("Local time step list:\n");
+  for(int i=0;i<cellnum;i++)
+    Tools::print("cell index:%d &time step: %f\n",i,time_steps[i]);
+  for (int iter=0;iter<iter_max;iter++){
   
+    //COMPUTE TIME STEP
+    //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
+    //Compute new sol. values using EulerOperator
+    //Compute new Boundary Conditions
+    //Output sol. every "iterout" steps
+
+    //Cal. residual norms and see if it is within iterative convergence tolerance
+
+  }
+
+  //Output solution
+  //Evaluate discretization norms for grid convergence
 
 
   return 0;

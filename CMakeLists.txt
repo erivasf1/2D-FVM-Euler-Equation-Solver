@@ -25,6 +25,7 @@ set(SOURCES
     Main.cpp
     Output.cpp
     Test.cpp
+    TimeIntegrator.cpp
 )
 
 # Define header files
@@ -35,6 +36,7 @@ set(HEADERS
     MeshGen.h
     Output.h
     Test.h
+    TimeIntegrator.h
 )
 
 # Create the executable

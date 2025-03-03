@@ -14,10 +14,11 @@ class Euler1D {
   const double MolMass = 28.96; // kg/kmol
   double R = Ru / MolMass; //specific gas constant
  
+
+  public:
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions)
 
-  public:
   Euler1D(); //empty constructor for unit testing
 
   Euler1D(int &cellnum,double &P0,double &T0,double &g); //constructor for Main file
@@ -33,7 +34,7 @@ class Euler1D {
   void ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx); //TODO: Computes the residual vector (uses artificial viscosity and dampening
 
   // Spatial Fluxes Fcns. (including source term)
-  array<double,3> ComputeSpatialFlux(array<double,3>* &field,int &loc,int nbor);//TODO
+  array<double,3> ComputeSpatialFlux(array<double,3>* &field,int loc,int nbor);//TODO
   double ComputeSourceTerm(array<double,3>* &field,int &loc,vector<double> &xcoords);//TODO: May have to look into Pi
 
   // Artificial Dissipaton Fcns. (using JST Dampening)
@@ -47,6 +48,8 @@ class Euler1D {
   double GetNu(array<double,3>* &field,int loc); //switching fcn.
   double GetMachNumber(array<double,3>* field,int loc); //used for GetLambda fcn.
   
+  // Supplemental Fcns. (may be used for other fcns. of other classes)
+  double GetLambdaMax(array<double,3>* &field,int &loc); //extracts largest eigenvalue for a given cell
 
   ~Euler1D();
 

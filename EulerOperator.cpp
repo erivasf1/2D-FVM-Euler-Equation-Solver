@@ -20,9 +20,9 @@ void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoor
   // ASSUMPTION: Mach number at left face is equal to the cell averaged Mach number of a given cell (may be fine as an initial condition)
   double M,psi,T,a;
 
-  Tools::print("SetInitialConditions\n");
+  //Tools::print("SetInitialConditions\n");
   for (int i=0;i<interior_cellnum;i++){
-    Tools::print("cell index: %d\n",i);
+   // Tools::print("cell index: %d\n",i);
 
     M = (9.0/10.0)*xcoords[i] + 1.0; //local Mach number
     psi = 1.0+(gamma-1.0)/2.0 * pow(M,2.0);
@@ -30,17 +30,17 @@ void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoor
     //pressure calc.
     field[i][2] = pow(psi,gamma/(gamma-1.0));
     field[i][2] = stag_pressure / field[i][2]; 
-    Tools::print("pressure: %f\n",field[i][2]);
+    //Tools::print("pressure: %f\n",field[i][2]);
     
     //density calc.
     T = stag_temperature / psi; // local temperature
     field[i][0] = field[i][2] / (R*T); 
-    Tools::print("density: %f\n",field[i][0]);
+    //Tools::print("density: %f\n",field[i][0]);
 
     //velocity calc.
     a = sqrt(gamma*R*T); //local speed of sound
     field[i][1] = abs(M*a);
-    Tools::print("velocity: %f\n",field[i][1]);
+    //Tools::print("velocity: %f\n",field[i][1]);
      
   }    
   
@@ -65,7 +65,7 @@ void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,
 
   total_cellnum = Field.size(); //!< saving the new total num. of cells (w/ ghost cells)
   field = Field.data(); //reassign pointer to new Field (w/ ghost cells)
-  Tools::print("total number of cells after set BC:%d\n",total_cellnum);
+  //Tools::print("total number of cells after set BC:%d\n",total_cellnum);
 
   //Calculating Boundary Condition values
   ComputeTotalBoundaryConditions(field,cond);
@@ -116,9 +116,9 @@ void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
     field[i][1] = abs(M0*a);
     
 
-    Tools::print("B.C.\n");
-    Tools::print("Cell index:%d\n",i);
-    Tools::print("Density: %f, Velocity:%f,Pressure:%f\n",field[i][0],field[i][1],field[i][2]);
+    //Tools::print("B.C.\n");
+    //Tools::print("Cell index:%d\n",i);
+    //Tools::print("Density: %f, Velocity:%f,Pressure:%f\n",field[i][0],field[i][1],field[i][2]);
    }
 
   return;
@@ -136,10 +136,13 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
       field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
       field[i][2] = 2.0*field[i-1][2] - field[i-2][2]; //pressure
 
+      //debug:
+      /*
       Tools::print("OutflowB.C.\n");
       Tools::print("Cell index:%d\n",i);
       Tools::print("[LeftNeighbor] Density: %f, Velocity:%f,Pressure:%f\n",field[i-1][0],field[i-1][1],field[i-1][2]);
       Tools::print("Density: %f, Velocity:%f,Pressure:%f\n",field[i][0],field[i][1],field[i][2]);
+      */
     }
 
   }
@@ -164,7 +167,7 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int &loc,int nbor){
+array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int loc,int nbor){
 
   // Conversion into conservative variables(cv)
   //Rho * U conserved variable
@@ -174,16 +177,16 @@ array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int &loc,int
   double cv2 = field[loc][0]*pow(field[loc][1],2) + field[loc][2];
   double cv2_nbor = field[nbor][0]*pow(field[nbor][1],2) + field[nbor][2];
   //Rho*U*h_t conserved variable
-  Tools::print("rho: %f\n",field[loc][0]);
+  //Tools::print("rho: %f\n",field[loc][0]);
   double h_t = gamma/(gamma-1.0) * (field[loc][2]/field[loc][0]) + (pow(field[loc][1],2)/2.0);
-  Tools::print("h_t[i]:%f\n",h_t);
+  //Tools::print("h_t[i]:%f\n",h_t);
   double cv3 = field[loc][0]*field[loc][1]*h_t;
-  Tools::print("cv3[i]:%f\n",cv3);
+  //Tools::print("cv3[i]:%f\n",cv3);
 
   h_t = gamma/(gamma-1.0) * (field[nbor][2]/field[nbor][0]) + (pow(field[nbor][1],2)/2.0);
-  Tools::print("h_t[nbor]:%f\n",h_t);
+  //Tools::print("h_t[nbor]:%f\n",h_t);
   double cv3_nbor = field[nbor][0]*field[nbor][1]*h_t;
-  Tools::print("cv3[nbor]:%f\n",cv3_nbor);
+  //Tools::print("cv3[nbor]:%f\n",cv3_nbor);
 
   // Value at interface interpolated using central quadrature
   double flux_continuity = (cv1+cv1_nbor) / 2.0;
@@ -340,13 +343,15 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
       continue;
 
-    Tools::print("---Cell: %d\n---",i);
+    //Tools::print("---Cell: %d\n---",i);
     //Spatial Flux Term
-    Tools::print("Spatial Flux Energy\n");
+    //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
+    //Tools::print("Spatial Flux Energy\n");
     F_right = ComputeSpatialFlux(field,i,i+1);
-    F_left = ComputeSpatialFlux(field,i,i-1);
-    Tools::print("F_right: %f\n",F_right[2]);
-    Tools::print("F_left: %f\n",F_left[2]);
+    F_left = ComputeSpatialFlux(field,i-1,i);
+    //F_left = ComputeSpatialFlux(field,i,i-1);
+    //Tools::print("F_right: %f\n",F_right[2]);
+    //Tools::print("F_left: %f\n",F_left[2]);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
@@ -356,7 +361,7 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
-    Tools::print("Damping Flux Energy\n");
+    //Tools::print("Damping Flux Energy\n");
     // right face
     D2_right = Compute2ndOrderDamping(field,i);
     D4_right = Compute4thOrderDamping(field,i);
@@ -364,10 +369,10 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     D2_left = Compute2ndOrderDamping(field,i-1);
     D4_left = Compute4thOrderDamping(field,i-1);
 
-    Tools::print("D2_right: %f\n",D2_right[2]);
-    Tools::print("D2_left: %f\n",D2_right[2]);
-    Tools::print("D4_right: %f\n",D4_right[2]);
-    Tools::print("D4_left: %f\n",D4_right[2]);
+    //Tools::print("D2_right: %f\n",D2_right[2]);
+    //Tools::print("D2_left: %f\n",D2_right[2]);
+    //Tools::print("D4_right: %f\n",D4_right[2]);
+    //Tools::print("D4_left: %f\n",D4_right[2]);
 
     //Total Flux Terms
     //continuity
@@ -377,12 +382,12 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     TotalF_right[1] = F_right[1] - (D2_right[1]+D4_right[1]);
     TotalF_left[1] = F_left[1] - (D2_left[1]+D4_left[1]);
     //energy
-    Tools::print("Total Flux Energy\n");
+    //Tools::print("Total Flux Energy\n");
     TotalF_right[2] = F_right[2] - (D2_right[2]+D4_right[2]);
     TotalF_left[2] = F_left[2] - (D2_left[2]+D4_left[2]);
 
-    Tools::print("TotalF_right: %f\n",TotalF_right[2]);
-    Tools::print("TotalF_left: %f\n",TotalF_left[2]);
+    //Tools::print("TotalF_right: %f\n",TotalF_right[2]);
+    //Tools::print("TotalF_left: %f\n",TotalF_left[2]);
 
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[i-2]);
@@ -397,12 +402,24 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     resid[i-2][1] =  (TotalF_right[1]*A_right - TotalF_left[1]*A_left) - S*dx;
 
     //energy residual
-    Tools::print("Energy Residual\n");
+    //Tools::print("Energy Residual\n");
     resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
-    Tools::print("resid: %f\n",resid[i-2][2]);
+    //Tools::print("resid: %f\n",resid[i-2][2]);
 
   }
   return;
+
+}
+
+//-----------------------------------------------------------
+double Euler1D::GetLambdaMax(array<double,3>* &field,int &loc){
+
+  double M = GetMachNumber(field,loc); //cell-averaged Mach number
+  double a = abs(field[loc][1]) * M; //cell-averaged speed of sound
+  //double a = absfield[loc][1] * M; //cell-averaged speed of sound
+  double lambda_max = abs(field[loc][1]) + a;
+
+  return lambda_max;
 
 }
 
