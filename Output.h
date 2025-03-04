@@ -1,4 +1,4 @@
-// Responsible for creating a Mesh (1D for now)
+// Responsible for outputting results in a clean format
 #ifndef _OUTPUT_H_
 #define _OUTPUT_H_
 #include "ExactNozzle.h"

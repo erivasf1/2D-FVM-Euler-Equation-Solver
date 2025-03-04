@@ -27,8 +27,9 @@ array<double,3> SpaceVariables1D::ComputeSolutionNorms(array<double,3>* &field){
   array<double,3> norm{0.0,0.0,0.0};
 
   //using L2 norm  
+  Tools::print("Calculating Global Norm\n");
   for (int i=0;i<cell_number;i++){
-    //Tools::print("Cell number: %d\n",i);
+    Tools::print("Cell number: %d\n",i);
     //continuity
     Tools::print("continuity res.: %e\n",field[i][0]);
     norm[0]+= pow(field[i][0],2);

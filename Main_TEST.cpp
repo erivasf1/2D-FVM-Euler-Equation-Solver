@@ -11,10 +11,10 @@
 
 #include "ExactNozzle.h"
 #include "MeshGen.h"
-#include "EulerOperator.h"
+#include "EulerOperator_TEST.h"
 #include "DataManager.h"
 #include "Output.h"
-#include "TimeIntegrator.h" 
+#include "TimeIntegrator_TEST.h" //comment regular .h file as this is for testing only
 
 using namespace std;
 
@@ -112,7 +112,7 @@ int main() {
 
   // SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  Euler.SetInitialConditions(field,xcoords);
+  Euler.SetInitialConditions(Field,xcoords);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   array<double,3> sol;
@@ -133,7 +133,7 @@ int main() {
   //area = tool.AreaVal(xcoord[i]);
 
   // SETTING BOUNDARY CONDITIONS
-  Euler.SetBoundaryConditions(Field,field,cond);
+  Euler.SetBoundaryConditions(Field,cond);
 
   //debug
   /*
@@ -146,7 +146,7 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  Euler.ComputeResidual(init_resid,field,xcoords,dx); //computing residuals per cell
+  Euler.ComputeResidual(InitResidual,Field,xcoords,dx); //computing residuals per cell
   InitNorms = InitResidSols.ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
@@ -171,13 +171,13 @@ int main() {
   
     //COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
-    time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);//TESTING
+    time_steps = Time.ComputeLocalTimeStep(Field,Euler,CFL,dx);//TESTING
     //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
 
     //COMPUTE NEW SOL. VALUES 
-    Time.FWDEulerAdvance(field,resid,time_steps,xcoords,dx);//TESTING
+    Time.FWDEulerAdvance(Field,Residual,time_steps,xcoords,dx);//TESTING
     //Time.FWDEulerAdvance(field,resid,time_steps,xcoords,dx);
-    Euler.ComputeResidual(resid,field,xcoords,dx); //computing residuals per cell
+    Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
     //debug:
     //resid = Residual.data();
     //Tools::print("(Before)1st resid of continuity:%e\n",resid[0][0]);

@@ -1,5 +1,5 @@
 //User-defined functions
-#include "EulerOperator.h" 
+#include "EulerOperator_TEST.h" 
 
 // EULER1D DEFINITIONS
 
@@ -13,25 +13,25 @@ Euler1D::Euler1D() {}
 
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeConserved(array<double,3>* &field,int loc){
+array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc){
 
   array<double,3> res; //to store conserved variables
 
   //density
-  res[0] = field[loc][0]; 
+  res[0] = Field[loc][0]; 
 
   //x-mom.
-  res[1] = field[loc][0]*field[loc][1]; 
+  res[1] = Field[loc][0]*Field[loc][1]; 
 
   //energy
-  res[2] = 1.0/(gamma-1.0) + (0.5)*field[loc][0]*pow(field[loc][2],2);
+  res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][2],2);
 
   return res;
 
 }
 
 //-----------------------------------------------------------
-void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoords){
+void Euler1D::SetInitialConditions(vector<array<double,3>> &Field,vector<double> &xcoords){
 
   // Mach number is set to vary linearly via M(x) = 9/10(x) + 1
   // And flow quantities are calculated using isentropic conditions
@@ -46,18 +46,18 @@ void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoor
     psi = 1.0+(gamma-1.0)/2.0 * pow(M,2.0);
     
     //pressure calc.
-    field[i][2] = pow(psi,gamma/(gamma-1.0));
-    field[i][2] = stag_pressure / field[i][2]; 
+    Field[i][2] = pow(psi,gamma/(gamma-1.0));
+    Field[i][2] = stag_pressure / Field[i][2]; 
     //Tools::print("pressure: %f\n",field[i][2]);
     
     //density calc.
     T = stag_temperature / psi; // local temperature
-    field[i][0] = field[i][2] / (R*T); 
+    Field[i][0] = Field[i][2] / (R*T); 
     //Tools::print("density: %f\n",field[i][0]);
 
     //velocity calc.
     a = sqrt(gamma*R*T); //local speed of sound
-    field[i][1] = abs(M*a);
+    Field[i][1] = abs(M*a);
     //Tools::print("velocity: %f\n",field[i][1]);
      
   }    
@@ -66,7 +66,7 @@ void Euler1D::SetInitialConditions(array<double,3>* &field,vector<double> &xcoor
 
 }
 //-----------------------------------------------------------
-void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,3>* &field,bool &cond){
+void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,bool &cond){
 
   //Inserting 4 ghost cells for inflow and outflow locations (2 for each)
   //iterator it = Field.begin();
@@ -82,29 +82,28 @@ void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,array<double,
   Field.push_back(empty); 
 
   total_cellnum = Field.size(); //!< saving the new total num. of cells (w/ ghost cells)
-  field = Field.data(); //reassign pointer to new Field (w/ ghost cells)
   //Tools::print("total number of cells after set BC:%d\n",total_cellnum);
 
   //Calculating Boundary Condition values
-  ComputeTotalBoundaryConditions(field,cond);
+  ComputeTotalBoundaryConditions(Field,cond);
 
   return;
   
 }
 
 //-----------------------------------------------------------
-void Euler1D::ComputeTotalBoundaryConditions(array<double,3>* &field,bool &cond){
+void Euler1D::ComputeTotalBoundaryConditions(vector<array<double,3>> &Field,bool &cond){
 
   //Combines setting the inflow and outflow boundary conditions
-  ComputeInflowBoundaryConditions(field);
+  ComputeInflowBoundaryConditions(Field);
 
-  ComputeOutflowBoundaryConditions(field,cond);
+  ComputeOutflowBoundaryConditions(Field,cond);
 
 
   return;
 }
 //-----------------------------------------------------------
-void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
+void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 
   // Domain:
   // [G1,G2,I1,...,Imax,G3,G4] --> READ THIS!!!
@@ -116,22 +115,22 @@ void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
   for (int i=1;i>-1;i--){ //reverse for loop for ease of indexing!
     // i=0 (G1) & i=1 (G2)
     //acquiring Mach number from neighboring nodes
-    M1 = GetMachNumber(field,i+1);
-    M2 = GetMachNumber(field,i+2);
+    M1 = GetMachNumber(Field,i+1);
+    M2 = GetMachNumber(Field,i+2);
     M0 = 2.0*M1 - M2;
     psi = 1.0+(gamma-1.0)/2.0 * pow(M0,2.0);
 
     //pressure calc.
-    field[i][2] = pow(psi,gamma/(gamma-1.0));
-    field[i][2] = stag_pressure / field[i][2]; 
+    Field[i][2] = pow(psi,gamma/(gamma-1.0));
+    Field[i][2] = stag_pressure / Field[i][2]; 
     
     //density calc.
     T = stag_temperature / psi; // local temperature
-    field[i][0] = field[i][2] / (R*T); 
+    Field[i][0] = Field[i][2] / (R*T); 
 
     //velocity calc.
     a = sqrt(gamma*R*T); //local speed of sound
-    field[i][1] = abs(M0*a);
+    Field[i][1] = abs(M0*a);
     
 
     //Tools::print("B.C.\n");
@@ -143,16 +142,16 @@ void Euler1D::ComputeInflowBoundaryConditions(array<double,3>* &field){
 }
 
 //-----------------------------------------------------------
-void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& cond){
+void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool& cond){
 
   //TODO: Figure out why [i-1] node is not retrieving the node of interior node
 
   if (cond == false){ //supersonic case 
     //using simple extrapolation from class notes section 3 slide 36
     for (int i=total_cellnum-2;i<total_cellnum;i++){ //for both outflow ghost cells
-      field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
-      field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
-      field[i][2] = 2.0*field[i-1][2] - field[i-2][2]; //pressure
+      Field[i][0] = 2.0*Field[i-1][0] - Field[i-2][0]; //density
+      Field[i][1] = 2.0*Field[i-1][1] - Field[i-2][1]; //velocity
+      Field[i][2] = 2.0*Field[i-1][2] - Field[i-2][2]; //pressure
 
       //debug:
       /*
@@ -169,12 +168,12 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
     //fixing back pressure at boundary, not at ghost cell
     int G3 = total_cellnum-2; //index for 1st outflow ghost cell
     double Pb = 120.0; //kPa
-    field[G3][2] = 2.0*Pb - field[G3-1][2]; //pressure at G3
-    field[G3+1][2] = 2.0*field[G3][2] - field[G3-2][2]; //extrapolated pressure for G4
+    Field[G3][2] = 2.0*Pb - Field[G3-1][2]; //pressure at G3
+    Field[G3+1][2] = 2.0*Field[G3][2] - Field[G3-2][2]; //extrapolated pressure for G4
 
     for (int i=total_cellnum-2;i<total_cellnum;i++){ //reg. extrapolation
-      field[i][0] = 2.0*field[i-1][0] - field[i-2][0]; //density
-      field[i][1] = 2.0*field[i-1][1] - field[i-2][1]; //velocity
+      Field[i][0] = 2.0*Field[i-1][0] - Field[i-2][0]; //density
+      Field[i][1] = 2.0*Field[i-1][1] - Field[i-2][1]; //velocity
     }
 
 
@@ -185,25 +184,25 @@ void Euler1D::ComputeOutflowBoundaryConditions(array<double,3>* &field,bool& con
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int loc,int nbor){
+array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor){
 
   // Conversion into conservative variables(cv)
   //Rho * U conserved variable
-  double cv1 = field[loc][0]*field[loc][1]; 
-  double cv1_nbor = field[nbor][0]*field[nbor][1]; 
+  double cv1 = Field[loc][0]*Field[loc][1]; 
+  double cv1_nbor = Field[nbor][0]*Field[nbor][1]; 
   //Rho * U^2 + P conserved variable
-  double cv2 = field[loc][0]*pow(field[loc][1],2) + field[loc][2];
-  double cv2_nbor = field[nbor][0]*pow(field[nbor][1],2) + field[nbor][2];
+  double cv2 = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2];
+  double cv2_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2];
   //Rho*U*h_t conserved variable
-  //Tools::print("rho: %f\n",field[loc][0]);
-  double h_t = gamma/(gamma-1.0) * (field[loc][2]/field[loc][0]) + (pow(field[loc][1],2)/2.0);
+  //Tools::print("rho: %f\n",Field[loc][0]);
+  double h_t = gamma/(gamma-1.0) * (Field[loc][2]/Field[loc][0]) + (pow(Field[loc][1],2)/2.0);
   //Tools::print("h_t[i]:%f\n",h_t);
-  double cv3 = field[loc][0]*field[loc][1]*h_t;
+  double cv3 = Field[loc][0]*Field[loc][1]*h_t;
   //Tools::print("cv3[i]:%f\n",cv3);
 
-  h_t = gamma/(gamma-1.0) * (field[nbor][2]/field[nbor][0]) + (pow(field[nbor][1],2)/2.0);
+  h_t = gamma/(gamma-1.0) * (Field[nbor][2]/Field[nbor][0]) + (pow(Field[nbor][1],2)/2.0);
   //Tools::print("h_t[nbor]:%f\n",h_t);
-  double cv3_nbor = field[nbor][0]*field[nbor][1]*h_t;
+  double cv3_nbor = Field[nbor][0]*Field[nbor][1]*h_t;
   //Tools::print("cv3[nbor]:%f\n",cv3_nbor);
 
   // Value at interface interpolated using central quadrature
@@ -217,13 +216,13 @@ array<double,3> Euler1D::ComputeSpatialFlux(array<double,3>* &field,int loc,int 
 }
 
 //-----------------------------------------------------------
-double Euler1D::ComputeSourceTerm(array<double,3>* &field,int &loc,vector<double> &xcoords) {
+double Euler1D::ComputeSourceTerm(vector<array<double,3>> &Field,int &loc,vector<double> &xcoords) {
 
   //Get area for i+1/2 and i-1/2 locations (refer to read me for data indexing)
   double A_rface = Tools::AreaVal(xcoords[loc-1]);
   double A_lface = Tools::AreaVal(xcoords[loc-2]);
   // pressure at i = loc
-  double p = field[loc][2];
+  double p = Field[loc][2];
   // source = P_i * (A_i+1/2 - A_i-1/2) / dx * dx
   double res = p * (A_rface - A_lface);
 
@@ -232,12 +231,12 @@ double Euler1D::ComputeSourceTerm(array<double,3>* &field,int &loc,vector<double
 }
 
 //-----------------------------------------------------------
-double Euler1D::GetEpsilon2(array<double,3>* &field,int &loc) {
+double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int &loc) {
 
-  double Nu = GetNu(field,loc);
-  double Nuleft = GetNu(field,loc-1);
-  double Nuright = GetNu(field,loc+1);
-  double Nuright2 = GetNu(field,loc+2);
+  double Nu = GetNu(Field,loc);
+  double Nuleft = GetNu(Field,loc-1);
+  double Nuright = GetNu(Field,loc+1);
+  double Nuright2 = GetNu(Field,loc+2);
 
   double kappa2 = 0.35; //typically from 1/4<kappa2<1/2
   
@@ -249,11 +248,11 @@ double Euler1D::GetEpsilon2(array<double,3>* &field,int &loc) {
 
 
 //-----------------------------------------------------------
-double Euler1D::GetNu(array<double,3>* &field,int loc){
+double Euler1D::GetNu(vector<array<double,3>> &Field,int loc){
 
   //Now changed to look at neighbors, originally everything was "loc"
-  double res = field[loc+1][2] - (2.0*field[loc][2]) +  field[loc-1][2];
-  res /= field[loc+1][2] + (2.0*field[loc][2]) +  field[loc-1][2];
+  double res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc-1][2];
+  res /= Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc-1][2];
   res = abs(res);
 
   return res;
@@ -262,10 +261,10 @@ double Euler1D::GetNu(array<double,3>* &field,int loc){
 
 
 //-----------------------------------------------------------
-double Euler1D::GetMachNumber(array<double,3>* field,int loc){
+double Euler1D::GetMachNumber(vector<array<double,3>> &Field,int loc){
 
   // Using isentropic conditions
-  double psi = (stag_pressure/field[loc][2]);
+  double psi = (stag_pressure/Field[loc][2]);
   psi = pow(psi,(gamma-1.0)/gamma);
   
   double M = (2.0*(psi-1.0)) / (gamma-1.0);
@@ -277,7 +276,7 @@ double Euler1D::GetMachNumber(array<double,3>* field,int loc){
 
 
 //-----------------------------------------------------------
-double Euler1D::GetLambda(array<double,3>* &field,int &loc){
+double Euler1D::GetLambda(vector<array<double,3>> &Field,int &loc){
 
   double M,a; //cell-averaged Mach number and speed of sound, respectively
   //\bar{lambda_i} at current cell
@@ -285,16 +284,16 @@ double Euler1D::GetLambda(array<double,3>* &field,int &loc){
   // T
   Tools::print("In GetLambda fcn.\n");
   Tools::print("Location:%d\n",loc);
-  M = GetMachNumber(field,loc); 
-  a = field[loc][1] * M;
+  M = GetMachNumber(Field,loc); 
+  a = Field[loc][1] * M;
   Tools::print("Mach Number:%f\n",M);
   Tools::print("Speed of Sound:%f\n",a);
-  double lambda_i = abs(field[loc][1]) + a;
+  double lambda_i = abs(Field[loc][1]) + a;
 
   //\bar{lambda_i+1} at neighboring cell to the right
-  M = GetMachNumber(field,loc+1); //cell-averaged Mach Number
-  a = field[loc+1][1] * M;
-  double lambda_iright = abs(field[loc+1][1]) + a;
+  M = GetMachNumber(Field,loc+1); //cell-averaged Mach Number
+  a = Field[loc+1][1] * M;
+  double lambda_iright = abs(Field[loc+1][1]) + a;
 
   double res = (lambda_i + lambda_iright) / 2.0;
   return res;
@@ -303,18 +302,18 @@ double Euler1D::GetLambda(array<double,3>* &field,int &loc){
 
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc){
+array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,int loc){
 
   //following Roy's class notes nomenclature (section 3 slide 31)
   //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
   //TODO: Compute conservative variables HERE ONLY!
   Tools::print("In 2nd order damping fcn.\n");
-  array<double,3> conserved = ComputeConserved(field,loc);
-  array<double,3> conserved_nbor = ComputeConserved(field,loc+1);
+  array<double,3> conserved = ComputeConserved(Field,loc);
+  array<double,3> conserved_nbor = ComputeConserved(Field,loc+1);
   
-  double lambda = GetLambda(field,loc); //at cell face (i+1/2)
-  double epsilon = GetEpsilon2(field,loc); //sensor for detecting shocks (will have to tweak the constant later)
+  double lambda = GetLambda(Field,loc); //at cell face (i+1/2)
+  double epsilon = GetEpsilon2(Field,loc); //sensor for detecting shocks (will have to tweak the constant later)
 
   Tools::print("Lambda: %f & Epsilon: %f\n",lambda,epsilon);
   double res_continuity = lambda*epsilon*(conserved_nbor[0]-conserved[0]);
@@ -334,9 +333,9 @@ array<double,3> Euler1D::Compute2ndOrderDamping(array<double,3>* &field,int loc)
 
 
 //-----------------------------------------------------------
-double Euler1D::GetEpsilon4(array<double,3>* &field,int &loc){
+double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int &loc){
 
-  double epsilon2 = GetEpsilon2(field,loc);
+  double epsilon2 = GetEpsilon2(Field,loc);
   double kappa4 = 1.0/50.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
@@ -346,21 +345,21 @@ double Euler1D::GetEpsilon4(array<double,3>* &field,int &loc){
 
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc){
+array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>> &Field,int loc){
 
-  double lambda = GetLambda(field,loc);
-  double epsilon = GetEpsilon4(field,loc); //looks for gradients that cause odd-even decoupling (will have to tweak the constant later)
+  double lambda = GetLambda(Field,loc);
+  double epsilon = GetEpsilon4(Field,loc); //looks for gradients that cause odd-even decoupling (will have to tweak the constant later)
   //TODO: Convert to conservative variables HERE ONLY!
-  array<double,3> conserved = ComputeConserved(field,loc);
-  array<double,3> conserved_leftnbor = ComputeConserved(field,loc-1);
-  array<double,3> conserved_rightnbor = ComputeConserved(field,loc+1);
-  array<double,3> conserved_right2nbor = ComputeConserved(field,loc+2);
+  array<double,3> conserved = ComputeConserved(Field,loc);
+  array<double,3> conserved_leftnbor = ComputeConserved(Field,loc-1);
+  array<double,3> conserved_rightnbor = ComputeConserved(Field,loc+1);
+  array<double,3> conserved_right2nbor = ComputeConserved(Field,loc+2);
 
   double res_continuity = lambda*epsilon*(conserved_right2nbor[0] - 3.0*conserved_rightnbor[0] + 3.0*conserved[0] - conserved_leftnbor[0]);
   double res_xmom = lambda*epsilon*(conserved_right2nbor[1] - 3.0*conserved_rightnbor[1] + 3.0*conserved[1] - conserved_leftnbor[1]);
   double res_energy = lambda*epsilon*(conserved_right2nbor[2] - 3.0*conserved_rightnbor[2] + 3.0*conserved[2] - conserved_leftnbor[2]);
 
-  /*double res_rho = lambda*epsilon*(field[loc+2][0] - 3.0*field[loc+1][0] + 3.0*field[loc][0] - field[loc-1][0]);
+  /*double res_rho = lambda*epsilon*(Field[loc+2][0] - 3.0*Field[loc+1][0] + 3.0*Field[loc][0] - Field[loc-1][0]);
   double res_vel = lambda*epsilon*(field[loc+2][1] - 3.0*field[loc+1][1] + 3.0*field[loc][1] - field[loc-1][1]);
   double res_pressure = lambda*epsilon*(field[loc+2][2] - 3.0*field[loc+1][2] + 3.0*field[loc][2] - field[loc-1][2]);
   */
@@ -371,7 +370,7 @@ array<double,3> Euler1D::Compute4thOrderDamping(array<double,3>* &field,int loc)
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,vector<double> &xcoords,double &dx){ 
+void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx){ 
 
   //following nomenclature from class notes
   array<double,3> F_right,F_left; //left and right face spatial fluxes 
@@ -390,27 +389,27 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
     Tools::print("Spatial Flux Energy\n");
-    F_right = ComputeSpatialFlux(field,i,i+1);
-    F_left = ComputeSpatialFlux(field,i-1,i);
-    //F_left = ComputeSpatialFlux(field,i,i-1);
+    F_right = ComputeSpatialFlux(Field,i,i+1);
+    F_left = ComputeSpatialFlux(Field,i-1,i);
+    //F_left = ComputeSpatialFlux(Field,i,i-1);
     Tools::print("F_right: %f\n",F_right[2]);
     Tools::print("F_left: %f\n",F_left[2]);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
     Tools::print("Source Term\n");
-    S = ComputeSourceTerm(field,i,xcoords);
+    S = ComputeSourceTerm(Field,i,xcoords);
     Tools::print("S: %f\n",S);
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
     Tools::print("Damping Flux Energy\n");
     // right face
-    D2_right = Compute2ndOrderDamping(field,i);
-    D4_right = Compute4thOrderDamping(field,i);
+    D2_right = Compute2ndOrderDamping(Field,i);
+    D4_right = Compute4thOrderDamping(Field,i);
     // left face
-    D2_left = Compute2ndOrderDamping(field,i-1);
-    D4_left = Compute4thOrderDamping(field,i-1);
+    D2_left = Compute2ndOrderDamping(Field,i-1);
+    D4_left = Compute4thOrderDamping(Field,i-1);
 
     Tools::print("D2_right: %f\n",D2_right[2]);
     Tools::print("D2_left: %f\n",D2_right[2]);
@@ -443,22 +442,22 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
     Tools::print("Continuity Residual\n");
     Tools::print("TotalF_right:%f\n",TotalF_right[0]);
     Tools::print("TotalF_left:%f\n",TotalF_left[0]);
-    resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
-    Tools::print("resid: %f\n",resid[i-2][0]);
+    Resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
+    Tools::print("Resid: %f\n",Resid[i-2][0]);
     
-    //x-mom. residual (w/ source term)
+    //x-mom. Residual (w/ source term)
     Tools::print("X-Mom. Residual\n");
     Tools::print("TotalF_right:%f\n",TotalF_right[1]);
     Tools::print("TotalF_left:%f\n",TotalF_left[1]);
-    resid[i-2][1] =  (TotalF_right[1]*A_right - TotalF_left[1]*A_left) - S*dx;
-    Tools::print("resid: %f\n",resid[i-2][1]);
+    Resid[i-2][1] =  (TotalF_right[1]*A_right - TotalF_left[1]*A_left) - S*dx;
+    Tools::print("Resid: %f\n",Resid[i-2][1]);
 
-    //energy residual
+    //energy Residual
     Tools::print("Energy Residual\n");
     Tools::print("TotalF_right:%f\n",TotalF_right[2]);
     Tools::print("TotalF_left:%f\n",TotalF_left[2]);
-    resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
-    Tools::print("resid: %f\n",resid[i-2][2]);
+    Resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
+    Tools::print("Resid: %f\n",Resid[i-2][2]);
     Tools::print("---------------\n");
 
   }
@@ -467,12 +466,12 @@ void Euler1D::ComputeResidual(array<double,3>* &resid,array<double,3>* &field,ve
 }
 
 //-----------------------------------------------------------
-double Euler1D::GetLambdaMax(array<double,3>* &field,int &loc){
+double Euler1D::GetLambdaMax(vector<array<double,3>> &Field,int &loc){
 
-  double M = GetMachNumber(field,loc); //cell-averaged Mach number
-  double a = abs(field[loc][1]) * M; //cell-averaged speed of sound
+  double M = GetMachNumber(Field,loc); //cell-averaged Mach number
+  double a = abs(Field[loc][1]) * M; //cell-averaged speed of sound
   //double a = absfield[loc][1] * M; //cell-averaged speed of sound
-  double lambda_max = abs(field[loc][1]) + a;
+  double lambda_max = abs(Field[loc][1]) + a;
 
   return lambda_max;
 
