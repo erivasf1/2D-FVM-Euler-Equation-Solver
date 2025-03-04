@@ -19,7 +19,7 @@ vector<double> EulerExplicit::ComputeLocalTimeStep(vector<array<double,3>> &Fiel
     if (i==0 | i==1 | i==Euler.total_cellnum-2 | i==Euler.total_cellnum-1) //skiping the ghost cells
       continue;
 
-    //lambda_max = Euler.GetLambdaMax(field,i); //obtaining largest eigenvalue per cell
+    lambda_max = Euler.GetLambdaMax(Field,i); //obtaining largest eigenvalue per cell
     time_steps[i-2] = CFL * (dx/lambda_max);
     //Tools::print("CFL:%f,dx: %f,lambda_max:%f\n",CFL,dx,lambda_max);
      
@@ -38,34 +38,43 @@ double EulerExplicit::ComputeGlobalTimeStep(const double &CFL,double &dx,double 
 
 }
 //-----------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,vector<double> &time_steps,vector<double> &xcoords,double &dx){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,Euler1D &Euler,vector<double> &time_steps,vector<double> &xcoords,double &dx){
 
   double vol;
-  //use indexing of interior cells!
-  //Need to convert to Conservative variables
+  array<double,3> conserve;
+  //use indexing of interior cells for Resid!
+  // Field still has ghost cells
+  //First, convert to conservative to compute conservative values at new time step
+  //Second, extract primitive variables from newly calculated conservative variables
   for (int i=0;i<cellnumber;i++){ //i+2 to skip inflow ghost cells
     
     vol = MeshGen1D::GetCellVolume(i,dx,xcoords); //acquiring cell vol
     Tools::print("Volume of cell %d:%f\n",i,vol);
-    //new density
+    conserve = Euler.ComputeConserved(Field,i); //!< computing conservative values
+
+    //new continuity
     Tools::print("previous density :%f\n",Field[i+2][0]);
-    Field[i+2][0] -= (time_steps[i] / vol) * Resid[i][0];
+    conserve[0] -= (time_steps[i] / vol) * Resid[i][0];
     Tools::print("time step :%f\n",time_steps[i]);
     Tools::print("continuity Resid :%f\n",Resid[i][0]);
-    Tools::print("new density :%f\n",Field[i+2][0]);
+    //Tools::print("new density :%f\n",Field[i+2][0]);
 
     //new velocity
     Tools::print("previous velocity :%f\n",Field[i+2][1]);
-    Field[i+2][1] -= (time_steps[i] / vol) * Resid[i][1];
+    conserve[1] -= (time_steps[i] / vol) * Resid[i][1];
     Tools::print("X-mom. Resid :%f\n",Resid[i][1]);
-    Tools::print("new velocity :%f\n",Field[i+2][1]);
 
     //new pressure
     Tools::print("previous pressure :%f\n",Field[i+2][2]);
-    Field[i+2][2] -= (time_steps[i] / vol) * Resid[i][2];
+    conserve[2] -= (time_steps[i] / vol) * Resid[i][2];
     Tools::print("Energy Resid :%f\n",Resid[i][2]);
+
+    Euler.ComputePrimitive(Field,conserve,i); //!< extracting new primitive variables
+    Tools::print("new density :%f\n",Field[i+2][0]);
+    Tools::print("new velocity :%f\n",Field[i+2][1]);
     Tools::print("new pressure :%f\n",Field[i+2][2]);
     Tools::print("------\n");
+    
 
   }
 

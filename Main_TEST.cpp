@@ -33,7 +33,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 6; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
@@ -171,12 +171,11 @@ int main() {
   
     //COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
-    time_steps = Time.ComputeLocalTimeStep(Field,Euler,CFL,dx);//TESTING
-    //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
+    time_steps = Time.ComputeLocalTimeStep(Field,Euler,CFL,dx);
 
     //COMPUTE NEW SOL. VALUES 
-    Time.FWDEulerAdvance(Field,Residual,time_steps,xcoords,dx);//TESTING
-    //Time.FWDEulerAdvance(field,resid,time_steps,xcoords,dx);
+    Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);
+
     Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
     //debug:
     //resid = Residual.data();

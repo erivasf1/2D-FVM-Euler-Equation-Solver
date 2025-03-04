@@ -38,7 +38,7 @@ int main() {
 
 
   //Temporal Specifications
-  const int iter_max = 10;
+  const int iter_max = 2;
   const int iterout = 5; //number of iterations per solution output
   const double CFL = 0.8; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping

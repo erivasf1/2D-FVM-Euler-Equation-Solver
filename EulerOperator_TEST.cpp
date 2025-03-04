@@ -17,7 +17,7 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
 
   array<double,3> res; //to store conserved variables
 
-  //density
+  //continuity
   res[0] = Field[loc][0]; 
 
   //x-mom.
@@ -28,6 +28,22 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
 
   return res;
 
+}
+
+//-----------------------------------------------------------
+void Euler1D::ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &Conserved,int loc) {
+
+  //Computing Primitive variables given the conserved variables
+  //density
+  Field[loc][0] = Conserved[0];
+
+  //x-velocity
+  Field[loc][1] = Conserved[1] / Conserved[0];
+
+  //pressure
+  Field[loc][2] = (gamma-1.0) * (Conserved[2]-0.5*(pow(Conserved[1],2)/Conserved[0]));
+
+  return;
 }
 
 //-----------------------------------------------------------
@@ -282,12 +298,12 @@ double Euler1D::GetLambda(vector<array<double,3>> &Field,int &loc){
   //\bar{lambda_i} at current cell
   //double a = sqrt(gamma*R*T); //TODO:speed of sound (define a fcn. for this)
   // T
-  Tools::print("In GetLambda fcn.\n");
-  Tools::print("Location:%d\n",loc);
+  //Tools::print("In GetLambda fcn.\n");
+  //Tools::print("Location: %d\n",loc);
   M = GetMachNumber(Field,loc); 
   a = Field[loc][1] * M;
-  Tools::print("Mach Number:%f\n",M);
-  Tools::print("Speed of Sound:%f\n",a);
+  //Tools::print("Mach Number:%f\n",M);
+  //Tools::print("Speed of Sound:%f\n",a);
   double lambda_i = abs(Field[loc][1]) + a;
 
   //\bar{lambda_i+1} at neighboring cell to the right
@@ -308,14 +324,14 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
   //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
   //TODO: Compute conservative variables HERE ONLY!
-  Tools::print("In 2nd order damping fcn.\n");
+  //Tools::print("In 2nd order damping fcn.\n");
   array<double,3> conserved = ComputeConserved(Field,loc);
   array<double,3> conserved_nbor = ComputeConserved(Field,loc+1);
   
   double lambda = GetLambda(Field,loc); //at cell face (i+1/2)
   double epsilon = GetEpsilon2(Field,loc); //sensor for detecting shocks (will have to tweak the constant later)
 
-  Tools::print("Lambda: %f & Epsilon: %f\n",lambda,epsilon);
+  //Tools::print("Lambda: %f & Epsilon: %f\n",lambda,epsilon);
   double res_continuity = lambda*epsilon*(conserved_nbor[0]-conserved[0]);
   double res_xmom = lambda*epsilon*(conserved_nbor[1]-conserved[1]);
   double res_energy = lambda*epsilon*(conserved_nbor[2]-conserved[2]);
@@ -385,7 +401,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
       continue;
 
 
-    Tools::print("---Cell: %d\n---",i);
+    Tools::print("---Cell: %d---\n",i);
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
     Tools::print("Spatial Flux Energy\n");

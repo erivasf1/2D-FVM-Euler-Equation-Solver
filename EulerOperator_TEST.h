@@ -23,8 +23,9 @@ class Euler1D {
 
   Euler1D(int &cellnum,double &P0,double &T0,double &g); //constructor for Main file
 
-  // Calculating Conserved variables
+  // Primitive & Conserved variables fcns.
   array<double,3> ComputeConserved(vector<array<double,3>> &Field,int loc);
+  void ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &Conserved,int loc);
 
   // Boundary + Initial Conditions Fcns.
   void SetInitialConditions(vector<array<double,3>> &Field,vector<double> &xcoords); //Complete (tested)
