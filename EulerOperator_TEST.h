@@ -32,7 +32,7 @@ class Euler1D {
   void SetBoundaryConditions(vector<array<double,3>> &Field,bool &cond); //ADDS ghost cells nodes and computes their values
   void ComputeTotalBoundaryConditions(vector<array<double,3>> &Field,bool &cond); //only computes their values
   void ComputeInflowBoundaryConditions(vector<array<double,3>> &Field); //only computes their values
-  void ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool& cond); //only computes their values
+  void ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool cond); //only computes their values
 
   // Residual
   void ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx); //TODO: Computes the residual vector (uses artificial viscosity and dampening

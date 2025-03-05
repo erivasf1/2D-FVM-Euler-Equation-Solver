@@ -139,6 +139,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
     M2 = GetMachNumber(Field,i+2);
     M0 = 2.0*M1 - M2;
     psi = 1.0+ (gamma-1.0)*0.5 * pow(M0,2.0);
+    Tools::print("at %d:M1=%f & M2=%f\n",i,M1,M2);
 
     //using isentropic conditions for thermodynamic variables
     //pressure calc.
@@ -163,15 +164,16 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 }
 
 //-----------------------------------------------------------
-void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool& cond){
+void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool cond){
 
-  //TODO: Figure out why [i-1] node is not retrieving the node of interior node
   //TODO: TEST THIS!!!
   // From Class Notes Slide 36, Section 3
 
   if (cond == false){ //supersonic case 
     //using simple extrapolation from class notes section 3 slide 36
     int c = (int)Field.size() - 2; //index of the 1st outflow cell
+    //int c = interior_cellnum; //index of the 1st outflow cell
+    //Tools::print("Field.size()=%d\n",(int)Field.size());
     //NOTE: index i is use to advance index c to the next outflow cell
     for (int i=0;i<2;i++){ //for both outflow ghost cells
       Field[(i+c)][0] = 2.0*Field[(i+c)-1][0] - Field[(i+c)-2][0]; //density
@@ -212,7 +214,7 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bo
 array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor){
 
   // Conversion into conservative variables(cv)
-  //Rho * U conserved variable
+  /*//Rho * U conserved variable
   double cv1 = Field[loc][0]*Field[loc][1]; 
   double cv1_nbor = Field[nbor][0]*Field[nbor][1]; 
   //Rho * U^2 + P conserved variable
@@ -229,13 +231,24 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int l
   //Tools::print("h_t[nbor]:%f\n",h_t);
   double cv3_nbor = Field[nbor][0]*Field[nbor][1]*h_t;
   //Tools::print("cv3[nbor]:%f\n",cv3_nbor);
+  */
+
+  //Now using Compute Conserved variable functions
+  array<double,3> U; //conserved variable vector
+  array<double,3> U_nbor; //conserved variable vector
+  U = ComputeConserved(Field,loc);
+  U_nbor = ComputeConserved(Field,nbor);
+  array<double,3> flux;
 
   // Value at interface interpolated using central quadrature
-  double flux_continuity = (cv1+cv1_nbor) / 2.0;
+  /*double flux_continuity = (cv1+cv1_nbor) / 2.0;
   double flux_xmom = (cv2+cv2_nbor) / 2.0;
   double flux_energy = (cv3+cv3_nbor) / 2.0;
+  */
+  for (int n=0;n<3;n++)
+    flux[n] = (U[n]+U_nbor[n]) / 2.0; //central quadrature
 
-  array<double,3> flux = {flux_continuity,flux_xmom,flux_energy};
+  //array<double,3> flux = {flux_continuity,flux_xmom,flux_energy};
   return flux; 
 
 }
@@ -305,7 +318,7 @@ double Euler1D::GetMachNumber(vector<array<double,3>> &Field,int loc){
   //Using insentropic conditions only for thermodynamic variables
   double T = Field[loc][2] / (Field[loc][0]*R);
 
-  double M = Field[loc][1] / sqrt(gamma * R * T); //M = u/a
+  double M = abs(Field[loc][1]) / sqrt(gamma * R * T); //M = u/a
 
   /*if (M<0) { //uncomment for now
 

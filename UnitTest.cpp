@@ -68,6 +68,8 @@ TEST_CASE(" EulerOperator " ){
   double P0 = 300.0;
   double T0 = 600.0;
   double gamma = 1.4; //specific heat ratio
+  bool cond{false}; //flow condition (false = supersonic & true = subsonic)
+
   Euler1D Euler(cellnum,P0,T0,gamma);
   array<double,3> empty{0.0,0.0,0.0};
   vector<array<double,3>> Field(cellnum,empty); //initilizing Field vecor
@@ -148,18 +150,129 @@ TEST_CASE(" EulerOperator " ){
 
 
 
-  SECTION( "Computing Inflow Boundary Conditions" ){
+  SECTION( "Computing Inflow Boundary Conditions" ){ //Verified
+    //Note: Look into solely extrapolating the primitive variables instead of the Mach Number
     
-  //extrapolating ghost cell closest to interior cells
+    //Checking if Field now includes ghost cells
+    REQUIRE(Field.size() == cellnum+4);
 
+    //Extrapolated Mach Number for Ghost Cells
+    double M1,M2;
+    M1 = Euler.GetMachNumber(Field,2);
+    M2 = Euler.GetMachNumber(Field,3);
+    CAPTURE(M1,M2);
+    double MG1 = 2.0*M1 - M2;//closest cell from interior; index:1
+
+    M1 = abs(MG1);
+    M2 = Euler.GetMachNumber(Field,2);
+    CAPTURE(M1,M2);
+    double MG2 = 2.0*M1 - M2; //furthest cell from interior; index:0
+  
+    //Tools::print("MG1:%f & MG2:%f\n",MG1,MG2);
+
+    double expected_density,expected_velocity,expected_pressure;
+    double psi;
+    double T,a;
+    //Extrapolating ghost cell closest to interior cells
+    psi = 1.0+ (gamma-1.0)*0.5 * pow(MG1,2.0);
+    CAPTURE(psi); //used for printing out values if Test fails
+
+    //Pressure calc.
+    expected_pressure = pow(psi,gamma/(gamma-1.0));
+    expected_pressure = P0 / expected_pressure; 
+
+    //Density calc.
+    T = T0 / psi; // local temperature
+    expected_density = expected_pressure / (Euler.R*T);
+
+    //Velocity calc.
+    a = sqrt(gamma*Euler.R*T);
+    expected_velocity = abs(MG1 * a);
+
+    Euler.ComputeInflowBoundaryConditions(Field);
+
+    REQUIRE(expected_density == Approx(Field[1][0]));
+    REQUIRE(expected_velocity == Approx(Field[1][1]));
+    REQUIRE(expected_pressure == Approx(Field[1][2]));
+
+    //Extrapolating ghost cell furthest to interior cells
+    psi = 1.0+ (gamma-1.0)*0.5 * pow(MG2,2.0);
+
+    //Pressure calc.
+    expected_pressure = pow(psi,gamma/(gamma-1.0));
+    expected_pressure = P0 / expected_pressure; 
+
+    //Density calc.
+    T = T0 / psi; // local temperature
+    expected_density = expected_pressure / (Euler.R*T);
+
+    //Velocity calc.
+    a = sqrt(gamma*Euler.R*T);
+    expected_velocity = abs(MG2 * a);
+
+    CAPTURE(Field[0][1],expected_velocity); //used for printing out values if Test fails
+    CAPTURE(MG1,MG2); //used for printing out values if Test fails
+    CAPTURE(psi); //used for printing out values if Test fails
+
+    REQUIRE(expected_density == Approx(Field[0][0]));
+    REQUIRE(expected_velocity == Approx(Field[0][1]));
+    REQUIRE(expected_pressure == Approx(Field[0][2]));
 
   }
 
 
-  SECTION( "Computing Outflow Boundary Conditions" ){
+  SECTION( "Computing Outflow Boundary Conditions" ){ //Verified only for supersonic outflow
 
+    //Checking if Field now includes ghost cells
+    REQUIRE(Field.size() == cellnum+4);
+
+    //Only extrapolating primitive solution variables
+    vector<array<double,3>> V = Field; //primitive sol. field
+    double V1,V2,V3; //primitive variables vector 
+    int index = V.size()-2; //index of first interior cell
+    for (int i=0;i<2;i++) {
+      V[index+i][0] = 2.0*V[index+i-1][0] - V[index+i-2][0];
+      V[index+i][1] = 2.0*V[index+i-1][1] - V[index+i-2][1];
+      V[index+i][2] = 2.0*V[index+i-1][2] - V[index+i-2][2];
+    }
+
+    Euler.ComputeOutflowBoundaryConditions(Field,false);
+    for (int n=0;n<Field.size();n++){
+      for (int i=0;i<3;i++){
+      CAPTURE(n,i);
+      CAPTURE(cellnum);
+      REQUIRE(V[n][i] == Approx(Field[n][i]));
+      }
+
+    }
+
+  }
+
+  
+  Euler.ComputeTotalBoundaryConditions(Field,cond); //Calls both Inflow and Outflow Boundary Conditions
+
+  SECTION( "Compute Spatial Flux" ){ //Verified
+
+    int cell_index = (int)Field.size()/2; //test cell
+    array<double,3> Flux;
+    array<double,3> Expected_Flux = Flux;
+
+    array<double,3> Uright; //conserved variable vector to right of test cell
+    array<double,3> U; //conserved variable vector at test cell
+    //Computing right face flux
+    Flux = Euler.ComputeSpatialFlux(Field,cell_index,cell_index+1);
     
+    Uright = Euler.ComputeConserved(Field,cell_index+1); 
+    U = Euler.ComputeConserved(Field,cell_index); 
+    for (int n=0;n<3;n++){ 
+      Expected_Flux[n] = (Uright[n]+U[n]) * 0.5;
 
+    }
+
+    for (int n=0;n<3;n++){ 
+      CAPTURE(Expected_Flux[n],Flux[n]);
+      REQUIRE(Expected_Flux[n] == Approx(Flux[n])); 
+    }
 
   }
 
