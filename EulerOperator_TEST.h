@@ -12,12 +12,12 @@ class Euler1D {
   double gamma;
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   
   const double MolMass = 28.96; // kg/kmol
-  double R = Ru / MolMass; //specific gas constant
  
 
   public:
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions)
+  double R = Ru / MolMass; //specific gas constant
 
   Euler1D(); //empty constructor for unit testing
 

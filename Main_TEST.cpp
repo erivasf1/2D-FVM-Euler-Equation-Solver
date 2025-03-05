@@ -27,7 +27,6 @@ int main() {
   double stag_pressure = 300.0; //kPa
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
-  int pt_num = 5; //# of evenly-spaced requested points (including xmin and xmax)
   double area;
   double area_star; //area at throat
   bool cond{false}; //true for subsonic & false for supersonic

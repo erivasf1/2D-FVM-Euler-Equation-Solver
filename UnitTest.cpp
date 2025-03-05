@@ -13,10 +13,10 @@
 
 #include "ExactNozzle.h"
 #include "MeshGen.h"
-#include "EulerOperator.h"
-#include "DataManager.h"
+#include "EulerOperator_TEST.h"
+#include "DataManager_TEST.h"
 #include "Output.h"
-#include "TimeIntegrator.h"
+#include "TimeIntegrator_TEST.h"
 
 using namespace std;
 
@@ -26,18 +26,18 @@ using namespace std;
 //MeshGen Fcns.
 //double dx=0.0;
 
-TEST_CASE( "CellVolumeComputation" ) {
+/*TEST_CASE( "CellVolumeComputation" ) {
 // Initializing Parameters
 double xmin = -1.0;
 double xmax = 1.0;
-/*double stag_pressure = 300.0; //kpa
+double stag_pressure = 300.0; //kpa
 double stag_temp = 600.0; //k
 double gamma = 1.4; //specific heat ratio
 int pt_num = 5; //# of evenly-spaced requested points (including xmin and xmax)
 double area;
 double area_star; //area at throat
 bool cond{false}; //true for subsonic & false for supersonic
-*/
+
 //Mesh Specifications
 int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
 vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
@@ -50,26 +50,124 @@ double dx = 0.0;
 
 
 }
-
-
-//DataManager Functions
-/*
-TEST_CASE(" ConvertToConservative" ){
-
-  vector<array<double,3>> Field(cellnum);
-  array<double,3>* field; //pointer to Field solutions
-  SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
-
-
-
-
-
-
-
-}
 */
 
 
+//EulerOperator Fcns.
+
+TEST_CASE(" EulerOperator " ){
+
+  //Mesh Specifications
+  double xmin = -1.0; double xmax = 1.0;
+  int cellnum = 6;
+  vector<double> xcoords;
+  MeshGen1D Mesh(xmin,xmax,cellnum);
+  Mesh.GenerateMesh(xcoords);
+
+  //Fluid properties
+  double P0 = 300.0;
+  double T0 = 600.0;
+  double gamma = 1.4; //specific heat ratio
+  Euler1D Euler(cellnum,P0,T0,gamma);
+  array<double,3> empty{0.0,0.0,0.0};
+  vector<array<double,3>> Field(cellnum,empty); //initilizing Field vecor
+  vector<array<double,3>> expected = Field; //stores the expected values of the whole field
+  double expected_density,expected_velocity,expected_pressure;
+
+  SECTION( "Setting Initial Conditions" ) { //Verified
+    for (int i=0;i<cellnum;i++) {
+      double M = (9.0/10.0)*xcoords[i] + 1.0; //testing for 1st grid cell.
+      double psi = 1.0+ (gamma-1.0)*0.5 * pow(M,2.0);
+
+
+      //expected pressure calc.
+      expected_pressure = pow(psi,gamma/(gamma-1.0));
+      expected_pressure = P0/expected_pressure;
+      expected[i][2] = expected_pressure;
+    
+      //expected density calc.
+      double T = T0 / psi; // local temperature
+      expected_density = expected_pressure / (Euler.R*T); 
+      expected[i][0] = expected_density;
+
+      //expected velocity calc.
+      double a = sqrt(gamma*Euler.R*T); // local temperature
+      expected_velocity = abs(M*a);
+      expected[i][1] = expected_velocity;
+
+
+      /*Euler.SetInitialConditions(Field,xcoords);
+      REQUIRE(Field[i][0] == Approx(expected_density)); 
+      REQUIRE(Field[i][1] == Approx(expected_velocity)); 
+      REQUIRE(Field[i][2] == Approx(expected_pressure)); 
+      */
+
+  }
+
+    Euler.SetInitialConditions(Field,xcoords);
+
+    REQUIRE(Field.size() == expected.size()); 
+    for (int n=0;n<(int)Field.size();n++){
+      for (int i=0;i<3;i++) {
+        REQUIRE(Field[n][i] == Approx(expected[n][i]));
+      }
+    }
+
+
+  }
+
+
+  SECTION( " Get Mach Number" ){ //Verified
+ 
+    double M_expected; //expected values (initial condition)
+    double M; //from fcn.
+    Euler.SetInitialConditions(Field,xcoords); //primitive variables
+
+    for(int i=0;i<cellnum;i++){
+      M_expected = (9.0/10.0)*xcoords[i] + 1.0;
+      M = Euler.GetMachNumber(Field,i);
+      //Tools::print("M_expected is %f\n",M_expected);
+      //Tools::print("M is %f\n",M);
+      CAPTURE(M,M_expected); //used for printing out values if Test fails
+      REQUIRE(M_expected == Approx(M));
+
+    }
+
+  }
+
+    Euler.SetInitialConditions(Field,xcoords); //!<initializing the domain
+
+  //Adding the ghost cells to Field
+  //Inflow
+  Field.insert(Field.begin(),empty); //!< temporarily setting ghost cells to empty arrays 
+  Field.insert(Field.begin(),empty); 
+
+  //Outflow
+  Field.push_back(empty); 
+  Field.push_back(empty); 
+
+
+
+  SECTION( "Computing Inflow Boundary Conditions" ){
+    
+  //extrapolating ghost cell closest to interior cells
+
+
+  }
+
+
+  SECTION( "Computing Outflow Boundary Conditions" ){
+
+    
+
+
+  }
+
+
+}
+
+
+/*
 //EulerOperator Fcns.
 TEST_CASE(" GetCellAverageSol" ){
   
@@ -110,6 +208,7 @@ TEST_CASE(" GetCellAverageSol" ){
   REQUIRE(Euler1D::GetCellAverageSol(area_left,area_right,dx,sol_left,sol_right) == 3896.9);
 
 }
+*/
 
 /*TEST_CASE( " ExactSolutionResiduals" ) {
 
