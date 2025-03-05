@@ -10,7 +10,10 @@
 2) Data indexing
   2.1) Before adding ghost cells (SetBoundaryConditions fcn.)
     2.1a) cell_list[0,....,cellnum-1] -- only consisting of interior nodes
-    2.1b) identifying corresponding cell faces: cell_i = cell_list[i]; right face = xcoords[i+1] & left face = xcoords[i-1]
+    2.1b) identifying corresponding cell faces: cell_i = cell_list[i]; right face = xcoords[i+1] & left face = xcoords[i]
   2.2) After adding 4 ghost cells (2 per side of nozzle)
     2.2a) cell_list[0,....,cellnum+3] -- consisting of interior + ghost cells 
     2.2b) identifying corresponding cell faces: cell_i = cell_list[i]; right face = xcoords[i-1] & left face = xcoords[i-2]
+
+CURRENTLY:
+Copies labeled "TEST" are copies of its corresponding file with the main nuance being the absence of pointers. Try getting this to run first (hopefully converge) and then use pointers

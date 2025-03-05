@@ -39,21 +39,21 @@ class Euler1D {
 
   // Spatial Fluxes Fcns. (including source term)
   array<double,3> ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor);//TODO
-  double ComputeSourceTerm(vector<array<double,3>> &Field,int &loc,vector<double> &xcoords);//TODO: May have to look into Pi
+  double ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<double> &xcoords);//TODO: May have to look into Pi
 
   // Artificial Dissipaton Fcns. (using JST Dampening)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>> &Field,int loc); // viscous term for shocks (c(2))
   array<double,3> Compute4thOrderDamping(vector<array<double,3>> &Field,int loc); // prevents odd-even decoupling (c(4))
   
-  double GetEpsilon2(vector<array<double,3>> &Field,int &loc); //sensor that detects "sharp" gradients
-  double GetEpsilon4(vector<array<double,3>> &Field,int &loc); 
+  double GetEpsilon2(vector<array<double,3>> &Field,int loc); //sensor that detects "sharp" gradients
+  double GetEpsilon4(vector<array<double,3>> &Field,int loc); 
  
-  double GetLambda(vector<array<double,3>> &Field,int &loc);
+  double GetLambda(vector<array<double,3>> &Field,int loc);
   double GetNu(vector<array<double,3>> &Field,int loc); //switching fcn.
   double GetMachNumber(vector<array<double,3>> &Field,int loc); //used for GetLambda fcn.
   
   // Supplemental Fcns. (may be used for other fcns. of other classes)
-  double GetLambdaMax(vector<array<double,3>> &Field,int &loc); //extracts largest eigenvalue for a given cell
+  double GetLambdaMax(vector<array<double,3>> &Field,int loc); //extracts largest eigenvalue for a given cell
   static double GetCellAverageSol(double &A_left,double &A_right,double &dx,array<double,3> &sol_left,array<double,3>&sol_right); //testing x-velocity for now
 
   ~Euler1D();

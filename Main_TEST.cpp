@@ -12,9 +12,9 @@
 #include "ExactNozzle.h"
 #include "MeshGen.h"
 #include "EulerOperator_TEST.h"
-#include "DataManager.h"
+#include "DataManager_TEST.h"
 #include "Output.h"
-#include "TimeIntegrator_TEST.h" //comment regular .h file as this is for testing only
+#include "TimeIntegrator_TEST.h" 
 
 using namespace std;
 
@@ -39,9 +39,14 @@ int main() {
 
   //Temporal Specifications
   const int iter_max = 10;
-  const int iterout = 5; //number of iterations per solution output
+  const int iterout = 1; //number of iterations per solution output
   const double CFL = 0.8; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping
+
+  //Governing Eq. Residuals
+  double cont_tol = 1e-3;
+  double xmom_tol = 1e-3;
+  double energy_tol = 1e-3;
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -70,17 +75,20 @@ int main() {
   vector<array<double,3>> Residual(cellnum);
   vector<array<double,3>> InitResidual(cellnum);
 
-  array<double,3>* field; //pointer to Field solutions
+  /*array<double,3>* field; //pointer to Field solutions
   array<double,3>* exact_sols; //pointer to exact solution field values
   array<double,3>* resid; //pointer to residual field values per cell
   array<double,3>* init_resid; //pointer to residual field values per cell
+  */
 
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
 
-  SpaceVariables1D Sols(cellnum,Field,field); //for storing solutions
-  SpaceVariables1D ExactSols(cellnum,ExactField,exact_sols); //for storing exact solutions
-  SpaceVariables1D ResidSols(cellnum,Residual,resid); //for storing residuals for every cell
-  SpaceVariables1D InitResidSols(cellnum,InitResidual,init_resid); //for storing initial residuals for every cell
+  SpaceVariables1D Sols; //for storing solutions
+  SpaceVariables1D ExactSols; //for storing exact solutions
+  SpaceVariables1D ResidSols; //for storing residuals for every cell
+  SpaceVariables1D InitResidSols; //for storing initial residuals for every cell
+
+  array<double,3> ResidualNorms;
 
   Tools tool; //used as utilities object
 
@@ -114,6 +122,10 @@ int main() {
   //Tools::print("At initial conditions\n");
   Euler.SetInitialConditions(Field,xcoords);
 
+  //Debug: printing initial conditions
+  const char* filename = "InitialSolutions.txt"; 
+  Sols.OutputPrimitiveVariables(Field,Euler,filename);
+
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   array<double,3> sol;
   area_star = tool.AreaVal(0.0); //area at throat
@@ -133,7 +145,16 @@ int main() {
   //area = tool.AreaVal(xcoord[i]);
 
   // SETTING BOUNDARY CONDITIONS
+  // Note: Was found that extrapolating values at boundary gave a negative pressure
   Euler.SetBoundaryConditions(Field,cond);
+
+  for (int i=0;i<(int)Field.size();i++) //!< Applying sol. limiter
+    Time.SolutionLimiter(Field[i]);
+
+  
+
+  const char* filename2 = "InitSolutionswBCs.txt"; 
+  Sols.OutputPrimitiveVariables(Field,Euler,filename2);
 
   //debug
   /*
@@ -147,7 +168,7 @@ int main() {
   // using ResidSols spacevariable
   array<double,3> InitNorms;
   Euler.ComputeResidual(InitResidual,Field,xcoords,dx); //computing residuals per cell
-  InitNorms = InitResidSols.ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
+  InitNorms = InitResidSols.ComputeSolutionNorms(InitResidual); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
   Tools::print("--X-Momentum:%e\n",InitNorms[1]);
@@ -159,15 +180,24 @@ int main() {
   //*resid = *init_resid; //assining residuals to initial residuals
   Residual = InitResidual;
 
+  //Limiting sols. before main
+  /*for (int i=0;i<cellnum;i++){
+
+    Time.SolutionLimiter(Field[i+1]);
+
+  }*/
+
   /*time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
   Tools::print("Local time step list:\n");
   for(int i=0;i<cellnum;i++)
     Tools::print("cell index:%d &time step: %f\n",i,time_steps[i]);
   */
-  for (int iter=1;iter<iter_max;iter++){
+  string it,name; //used for outputting file name
+  int iter; //iteration number
+  for (iter=1;iter<iter_max;iter++){
 
     //debugging only
-    Tools::print("Iteration #: %d\n",iter);
+    Tools::print("------Iteration #: %d----------\n",iter);
   
     //COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
@@ -176,12 +206,36 @@ int main() {
     //COMPUTE NEW SOL. VALUES 
     Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);
 
+    //COMPUTE RESIDUAL NORMS
+    ResidSols.ComputeSolutionNorms(Residual);
+
+    //COMPUTE BOUNDARY CONDITIONS
+    Euler.ComputeTotalBoundaryConditions(Field,cond);
+
+    //OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
+    if (iter % iterout == 0) {
+      it = to_string(iter);
+      string name = "SolResults/Iteration";
+      name += it;
+      name += ".txt";
+      const char* filename_iter = name.c_str(); 
+      Sols.OutputPrimitiveVariables(Field,Euler,filename_iter);
+      
+    }
+
+    //COMPUTE RESIDUALS 
     Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
+
+
+    //COMPUTE RESIDUALS & CHECK FOR CONVERGENCE
+    ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
+    if (ResidualNorms[0] <= cont_tol || ResidualNorms[1] <= xmom_tol || ResidualNorms[2] <= energy_tol)
+      break;
+    
     //debug:
     //resid = Residual.data();
     //Tools::print("(Before)1st resid of continuity:%e\n",resid[0][0]);
     //Tools::print("(Before)1st Resid of continuity:%e\n",Residual[0][0]);
-    ResidSols.ComputeSolutionNorms(resid);
     //Tools::print("(After)1st resid of continuity:%e\n",resid[0][0]);
 
     //Compute new Boundary Conditions
@@ -191,7 +245,16 @@ int main() {
 
   }
 
-  //Output solution
+  //Final Output of Solution
+
+  if (iter==iter_max)
+    Tools::print("Failed to converge!\n");
+
+  else {
+    const char* filename_final = "ConvergedSolution.txt" ; 
+    Sols.OutputPrimitiveVariables(Field,Euler,filename_final);
+  }
+
   //Evaluate discretization norms for grid convergence
 
   return 0;

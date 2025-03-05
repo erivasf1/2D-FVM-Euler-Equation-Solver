@@ -34,7 +34,7 @@ set(SOURCES
 )
 # Define unit testing source files
 set(TESTSOURCES
-    DataManager.cpp
+    DataManager_TEST.cpp
     EulerOperator_TEST.cpp
     ExactNozzle.cpp
     Main_TEST.cpp
@@ -56,7 +56,7 @@ set(HEADERS
 )
 
 set(TESTHEADERS
-    DataManager.h
+    DataManager_TEST.h
     EulerOperator_TEST.h
     ExactNozzle.h
     MeshGen.h
