@@ -14,9 +14,9 @@ class Euler1D {
  
 
   public:
-  double dx; //cell thickness
+  double dx; //cell thickness -- gets assigned value in Source Term fcn. (P.S. not sure if this is the best way in doing this)
   int interior_cellnum; //holds the cell num (interior only)
-  int total_cellnum; //holds the total cell num (including boundary conditions)
+  int total_cellnum; //holds the total cell num (including boundary conditions) -- gets assigned value in SetBoundaryConditions fcn.
   double R = Ru / MolMass; //specific gas constant
 
   Euler1D(); //empty constructor for unit testing

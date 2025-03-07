@@ -349,8 +349,72 @@ TEST_CASE(" EulerOperator " ){
     
     } 
 
-  //TODO: SECTION( "Compute Residual" )
+    SECTION( "Compute Residual" ){ //Verified
+  
+      //xcoords stored at the left of interior cell faces (still size of interior cell num)
+      // Field = [0,1][2,...Totalsize-3][Totalsize-2,Totalsize-1]
+      // xcoords = [0,1,...,cellnum-1]
 
+      vector<array<double,3>> Resid(cellnum); //stores the residuals for each governing eq. for every cell
+      vector<array<double,3>> ExpectedResid(cellnum); //stores the residuals for each governing eq. for every cell
+      array<double,3> F_right,F_left;
+      array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
+      array<double,3> TotalF_right,TotalF_left; //left and right total fluxes (spatial + damping)
+      array<double,3> S; //source term
+      double A_left,A_right; //areas of left and right faces
+      double dx = abs(xcoords[1]-xcoords[0]);
+
+      for (int n=0;n<cellnum;n++){
+
+        F_right = Euler.ComputeSpatialFlux(Field,n+2,n+3);
+        F_left = Euler.ComputeSpatialFlux(Field,n+1,n+2);
+
+        D2_right = Euler.Compute2ndOrderDamping(Field,n+2);
+        D2_left = Euler.Compute2ndOrderDamping(Field,n+1);
+
+        D4_right = Euler.Compute4thOrderDamping(Field,n+2);
+        D4_left = Euler.Compute4thOrderDamping(Field,n+1);
+
+        for (int i=0;i<3;i++){ //computing total flux vector
+          TotalF_right[i] = F_right[i] - (D2_right[i] + D4_right[i]);
+          TotalF_left[i] = F_left[i] - (D2_left[i] + D4_left[i]);
+        } 
+
+
+        S[1] = Euler.ComputeSourceTerm(Field,n+2,xcoords); //source term only for x-mom eq.
+        A_right = Tools::AreaVal(xcoords[n+1]);
+        A_left = Tools::AreaVal(xcoords[n]);
+
+        CAPTURE(TotalF_right[0],TotalF_left[0]);
+
+        for (int i=0;i<3;i++){ //computing expected residual
+
+          ExpectedResid[n][i] = TotalF_right[i]*A_right - TotalF_left[i]*A_left - S[i]*dx;
+
+        }
+
+
+
+      }
+
+      Euler.ComputeResidual(Resid,Field,xcoords,dx); //calculated residual from fcn.
+
+      A_right = Tools::AreaVal(xcoords[1]);
+      A_left = Tools::AreaVal(xcoords[0]);
+      for (int n=0;n<cellnum;n++){
+        for (int i=0;i<3;i++){
+
+          CAPTURE(n,i);
+          CAPTURE(A_right,A_left);
+          CAPTURE(dx,Field[n+2][i]);
+          REQUIRE( Resid[n][i] == Approx(ExpectedResid[n][i]));
+
+        }
+      }
+
+
+
+    }
 
 }
 

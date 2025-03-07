@@ -425,6 +425,7 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>> &Field,i
 //-----------------------------------------------------------
 void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx){ 
 
+  Tools::print("I am here\n");
   //following nomenclature from class notes
   array<double,3> F_right,F_left; //left and right face spatial fluxes 
   array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
@@ -433,26 +434,20 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
   double A_left,A_right; //Area of corresponding faces
 
   //Tools::print("------In Euler.ComputeResidual---------\n");
-  //Tools::print("Total Size: %d\n",total_cellnum);
+  total_cellnum = (int)Field.size();
+  Tools::print("Total Size: %d\n",total_cellnum);
   for (int i=0;i<total_cellnum;i++){ //looping through all interior nodes
     if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
       continue;
+    
+    Tools::print("cell index:%d\n");
 
-    /*if (total_cellnum == (int)Field.size()){ //skipping the ghost cell nodes
-      Tools::print("Field size w/ ghost cells size does not match with total_cellnum!\n");  
-      Tools::print("Field size: %d & total_cellnum: %d\n",(int)Field.size(),total_cellnum);
-      break;
-    }*/
 
-    //Tools::print("---Cell: %d---\n",i);
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
     //Tools::print("Spatial Flux Energy\n");
     F_right = ComputeSpatialFlux(Field,i,i+1);
     F_left = ComputeSpatialFlux(Field,i-1,i);
-    //F_left = ComputeSpatialFlux(Field,i,i-1);
-    //Tools::print("F_right: %f\n",F_right[2]);
-    //Tools::print("F_left: %f\n",F_left[2]);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
@@ -462,7 +457,6 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
-    //Tools::print("Damping Flux Energy\n");
     // right face
     D2_right = Compute2ndOrderDamping(Field,i);
     D4_right = Compute4thOrderDamping(Field,i);
@@ -470,56 +464,37 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     D2_left = Compute2ndOrderDamping(Field,i-1);
     D4_left = Compute4thOrderDamping(Field,i-1);
 
-    /*
-    Tools::print("D2_right: %f\n",D2_right[2]);
-    Tools::print("D2_left: %f\n",D2_right[2]);
-    Tools::print("D4_right: %f\n",D4_right[2]);
-    Tools::print("D4_left: %f\n",D4_right[2]);
-    */
 
     //Total Flux Terms
     //continuity
     TotalF_right[0] = F_right[0] - (D2_right[0]+D4_right[0]);
     TotalF_left[0] = F_left[0] - (D2_left[0]+D4_left[0]);
+    Tools::print("Cont. Total F_right:%f\n",TotalF_right[0]);
     //x-mom.
     TotalF_right[1] = F_right[1] - (D2_right[1]+D4_right[1]);
     TotalF_left[1] = F_left[1] - (D2_left[1]+D4_left[1]);
     //energy
-    //Tools::print("Total Flux Energy\n");
     TotalF_right[2] = F_right[2] - (D2_right[2]+D4_right[2]);
     TotalF_left[2] = F_left[2] - (D2_left[2]+D4_left[2]);
 
-    //Tools::print("TotalF_right: %f\n",TotalF_right[2]);
-    //Tools::print("TotalF_left: %f\n",TotalF_left[2]);
 
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[i-2]);
     A_right = Tools::AreaVal(xcoords[i-1]);
+    Tools::print("A_left:%f & A_right:%f\n");
+    //cout<<"A_left: "<<A_left<<"& "<<"A_right: "<<A_right<<endl;
 
     //Residual cal.
     //Tools::print("Cell Index: %d\n",i-2);
     
     //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) 
-    //Tools::print("Continuity Residual\n");
-    //Tools::print("TotalF_right:%f\n",TotalF_right[0]);
-    //Tools::print("TotalF_left:%f\n",TotalF_left[0]);
     Resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
-    //Tools::print("Resid: %f\n",Resid[i-2][0]);
     
     //x-mom. Residual (w/ source term)
-    //Tools::print("X-Mom. Residual\n");
-    //Tools::print("TotalF_right:%f\n",TotalF_right[1]);
-    //Tools::print("TotalF_left:%f\n",TotalF_left[1]);
     Resid[i-2][1] =  (TotalF_right[1]*A_right - TotalF_left[1]*A_left) - S*dx;
-    //Tools::print("Resid: %f\n",Resid[i-2][1]);
 
     //energy Residual
-    //Tools::print("Energy Residual\n");
-    //Tools::print("TotalF_right:%f\n",TotalF_right[2]);
-    //Tools::print("TotalF_left:%f\n",TotalF_left[2]);
     Resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
-    //Tools::print("Resid: %f\n",Resid[i-2][2]);
-    //Tools::print("---------------\n");
 
   }
   return;
