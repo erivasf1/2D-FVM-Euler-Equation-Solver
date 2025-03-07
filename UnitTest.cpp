@@ -253,7 +253,7 @@ TEST_CASE(" EulerOperator " ){
 
   SECTION( "Compute Spatial Flux" ){ //Verified
 
-    int cell_index = (int)Field.size()/2; //test cell
+    int cell_index = (int)Field.size()-3; //test cell
     array<double,3> Flux;
     array<double,3> Expected_Flux = Flux;
 
@@ -275,6 +275,81 @@ TEST_CASE(" EulerOperator " ){
     }
 
   }
+
+  SECTION( "Compute Artificial Dissipation" ){ //TODO
+    int cell_test = (int)Field.size()-3; //test cell node
+    //int cell_test = 0; //test cell node
+    array<double,3> CV = Euler.ComputeConserved(Field,cell_test); //conserved variable conversion
+    array<double,3> CV_nbor = Euler.ComputeConserved(Field,cell_test+1); //conserved variable conversion
+
+    SECTION(" Compute 2nd Order Damping "){ //2nd Order Damping Test
+      double Lambda = Euler.GetLambda(Field,cell_test);  
+      double Epsilon = Euler.GetEpsilon2(Field,cell_test);  
+      array<double,3> CVdiff,D2_expected,D2;
+      for (int n=0;n<3;n++){ //!< Computing the expected d value of the 2nd order damping term
+        CVdiff[n] = CV_nbor[n] - CV[n];
+        D2_expected[n] = Epsilon*Lambda*CVdiff[n];
+        //D2_expected[n] = Epsilon*Lambda*(CV_nbor[n] - CV[n]);
+      }
+       
+      D2 = Euler.Compute2ndOrderDamping(Field,cell_test); //from Main file
+      for (int n=0;n<3;n++)
+        REQUIRE(D2_expected[n] == Approx(D2[n]));
+    }
+ 
+    SECTION(" Compute 4th Order Damping "){ //4th Order Damping Test
+
+      array<double,3> CV_nbor_right2 = Euler.ComputeConserved(Field,cell_test+2); //conserved variable conversion
+      array<double,3> CV_nbor_left1 = Euler.ComputeConserved(Field,cell_test-1); //conserved variable conversion
+      double Lambda = Euler.GetLambda(Field,cell_test);  
+      double Epsilon = Euler.GetEpsilon4(Field,cell_test);  
+
+      array<double,3> CVdiff,D4_expected,D4;
+      for (int n=0;n<3;n++){ //!< Computing the expected d value of the 2nd order damping term
+        CVdiff[n] = CV_nbor_right2[n] - 3.0*CV_nbor[n] + 3.0*CV[n] - CV_nbor_left1[n];
+        D4_expected[n] = Epsilon*Lambda*CVdiff[n];
+      }
+
+      D4 = Euler.Compute4thOrderDamping(Field,cell_test); //from Main file
+      for (int n=0;n<3;n++)
+        REQUIRE(D4_expected[n] == Approx(D4[n]));
+    }
+
+
+    
+
+  }
+    SECTION( "Compute Source Term" ){ // Verified
+
+      //xcoords stored at the left of interior cell faces (still size of interior cell num)
+      // Field = [0,1][2,...Totalsize-3][Totalsize-2,Totalsize-1]
+      // xcoords = [0,1,...,cellnum-1]
+      vector<double> Source(cellnum); //storing interior cell source terms
+      vector<double> Source_Expected = Source; //storing expected interior cell source terms
+
+      double Aright,Aleft,Pressure;
+      double dx = abs(xcoords[1]-xcoords[0]);
+      for (int i=0;i<cellnum;i++){ //Computing Expected Source Term Value
+        Aright = Tools::AreaVal(xcoords[i+1]);
+        Aleft = Tools::AreaVal(xcoords[i]); 
+        Pressure = Field[i+2][2]; //pressure at current cell
+
+        Source_Expected[i] = Pressure*((Aright-Aleft)/dx);
+      }
+
+      for (int i=0;i<cellnum;i++){ //Computing Source Term from fcn.
+
+        Source[i] = Euler.ComputeSourceTerm(Field,i+2,xcoords);
+
+      }
+
+      for (int i=0;i<cellnum;i++) //Comparing Source Terms
+        REQUIRE(Source_Expected[i] == Approx(Source[i])); 
+      
+    
+    } 
+
+  //TODO: SECTION( "Compute Residual" )
 
 
 }

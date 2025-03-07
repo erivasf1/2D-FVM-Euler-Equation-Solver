@@ -37,7 +37,7 @@ set(TESTSOURCES
     DataManager_TEST.cpp
     EulerOperator_TEST.cpp
     ExactNozzle.cpp
-    #Main_TEST.cpp -- for system level testing
+    #Main_TEST.cpp #for system level testing
     MeshGen.cpp
     Output.cpp
     TimeIntegrator_TEST.cpp

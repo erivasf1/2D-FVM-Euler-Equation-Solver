@@ -213,26 +213,6 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bo
 //-----------------------------------------------------------
 array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor){
 
-  // Conversion into conservative variables(cv)
-  /*//Rho * U conserved variable
-  double cv1 = Field[loc][0]*Field[loc][1]; 
-  double cv1_nbor = Field[nbor][0]*Field[nbor][1]; 
-  //Rho * U^2 + P conserved variable
-  double cv2 = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2];
-  double cv2_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2];
-  //Rho*U*h_t conserved variable
-  //Tools::print("rho: %f\n",Field[loc][0]);
-  double h_t = gamma/(gamma-1.0) * (Field[loc][2]/Field[loc][0]) + (pow(Field[loc][1],2)/2.0);
-  //Tools::print("h_t[i]:%f\n",h_t);
-  double cv3 = Field[loc][0]*Field[loc][1]*h_t;
-  //Tools::print("cv3[i]:%f\n",cv3);
-
-  h_t = gamma/(gamma-1.0) * (Field[nbor][2]/Field[nbor][0]) + (pow(Field[nbor][1],2)/2.0);
-  //Tools::print("h_t[nbor]:%f\n",h_t);
-  double cv3_nbor = Field[nbor][0]*Field[nbor][1]*h_t;
-  //Tools::print("cv3[nbor]:%f\n",cv3_nbor);
-  */
-
   //Now using Compute Conserved variable functions
   array<double,3> U; //conserved variable vector
   array<double,3> U_nbor; //conserved variable vector
@@ -256,13 +236,19 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int l
 //-----------------------------------------------------------
 double Euler1D::ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<double> &xcoords) {
 
+
+  //Note: loc is index of cell in Field -> xcoords index is i-2 of left face
   //Get area for i+1/2 and i-1/2 locations (refer to read me for data indexing)
+  
+  //double A_rface = Tools::AreaVal(xcoords[loc+1]);
+  //double A_lface = Tools::AreaVal(xcoords[loc]);
+  dx = abs(xcoords[0]-xcoords[1]); //assigning dx val. here
   double A_rface = Tools::AreaVal(xcoords[loc-1]);
   double A_lface = Tools::AreaVal(xcoords[loc-2]);
   // pressure at i = loc
   double p = Field[loc][2];
   // source = P_i * (A_i+1/2 - A_i-1/2) / dx * dx
-  double res = p * (A_rface - A_lface);
+  double res = p * (A_rface - A_lface)/dx;
 
   return res;
 
@@ -276,7 +262,7 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
   double Nuright = GetNu(Field,loc+1);
   double Nuright2 = GetNu(Field,loc+2);
 
-  double kappa2 = 0.35; //typically from 1/4<kappa2<1/2
+  double kappa2 = 1.0/3.0; //typically from 1/4<kappa2<1/2
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -288,7 +274,6 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
 //-----------------------------------------------------------
 double Euler1D::GetNu(vector<array<double,3>> &Field,int loc){
 
-  //Now changed to look at neighbors, originally everything was "loc"
   double res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc-1][2];
   res /= Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc-1][2];
   res = abs(res);
@@ -448,6 +433,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
   double A_left,A_right; //Area of corresponding faces
 
   //Tools::print("------In Euler.ComputeResidual---------\n");
+  //Tools::print("Total Size: %d\n",total_cellnum);
   for (int i=0;i<total_cellnum;i++){ //looping through all interior nodes
     if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
       continue;

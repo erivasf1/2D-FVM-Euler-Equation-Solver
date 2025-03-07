@@ -6,7 +6,6 @@
 
 class Euler1D {
   //vector<double> &xcoords;
-  double dx; //cell thickness
   double stag_pressure; //stagnation pressure
   double stag_temperature; //stagnation temperature
   double gamma;
@@ -15,6 +14,7 @@ class Euler1D {
  
 
   public:
+  double dx; //cell thickness
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions)
   double R = Ru / MolMass; //specific gas constant
