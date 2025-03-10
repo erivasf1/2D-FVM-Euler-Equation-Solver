@@ -7,28 +7,30 @@ SpaceVariables1D::SpaceVariables1D()
 {}
 
 //---------------------------------------------------------
-array<double,3> SpaceVariables1D::ComputeSolutionNorms(vector<array<double,3>> &Field){
+array<double,3> SpaceVariables1D::ComputeSolutionNorms(vector<array<double,3>> &Resid){
 
   array<double,3> norm{0.0,0.0,0.0};
 
+  double imax = (double)Resid.size(); //number of interior nodes 
+
   //using L2 norm  
-  Tools::print("Calculating Global Norm\n");
-  for (int i=0;i<(int)Field.size();i++){
+  //Tools::print("Calculating Global Norm\n");
+  for (int i=0;i<(int)Resid.size();i++){
     //Tools::print("Cell number: %d\n",i);
     //continuity
-    //Tools::print("continuity res.: %e\n",Field[i][0]);
-    norm[0]+= pow(Field[i][0],2);
+    //Tools::print("continuity res.: %e\n",Resid[i][0]);
+    norm[0]+= pow(Resid[i][0],2);
     //x-mom
-    //Tools::print("x-mom. res.: %e\n",Field[i][1]);
-    norm[1]+= pow(Field[i][1],2);
+    //Tools::print("x-mom. res.: %e\n",Resid[i][1]);
+    norm[1]+= pow(Resid[i][1],2);
     //energy
-    //Tools::print("energy res.: %e\n",Field[i][2]);
-    norm[2]+= pow(Field[i][2],2);
+    //Tools::print("energy res.: %e\n",Resid[i][2]);
+    norm[2]+= pow(Resid[i][2],2);
 
   }
-  norm[0] = sqrt(norm[0]);
-  norm[1] = sqrt(norm[1]);
-  norm[2] = sqrt(norm[2]);
+  norm[0] = sqrt(norm[0]/imax); //normalizing by imax
+  norm[1] = sqrt(norm[1]/imax);
+  norm[2] = sqrt(norm[2]/imax);
 
   //Tools::print("Continuity res.: %e\n",norm[0]);
   //Tools::print("X-Momentum res.: %e\n",norm[1]);
@@ -60,6 +62,28 @@ void SpaceVariables1D::OutputPrimitiveVariables(vector<array<double,3>> &Field,E
       myfile<<i<<"  "<<Field[i][0]<<"  "<<Field[i][1]<<"  "<<Field[i][2]<<"  "<<M<<endl;
 
     }
+
+  
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
+
+return;
+}
+
+//---------------------------------------------------------
+void SpaceVariables1D::OutputLocalResiduals(vector<array<double,3>> &Resid,const char *filename){
+
+
+  ofstream myfile;
+  myfile.open(filename);
+  //ofstream myfile(filename);
+
+  if (!myfile.is_open()){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+  myfile<<"Global Residuals"<<endl;
+  //myfile<<"Continuity: "<<Resid<<"Density"<<"  "<<"Velocity"<<"  "<<"Pressure"<<"  "<<"Mach Number"<<endl;
 
   
   myfile.close(); //closing file writing to it

@@ -377,7 +377,8 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
   double res_pressure = lambda*epsilon*(field[loc+1][2] + field[loc+1][2]);
   */
-  array<double,3> res = {res_continuity,res_xmom,res_energy};
+  //array<double,3> res = {res_continuity,res_xmom,res_energy};
+  array<double,3> res = {0.0,0.0,0.0}; //TODO: temporarily turning off
 
   return res;
 

@@ -23,7 +23,7 @@ double MeshGen1D::GetCellVolume(int &loc,double &dx,vector<double> &xcoords){
 void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
 
   //TODO: Need to add ghost cells here
-  Tools::print("1D EULER EQ. SOLVER?\n");
+  Tools::print("1D EULER EQ. SOLVER\n");
   double facenum = cellnumber + 1; //number of faces
   int midface_loc = facenum / 2;
   xcoords = Tools::RetrievePoints(xmin,xmax,facenum);  

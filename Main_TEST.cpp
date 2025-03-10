@@ -32,14 +32,14 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 6; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 10; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
   //Temporal Specifications
-  const int iter_max = 10;
-  const int iterout = 1; //number of iterations per solution output
-  const double CFL = 0.8; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e3;
+  const int iterout = 10; //number of iterations per solution output
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
@@ -176,23 +176,17 @@ int main() {
 
   // BEGIN OF MAIN LOOP
   vector<double> time_steps;
-  //*resid = *init_resid; //assining residuals to initial residuals
   Residual = InitResidual;
 
-  //Limiting sols. before main
-  /*for (int i=0;i<cellnum;i++){
 
-    Time.SolutionLimiter(Field[i+1]);
-
-  }*/
-
-  /*time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
-  Tools::print("Local time step list:\n");
-  for(int i=0;i<cellnum;i++)
-    Tools::print("cell index:%d &time step: %f\n",i,time_steps[i]);
-  */
-  string it,name; //used for outputting file name
+  string it,name,resid; //used for outputting file name
   int iter; //iteration number
+
+  //Opening File that stores residuals
+  ofstream myresids;
+  myresids.open("SolResids.txt");
+  myresids<<"Iteration"<<"  "<<"Contintuity"<<"  "<<"X-Momentum"<<"  "<<"Energy"<<endl;
+
   for (iter=1;iter<iter_max;iter++){
 
     //debugging only
@@ -211,11 +205,12 @@ int main() {
 
     //COMPUTE BOUNDARY CONDITIONS
     Euler.ComputeTotalBoundaryConditions(Field,cond);
+    Time.SolutionLimiter(Field); //temporarily reapplying the limiter
 
     //OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
     if (iter % iterout == 0) {
       it = to_string(iter);
-      string name = "SolResults/Iteration";
+      name = "SolResults/Iteration";
       name += it;
       name += ".txt";
       const char* filename_iter = name.c_str(); 
@@ -229,7 +224,11 @@ int main() {
 
     //COMPUTE RESIDUAL NORMS & CHECK FOR CONVERGENCE
     ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
-    if (ResidualNorms[0] <= cont_tol || ResidualNorms[1] <= xmom_tol || ResidualNorms[2] <= energy_tol)
+    Tools::print("Norms\n");
+    Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
+    myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
+
+    if (ResidualNorms[0]/InitNorms[0] <= cont_tol || ResidualNorms[1]/InitNorms[1] <= xmom_tol || ResidualNorms[2]/InitNorms[2] <= energy_tol)
       break;
     
     //debug:
@@ -254,6 +253,9 @@ int main() {
     const char* filename_final = "ConvergedSolution.txt" ; 
     Sols.OutputPrimitiveVariables(Field,Euler,filename_final);
   }
+
+  //Closing Residuals file
+  myresids.close();
 
   //Evaluate discretization norms for grid convergence
 
