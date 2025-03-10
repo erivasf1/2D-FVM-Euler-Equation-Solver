@@ -32,14 +32,14 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 10; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 20; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
   //Temporal Specifications
-  const int iter_max = 1e3;
+  const int iter_max = 1e4;
   const int iterout = 10; //number of iterations per solution output
-  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals

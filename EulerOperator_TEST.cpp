@@ -339,12 +339,14 @@ double Euler1D::GetLambda(vector<array<double,3>> &Field,int loc){
     Tools::print("Speed of Sound:%f\n",a);
     Tools::print("Cell Index:%d\n",loc);
   }
-  double lambda_i = abs(Field[loc][1]) + a;
+  double lambda_i = GetLambdaMax(Field,loc); //Lambda bar
+  //double lambda_i = abs(Field[loc][1]) + a;
 
   //\bar{lambda_i+1} at neighboring cell to the right
   M = GetMachNumber(Field,loc+1); //cell-averaged Mach Number
   a = Field[loc+1][1] * M;
-  double lambda_iright = abs(Field[loc+1][1]) + a;
+  double lambda_iright = GetLambdaMax(Field,loc+1); //Lambda_right bar
+  //double lambda_iright = abs(Field[loc+1][1]) + a;
 
   double res = (lambda_i + lambda_iright) / 2.0;
   return res;
@@ -390,7 +392,7 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
 double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int loc){
 
   double epsilon2 = GetEpsilon2(Field,loc);
-  double kappa4 = 1.0/50.0; //typically ranges from: 1/64<kappa4<1/32
+  double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
   return res;
@@ -409,15 +411,19 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>> &Field,i
   array<double,3> conserved_rightnbor = ComputeConserved(Field,loc+1);
   array<double,3> conserved_right2nbor = ComputeConserved(Field,loc+2);
 
-  double res_continuity = lambda*epsilon*(conserved_right2nbor[0] - 3.0*conserved_rightnbor[0] + 3.0*conserved[0] - conserved_leftnbor[0]);
-  double res_xmom = lambda*epsilon*(conserved_right2nbor[1] - 3.0*conserved_rightnbor[1] + 3.0*conserved[1] - conserved_leftnbor[1]);
-  double res_energy = lambda*epsilon*(conserved_right2nbor[2] - 3.0*conserved_rightnbor[2] + 3.0*conserved[2] - conserved_leftnbor[2]);
+  array<double,3> res;
+  for (int i=0;i<3;i++) 
+    res[i] = lambda*epsilon*(conserved_right2nbor[i] - 3.0*conserved_rightnbor[i] + 3.0*conserved[i] - conserved_leftnbor[i]);
+    /*double res_continuity = lambda*epsilon*(conserved_right2nbor[0] - 3.0*conserved_rightnbor[0] + 3.0*conserved[0] - conserved_leftnbor[0]);
+    double res_xmom = lambda*epsilon*(conserved_right2nbor[1] - 3.0*conserved_rightnbor[1] + 3.0*conserved[1] - conserved_leftnbor[1]);
+    double res_energy = lambda*epsilon*(conserved_right2nbor[2] - 3.0*conserved_rightnbor[2] + 3.0*conserved[2] - conserved_leftnbor[2]);*/
+  
 
   /*double res_rho = lambda*epsilon*(Field[loc+2][0] - 3.0*Field[loc+1][0] + 3.0*Field[loc][0] - Field[loc-1][0]);
   double res_vel = lambda*epsilon*(field[loc+2][1] - 3.0*field[loc+1][1] + 3.0*field[loc][1] - field[loc-1][1]);
   double res_pressure = lambda*epsilon*(field[loc+2][2] - 3.0*field[loc+1][2] + 3.0*field[loc][2] - field[loc-1][2]);
   */
-  array<double,3> res = {res_continuity,res_xmom,res_energy};
+  //array<double,3> res = {res_continuity,res_xmom,res_energy};
 
   return res;
 }
@@ -426,67 +432,81 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>> &Field,i
 //-----------------------------------------------------------
 void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx){ 
 
-  Tools::print("I am here\n");
+  //Tools::print("I am here\n");
   //following nomenclature from class notes
   array<double,3> F_right,F_left; //left and right face spatial fluxes 
   array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
   array<double,3> TotalF_right,TotalF_left; //left and right total fluxes (spatial + damping)
-  double S; //source term (only for x-mom. eq.)
+  array<double,3> Source{0.0,0.0,0.0}; //source term vector
+  double S; //scalar source term (only for x-mom. eq.)
   double A_left,A_right; //Area of corresponding faces
 
   //Tools::print("------In Euler.ComputeResidual---------\n");
   total_cellnum = (int)Field.size();
   Tools::print("Total Size: %d\n",total_cellnum);
-  for (int i=0;i<total_cellnum;i++){ //looping through all interior nodes
-    if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
+  for (int n=0;n<total_cellnum;n++){ //looping through all interior nodes
+    if (n==0 | n==1 | n==total_cellnum-2 | n==total_cellnum-1) //skipping the ghost cell nodes
       continue;
     
-    Tools::print("cell index:%d\n",i);
+    Tools::print("cell index:%d\n",n);
 
 
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
     //Tools::print("Spatial Flux Energy\n");
-    F_right = ComputeSpatialFlux(Field,i,i+1); F_left = ComputeSpatialFlux(Field,i-1,i);
+    F_right = ComputeSpatialFlux(Field,n,n+1);
+    F_left = ComputeSpatialFlux(Field,n-1,n);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
     //Tools::print("Source Term\n");
-    S = ComputeSourceTerm(Field,i,xcoords);
+    S = ComputeSourceTerm(Field,n,xcoords);//computing source term scalar
+    Source[1] = S; //adding scalar to vector
     //Tools::print("S: %f\n",S);
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
-    // right face -- issue observed here at last interior cell (D2 and D4 are calculated as nan)
-    D2_right = Compute2ndOrderDamping(Field,i);
-    D4_right = Compute4thOrderDamping(Field,i);
+    // right face 
+    D2_right = Compute2ndOrderDamping(Field,n);
+    D4_right = Compute4thOrderDamping(Field,n);
     // left face
-    D2_left = Compute2ndOrderDamping(Field,i-1);
-    D4_left = Compute4thOrderDamping(Field,i-1);
+    D2_left = Compute2ndOrderDamping(Field,n-1);
+    D4_left = Compute4thOrderDamping(Field,n-1);
 
 
     //Total Flux Terms
+    for (int i=0;i<3;i++){
+      TotalF_right[i] = F_right[i] - (D2_right[i]+D4_right[i]);
+      TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
+    }
+    /*
     //continuity
     TotalF_right[0] = F_right[0] - (D2_right[0]+D4_right[0]);
     TotalF_left[0] = F_left[0] - (D2_left[0]+D4_left[0]);
-    Tools::print("Cont. Total F_right:%f\n",TotalF_right[0]);
+    //Tools::print("Cont. Total F_right:%f\n",TotalF_right[0]);
     //x-mom.
     TotalF_right[1] = F_right[1] - (D2_right[1]+D4_right[1]);
     TotalF_left[1] = F_left[1] - (D2_left[1]+D4_left[1]);
     //energy
     TotalF_right[2] = F_right[2] - (D2_right[2]+D4_right[2]);
     TotalF_left[2] = F_left[2] - (D2_left[2]+D4_left[2]);
+    */
 
 
     //Area Evaluations
-    A_left = Tools::AreaVal(xcoords[i-2]);
-    A_right = Tools::AreaVal(xcoords[i-1]);
+    A_left = Tools::AreaVal(xcoords[n-2]);
+    A_right = Tools::AreaVal(xcoords[n-1]);
     Tools::print("A_left:%f & A_right:%f\n",A_left,A_right);
     //cout<<"A_left: "<<A_left<<"& "<<"A_right: "<<A_right<<endl;
 
     //Residual cal.
+    for (int i=0;i<3;i++)
+      Resid[n-2][i] = (TotalF_right[i]*A_right - TotalF_left[i]*A_left) - Source[i]*dx;
+
+    
     //Tools::print("Cell Index: %d\n",i-2);
     
+    /*
     //continuity residual (i-2 so that indexing is correct for resid spacevariable pointer) 
     Resid[i-2][0] = (TotalF_right[0]*A_right - TotalF_left[0]*A_left);
     
@@ -495,6 +515,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 
     //energy Residual
     Resid[i-2][2] =  (TotalF_right[2]*A_right - TotalF_left[2]*A_left);
+    */
 
   }
   return;
