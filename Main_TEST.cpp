@@ -147,8 +147,8 @@ int main() {
   // Note: Was found that extrapolating values at boundary gave a negative pressure
   Euler.SetBoundaryConditions(Field,cond);
 
-  for (int i=0;i<(int)Field.size();i++) //!< Applying sol. limiter
-    Time.SolutionLimiter(Field[i]);
+  //for (int i=0;i<(int)Field.size();i++) //!< Applying sol. limiter for every cell
+  Time.SolutionLimiter(Field);
 
   
 
@@ -204,9 +204,10 @@ int main() {
 
     //COMPUTE NEW SOL. VALUES 
     Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);
+    Time.SolutionLimiter(Field); //applies solution limiter to all cells (including ghost cells)
 
     //COMPUTE RESIDUAL NORMS
-    ResidSols.ComputeSolutionNorms(Residual);
+    //ResidSols.ComputeSolutionNorms(Residual);
 
     //COMPUTE BOUNDARY CONDITIONS
     Euler.ComputeTotalBoundaryConditions(Field,cond);
@@ -222,11 +223,11 @@ int main() {
       
     }
 
-    //COMPUTE RESIDUALS 
+    //COMPUTE NEW RESIDUALS 
     Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
 
 
-    //COMPUTE RESIDUALS & CHECK FOR CONVERGENCE
+    //COMPUTE RESIDUAL NORMS & CHECK FOR CONVERGENCE
     ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
     if (ResidualNorms[0] <= cont_tol || ResidualNorms[1] <= xmom_tol || ResidualNorms[2] <= energy_tol)
       break;

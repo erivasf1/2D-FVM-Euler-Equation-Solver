@@ -55,7 +55,7 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
     
     vol = MeshGen1D::GetCellVolume(i,dx,xcoords); //acquiring cell vol
     //Tools::print("Volume of cell %d:%f\n",i,vol);
-    conserve = Euler.ComputeConserved(Field,i); //!< computing conservative values
+    conserve = Euler.ComputeConserved(Field,i+2); //!< computing conservative values
 
     //new continuity
     //Tools::print("previous density :%f\n",Field[i+2][0]);
@@ -74,15 +74,14 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
     conserve[2] -= (time_steps[i] / vol) * Resid[i][2];
     //Tools::print("Energy Resid :%f\n",Resid[i][2]);
 
-    Euler.ComputePrimitive(Field,conserve,i); //!< extracting new primitive variables
+    Euler.ComputePrimitive(Field,conserve,i+2); //!< extracting new primitive variables
 
-    //Applying Solution Limiter
-    SolutionLimiter(Field[i+2]);
+    //Applying Solution Limiter 
+    //SolutionLimiter(Field[i+2]);
 
 
     /*
-    Tools::print("new density :%f\n",Field[i+2][0]);
-    Tools::print("new velocity :%f\n",Field[i+2][1]);
+    Tools::print("new density :%f\n",Field[i+2][0]); Tools::print("new velocity :%f\n",Field[i+2][1]);
     Tools::print("new pressure :%f\n",Field[i+2][2]);
     Tools::print("------\n");
     */ 
@@ -92,28 +91,30 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
 }
 
 //-----------------------------------------------------------
-void EulerExplicit::SolutionLimiter(array<double,3> &Sol){
+void EulerExplicit::SolutionLimiter(vector<array<double,3>> &Field){
 
-  for(int i=0;i<cellnumber;i++){
+  for (int n=0;n<(int)Field.size();n++){
     //Density
-    Sol[0] = std::min(Density_max,std::max(Density_min,Sol[0]));
+    Field[n][0] = std::min(Density_max,std::max(Density_min,Field[n][0]));
 
     //Velocity
-    Sol[1] = std::min(Velocity_max,std::max(Velocity_min,Sol[1]));
+    Field[n][1] = std::min(Velocity_max,std::max(Velocity_min,Field[n][1]));
 
     //Pressure
-    Sol[2] = std::min(Pressure_max,std::max(Pressure_min,Sol[2]));
+    Field[n][2] = std::min(Pressure_max,std::max(Pressure_min,Field[n][2]));
 
     //Printing out message if limiter kicks in
-    if (Sol[0] == Density_max || Sol[0] == Density_min)
-      Tools::print("Limiter was hit for density at cell %d\n",i);
+    if (Field[n][0] == Density_max || Field[n][0] == Density_min)
+      Tools::print("Limiter was hit for density at cell %d\n",n);
 
-    if (Sol[1] == Velocity_max || Sol[1] == Velocity_min)
-      Tools::print("Limiter was hit for velocity at cell %d\n",i);
+    if (Field[n][1] == Velocity_max || Field[n][1] == Velocity_min)
+      Tools::print("Limiter was hit for velocity at cell %d\n",n);
 
-    if (Sol[2] == Pressure_max || Sol[2] == Pressure_min)
-      Tools::print("Limiter was hit for pressure at cell %d\n",i);
+    if (Field[n][2] == Pressure_max || Field[n][2] == Pressure_min)
+      Tools::print("Limiter was hit for pressure at cell %d\n",n);
+
   }
+  
   return;
 
 }

@@ -23,8 +23,8 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
   //x-mom.
   res[1] = Field[loc][0]*Field[loc][1]; 
 
-  //energy
-  res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][2],2);
+  //energy (now changed to rho*u, used to be rho*p)
+  res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2);
 
   return res;
 
@@ -301,7 +301,7 @@ double Euler1D::GetMachNumber(vector<array<double,3>> &Field,int loc){
   */
 
   //Using insentropic conditions only for thermodynamic variables
-  double T = Field[loc][2] / (Field[loc][0]*R);
+  double T = Field[loc][2] / (Field[loc][0]*R); //if T is negative than M will be -nan!!!
 
   double M = abs(Field[loc][1]) / sqrt(gamma * R * T); //M = u/a
 
@@ -440,14 +440,13 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     if (i==0 | i==1 | i==total_cellnum-2 | i==total_cellnum-1) //skipping the ghost cell nodes
       continue;
     
-    Tools::print("cell index:%d\n");
+    Tools::print("cell index:%d\n",i);
 
 
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
     //Tools::print("Spatial Flux Energy\n");
-    F_right = ComputeSpatialFlux(Field,i,i+1);
-    F_left = ComputeSpatialFlux(Field,i-1,i);
+    F_right = ComputeSpatialFlux(Field,i,i+1); F_left = ComputeSpatialFlux(Field,i-1,i);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
@@ -457,7 +456,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
-    // right face
+    // right face -- issue observed here at last interior cell (D2 and D4 are calculated as nan)
     D2_right = Compute2ndOrderDamping(Field,i);
     D4_right = Compute4thOrderDamping(Field,i);
     // left face
@@ -481,7 +480,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[i-2]);
     A_right = Tools::AreaVal(xcoords[i-1]);
-    Tools::print("A_left:%f & A_right:%f\n");
+    Tools::print("A_left:%f & A_right:%f\n",A_left,A_right);
     //cout<<"A_left: "<<A_left<<"& "<<"A_right: "<<A_right<<endl;
 
     //Residual cal.
