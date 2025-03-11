@@ -15,6 +15,7 @@ Euler1D::Euler1D() {}
 //-----------------------------------------------------------
 array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc){
 
+  //TODO: Check for any negative values here
   array<double,3> res; //to store conserved variables
 
   //continuity
@@ -33,6 +34,7 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
 //-----------------------------------------------------------
 void Euler1D::ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &Conserved,int loc) {
 
+  // TODO: Check for negative values here
   //Computing Primitive variables given the conserved variables
   //density
   Field[loc][0] = Conserved[0];
@@ -139,7 +141,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
     M2 = GetMachNumber(Field,i+2);
     M0 = 2.0*M1 - M2;
     psi = 1.0+ (gamma-1.0)*0.5 * pow(M0,2.0);
-    Tools::print("at %d:M1=%f & M2=%f\n",i,M1,M2);
+    //Tools::print("at %d:M1=%f & M2=%f\n",i,M1,M2);
 
     //using isentropic conditions for thermodynamic variables
     //pressure calc.
@@ -219,16 +221,29 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int l
   U = ComputeConserved(Field,loc);
   U_nbor = ComputeConserved(Field,nbor);
   array<double,3> flux;
+  double Fi,F_nbor; //fluxes at cells
 
   // Value at interface interpolated using central quadrature
+  // flux notation from Section3, Slide 28
   /*double flux_continuity = (cv1+cv1_nbor) / 2.0;
   double flux_xmom = (cv2+cv2_nbor) / 2.0;
   double flux_energy = (cv3+cv3_nbor) / 2.0;
   */
-  for (int n=0;n<3;n++)
-    flux[n] = (U[n]+U_nbor[n]) / 2.0; //central quadrature
 
-  //array<double,3> flux = {flux_continuity,flux_xmom,flux_energy};
+  //Continuity Flux
+  Fi = U[1]; F_nbor = U_nbor[1]; //rho*u
+  flux[0] = 0.5*(F_nbor + Fi); 
+
+  //X-Momentum Flux
+  Fi = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2]; //rho*u^2 + P
+  F_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2]; 
+  flux[1] = 0.5*(F_nbor + Fi); 
+
+  //Energy Flux
+  Fi = gamma/(gamma-1.0)*Field[loc][2]*Field[loc][1] + Field[loc][0]*pow(Field[loc][1],3)*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
+  F_nbor = gamma/(gamma-1.0)*Field[nbor][2]*Field[nbor][1] + Field[nbor][0]*pow(Field[nbor][1],3)*0.5;
+  flux[2] = 0.5*(F_nbor + Fi); 
+
   return flux; 
 
 }
@@ -361,8 +376,7 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
   //returns solely \arrow{d^2} vector!
   //look into applying damping terms to boundary?
   //TODO: Compute conservative variables HERE ONLY!
-  //Tools::print("In 2nd order damping fcn.\n");
-  array<double,3> conserved = ComputeConserved(Field,loc);
+  array<double,3> conserved = ComputeConserved(Field,loc); 
   array<double,3> conserved_nbor = ComputeConserved(Field,loc+1);
   
   //Tools::print("Pressure before lambda:%f\n",Field[loc][2]);
@@ -370,17 +384,23 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
   double lambda = GetLambda(Field,loc); //at cell face (i+1/2)
   double epsilon = GetEpsilon2(Field,loc); //sensor for detecting shocks (will have to tweak the constant later)
 
+  array<double,3> res;
   //Tools::print("Lambda: %f & Epsilon: %f\n",lambda,epsilon);
+  for (int i=0;i<3;i++) //computing 2nd order damping here
+    res[i] = lambda*epsilon*(conserved_nbor[i]-conserved[i]);
+  /*
   double res_continuity = lambda*epsilon*(conserved_nbor[0]-conserved[0]);
   double res_xmom = lambda*epsilon*(conserved_nbor[1]-conserved[1]);
   double res_energy = lambda*epsilon*(conserved_nbor[2]-conserved[2]);
+  */
   
   /*double res_rho = lambda*epsilon*(field[loc+1][0] - field[loc][0]);
   double res_vel = lambda*epsilon*(field[loc+1][1] + field[loc+1][1]);
   double res_pressure = lambda*epsilon*(field[loc+1][2] + field[loc+1][2]);
   */
   //array<double,3> res = {res_continuity,res_xmom,res_energy};
-  array<double,3> res = {0.0,0.0,0.0}; //TODO: temporarily turning off
+  res[0]=0.0;res[1]=0.0;res[2]=0.0; //TODO: temporarily turning off
+  //array<double,3> res = {0.0,0.0,0.0}; //TODO: temporarily turning off
 
   return res;
 
@@ -406,13 +426,13 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>> &Field,i
   double lambda = GetLambda(Field,loc);
   double epsilon = GetEpsilon4(Field,loc); //looks for gradients that cause odd-even decoupling (will have to tweak the constant later)
   //TODO: Convert to conservative variables HERE ONLY!
-  array<double,3> conserved = ComputeConserved(Field,loc);
+  array<double,3> conserved = ComputeConserved(Field,loc); 
   array<double,3> conserved_leftnbor = ComputeConserved(Field,loc-1);
   array<double,3> conserved_rightnbor = ComputeConserved(Field,loc+1);
   array<double,3> conserved_right2nbor = ComputeConserved(Field,loc+2);
 
   array<double,3> res;
-  for (int i=0;i<3;i++) 
+  for (int i=0;i<3;i++) //computing 4th order damping term here
     res[i] = lambda*epsilon*(conserved_right2nbor[i] - 3.0*conserved_rightnbor[i] + 3.0*conserved[i] - conserved_leftnbor[i]);
     /*double res_continuity = lambda*epsilon*(conserved_right2nbor[0] - 3.0*conserved_rightnbor[0] + 3.0*conserved[0] - conserved_leftnbor[0]);
     double res_xmom = lambda*epsilon*(conserved_right2nbor[1] - 3.0*conserved_rightnbor[1] + 3.0*conserved[1] - conserved_leftnbor[1]);
