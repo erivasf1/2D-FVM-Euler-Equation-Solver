@@ -24,6 +24,8 @@ class SpaceVariables1D {
 
   void OutputResidualTerms(array<double,3> F_right,array<double,3> F_left,double S,array<double,3> D2_right,array<double,3> D2_left,array<double,3> D4_right,array<double,3> D4_left,const char* filename);
 
+  void ComputeCellAveragedSol(vector<array<double,3>> &SolFace,vector<array<double,3>> &SolCell,vector<double> &xcoords,double dx);
+
   ~SpaceVariables1D();
 
 

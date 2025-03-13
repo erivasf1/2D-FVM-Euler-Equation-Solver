@@ -21,25 +21,25 @@ using namespace std;
 
 int main() {
 
-  // Initializing Parameters
+  // Domain and Fluid Parameters
   double xmin = -1.0;
   double xmax = 1.0;
   double stag_pressure = 300.0; //kPa
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
   double area;
-  double area_star; //area at throat
+  double area_star = Tools::AreaVal(0.5*(xmin+xmax)); //area at throat (midpoint of xmin and xmax)
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 20; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
   //Temporal Specifications
-  const int iter_max = 1e4;
-  const int iterout = 10; //number of iterations per solution output
-  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e2; //max number of iterations
+  const int iterout = 1; //number of iterations per solution output
+  const double CFL = 0.5; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
@@ -52,9 +52,9 @@ int main() {
   // Set Initial Conditions (verified)
   // Calculate Exact Sol. for comparison (verified)
   // Set Boundary Conditions (verified)
-  // TODO: Output Initial Residual Norm
-  // TODO: Output Initial Solution
-  // TODO: Begin Main Loop to iteratively solve Euler Eqs.
+  // Output Initial Residual Norm (verified)
+  // Output Initial Solution (verified)
+  // Begin Main Loop to iteratively solve Euler Eqs.
   //   Set Time Step
   //   Solve Flow quantity at the new time step
   //   Calc. primitive variables from conserved variables //   Reset boundary conditions (ghost node approach)
@@ -62,32 +62,29 @@ int main() {
   //   calculate residual norms (normalized by initial value)
   //   check for convergence (if converged, exit main loop)
   // End Main Loop
-  // TODO: Output solution
+  // Output solution
   // TODO: Evaluate discreization for error norms for grid convergence (isentropic)
 
   //double M; //used for debugging M
 
 
   //Object Initializations
-  vector<array<double,3>> Field(cellnum);
-  vector<array<double,3>> ExactField(cellnum);
-  vector<array<double,3>> Residual(cellnum);
-  vector<array<double,3>> InitResidual(cellnum);
+  vector<array<double,3>> Field(cellnum); //stores the primitive variable sols. at all cells
+  vector<array<double,3>> ExactField(cellnum); //stores the exact sol. at all cells
+  vector<array<double,3>> Residual(cellnum); //stores the residuals for all interior cells
+  vector<array<double,3>> InitResidual(cellnum); //stores the initial residuals for all interior cells
 
-  /*array<double,3>* field; //pointer to Field solutions
-  array<double,3>* exact_sols; //pointer to exact solution field values
-  array<double,3>* resid; //pointer to residual field values per cell
-  array<double,3>* init_resid; //pointer to residual field values per cell
-  */
 
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
 
-  SpaceVariables1D Sols; //for storing solutions
-  SpaceVariables1D ExactSols; //for storing exact solutions
-  SpaceVariables1D ResidSols; //for storing residuals for every cell
-  SpaceVariables1D InitResidSols; //for storing initial residuals for every cell
+  //TODO: Only need 1 of these
+  // for outputting primitive variables and sol. norms
+  SpaceVariables1D Sols; 
+  SpaceVariables1D ExactSols; 
+  SpaceVariables1D ResidSols; 
+  SpaceVariables1D InitResidSols; 
 
-  array<double,3> ResidualNorms;
+  array<double,3> ResidualNorms; //stores the norms of the residuals
 
   Tools tool; //used as utilities object
 
@@ -126,22 +123,23 @@ int main() {
   Sols.OutputPrimitiveVariables(Field,Euler,filename);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
-  array<double,3> sol;
-  area_star = tool.AreaVal(0.0); //area at throat
+  // TODO: Need to obtain the exact cell-averaged sol.
+  vector<array<double,3>> ExactSol_Faces(cellnum+1);
   //Tools::print("Exact Solution Output\n");
-  /*for (int i=0;i<cellnum;i++) {
-    area = tool.AreaVal(xcoords[i]);
-    cond = (xcoords[i] < 0) ? true:false; 
+  //Computing and storing exact sol. at face
+  for (int n=0;n<(int)ExactSol_Faces.size();n++) {
+    area = tool.AreaVal(xcoords[n]);
+    cond = (xcoords[n] < 0) ? true:false; 
     SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
-    Nozzle.ComputeExactSol(sol);
+    Nozzle.ComputeExactSol(ExactSol_Faces[n]); 
  
-    exact_sols[i] = sol; //storing solution values to exact sol.
-    
     //Tools::print("Point %f\n",xcoords[i]);
     //Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
+  }
 
-  }*/
-  //area = tool.AreaVal(xcoord[i]);
+  //Computing cell-average sol. for all cells
+  ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
+  
 
   // SETTING BOUNDARY CONDITIONS
   // Note: Was found that extrapolating values at boundary gave a negative pressure

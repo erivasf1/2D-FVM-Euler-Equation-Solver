@@ -123,4 +123,29 @@ void SpaceVariables1D::OutputResidualTerms(array<double,3> F_right,array<double,
 }
 
 //---------------------------------------------------------
+void SpaceVariables1D::ComputeCellAveragedSol(vector<array<double,3>> &SolFace,vector<array<double,3>> &SolCell,vector<double> &xcoords,double dx){
+
+  //SolFace has one more element than SolCell, due to more faces than cells
+  // using trapezoidal to approximate integral
+  int rght_face,lft_face;
+  double A_right,A_left;
+  for (int n=0;n<(int)SolCell.size();n++){ //computing sol. at each cell
+    lft_face = n;
+    rght_face = n + 1; 
+    A_right = Tools::AreaVal(xcoords[rght_face]);
+    A_left = Tools::AreaVal(xcoords[lft_face]);
+
+    for (int i=0;i<3;i++){ //computing cell average for each primitive variable
+      SolCell[n][i] = A_right*SolFace[rght_face][i] + A_left*SolFace[lft_face][i];
+      SolCell[n][i] /= A_right + A_left;
+      //SolCell[n][i] = 0.5*(A_right*SolFace[rght_face][i] + A_left*SolFace[lft_face][i]);
+      //SolCell[n][i] /= 0.5*(A_right + A_left)*dx;
+    }
+
+  }
+
+  return;
+}
+
+//---------------------------------------------------------
 SpaceVariables1D::~SpaceVariables1D(){}

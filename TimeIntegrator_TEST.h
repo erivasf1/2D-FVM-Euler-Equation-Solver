@@ -7,13 +7,13 @@
 class EulerExplicit {
   //double xmin,xmax;
   int cellnumber; // cellnumber in domain
-  double Density_min = 1.0e-3;
-  double Velocity_min = 1.0e-3;
-  double Pressure_min = 1.0e-3;
+  double Density_min = 1.0e-5;
+  double Velocity_min = 1.0e-5;
+  double Pressure_min = 1.0e-5;
 
-  double Density_max = 1.0e4;
-  double Velocity_max = 1.0e4;
-  double Pressure_max = 1.0e4;
+  double Density_max = 1.0e5;
+  double Velocity_max = 1.0e5;
+  double Pressure_max = 1.0e5;
 
   public:
   EulerExplicit(int &c);
