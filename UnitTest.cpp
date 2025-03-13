@@ -255,19 +255,25 @@ TEST_CASE(" EulerOperator " ){
 
     int cell_index = (int)Field.size()-3; //test cell
     array<double,3> Flux;
-    array<double,3> Expected_Flux = Flux;
+    array<double,3> Expected_Flux;
 
-    array<double,3> Uright; //conserved variable vector to right of test cell
-    array<double,3> U; //conserved variable vector at test cell
+    array<double,3> V_face;
+
+    
     //Computing right face flux
     Flux = Euler.ComputeSpatialFlux(Field,cell_index,cell_index+1);
     
-    Uright = Euler.ComputeConserved(Field,cell_index+1); 
-    U = Euler.ComputeConserved(Field,cell_index); 
-    for (int n=0;n<3;n++){ 
-      Expected_Flux[n] = (Uright[n]+U[n]) * 0.5;
+    for (int i=0;i<3;i++)
+      V_face[i] = (Field[cell_index][i]+Field[cell_index+1][i]) * 0.5;
 
-    }
+    //continuity flux
+    Expected_Flux[0] = V_face[0]*V_face[1];
+    //x-momentum flux
+    Expected_Flux[1] = V_face[0]*pow(V_face[1],2) + V_face[2];
+    //energy flux
+    Expected_Flux[2] = (gamma/(gamma-1.0))*V_face[2]*V_face[1];
+    Expected_Flux[2] += 0.5*(V_face[0]*pow(V_face[1],3));
+    
 
     for (int n=0;n<3;n++){ 
       CAPTURE(Expected_Flux[n],Flux[n]);

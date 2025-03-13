@@ -32,7 +32,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 8; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 32; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
@@ -123,7 +123,6 @@ int main() {
   Sols.OutputPrimitiveVariables(Field,Euler,filename);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
-  // TODO: Need to obtain the exact cell-averaged sol.
   vector<array<double,3>> ExactSol_Faces(cellnum+1);
   //Tools::print("Exact Solution Output\n");
   //Computing and storing exact sol. at face
@@ -139,6 +138,9 @@ int main() {
 
   //Computing cell-average sol. for all cells
   ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
+
+  //TODO: Temporarily set initial conditions to exact solutions
+  Field = ExactField;
   
 
   // SETTING BOUNDARY CONDITIONS
@@ -170,6 +172,7 @@ int main() {
   Tools::print("--Continuity:%e\n",InitNorms[0]);
   Tools::print("--X-Momentum:%e\n",InitNorms[1]);
   Tools::print("--Energy:%e\n",InitNorms[2]);
+  //return 0;
 
 
   // BEGIN OF MAIN LOOP

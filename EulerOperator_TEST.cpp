@@ -24,8 +24,9 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
   //x-mom.
   res[1] = Field[loc][0]*Field[loc][1]; 
 
-  //energy (now changed to rho*u, used to be rho*p)
-  res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2);
+  //total energy density (now changed to rho*u, used to be rho*p)
+  res[2] = Field[loc][2]/(gamma-1.0) + 0.5*Field[loc][0]*pow(Field[loc][1],2);
+  //res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2); -old
 
   return res;
 
@@ -212,16 +213,24 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bo
   return;
 }
 
-//-----------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor){
 
   //Now using Compute Conserved variable functions
-  array<double,3> U; //conserved variable vector
-  array<double,3> U_nbor; //conserved variable vector
-  U = ComputeConserved(Field,loc);
-  U_nbor = ComputeConserved(Field,nbor);
+  //array<double,3> U; //conserved variable vector
+  //array<double,3> U_nbor; //conserved variable vector
+
+  //array<double,3> U_face; //conserved variable at face
+  array<double,3> V_face; //primitive variable at face
+  //U = ComputeConserved(Field,loc);
+  //U_nbor = ComputeConserved(Field,nbor);
+
+  //RECONSTRUCTION: approximating primitive variables at face using central quadrature
+  for (int i=0;i<3;i++)
+    V_face[i] = 0.5*(Field[loc][i]+Field[nbor][i]);  
+
   array<double,3> flux;
-  double Fi,F_nbor; //fluxes at cells
+  //double Fi,F_nbor; //fluxes at cells
 
   // Value at interface interpolated using central quadrature
   // flux notation from Section3, Slide 28
@@ -231,24 +240,27 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int l
   */
 
   //Continuity Flux
-  Fi = U[1]; F_nbor = U_nbor[1]; //rho*u
-  flux[0] = 0.5*(F_nbor + Fi); 
+  //Fi = U[1]; F_nbor = U_nbor[1]; //rho*u
+  //flux[0] = 0.5*(F_nbor + Fi); 
+  flux[0] = V_face[0]*V_face[1]; //rho*u
 
   //X-Momentum Flux
-  Fi = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2]; //rho*u^2 + P
-  F_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2]; 
-  flux[1] = 0.5*(F_nbor + Fi); 
+  //Fi = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2]; //rho*u^2 + P
+  //F_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2]; 
+  //flux[1] = 0.5*(F_nbor + Fi); 
+  flux[1] = V_face[0]*pow(V_face[1],2) + V_face[2]; //rho*u^2 + P
 
   //Energy Flux
-  Fi = gamma/(gamma-1.0)*Field[loc][2]*Field[loc][1] + Field[loc][0]*pow(Field[loc][1],3)*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
-  F_nbor = gamma/(gamma-1.0)*Field[nbor][2]*Field[nbor][1] + Field[nbor][0]*pow(Field[nbor][1],3)*0.5;
-  flux[2] = 0.5*(F_nbor + Fi); 
+  //Fi = (gamma/(gamma-1.0))*Field[loc][2]*Field[loc][1] + (Field[loc][0]*pow(Field[loc][1],3))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
+  //F_nbor = (gamma/(gamma-1.0))*Field[nbor][2]*Field[nbor][1] + (Field[nbor][0]*pow(Field[nbor][1],3))*0.5;
+  //flux[2] = 0.5*(F_nbor + Fi); 
+  flux[2] =(gamma/(gamma-1.0))*V_face[2]*V_face[1] + (V_face[0]*pow(V_face[1],3))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
 
   return flux; 
 
 }
 
-//-----------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 double Euler1D::ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<double> &xcoords) {
 
 
@@ -340,14 +352,15 @@ double Euler1D::GetMachNumber(vector<array<double,3>> &Field,int loc){
 //-----------------------------------------------------------
 double Euler1D::GetLambda(vector<array<double,3>> &Field,int loc){
 
-  double M,a; //cell-averaged Mach number and speed of sound, respectively
+  //double M,a; //cell-averaged Mach number and speed of sound, respectively
   //\bar{lambda_i} at current cell
   //double a = sqrt(gamma*R*T); //TODO:speed of sound (define a fcn. for this)
   // T
   //Tools::print("In GetLambda fcn.\n");
   //Tools::print("Location: %d\n",loc);
-  M = GetMachNumber(Field,loc); 
-  a = Field[loc][1] * M;
+  //M = GetMachNumber(Field,loc); 
+  //a = Field[loc][1] * M;
+  /*
   if (std::isnan(M) || std::isnan(a)){
     Tools::print("Mach Number:%f\n",M);
     Tools::print("Velocity:%f\n",Field[loc][1]);
@@ -355,12 +368,13 @@ double Euler1D::GetLambda(vector<array<double,3>> &Field,int loc){
     Tools::print("Speed of Sound:%f\n",a);
     Tools::print("Cell Index:%d\n",loc);
   }
+  */
   double lambda_i = GetLambdaMax(Field,loc); //Lambda bar
   //double lambda_i = abs(Field[loc][1]) + a;
 
   //\bar{lambda_i+1} at neighboring cell to the right
-  M = GetMachNumber(Field,loc+1); //cell-averaged Mach Number
-  a = Field[loc+1][1] * M;
+  //M = GetMachNumber(Field,loc+1); //cell-averaged Mach Number
+  //a = Field[loc][1] / M; //speed of sound
   double lambda_iright = GetLambdaMax(Field,loc+1); //Lambda_right bar
   //double lambda_iright = abs(Field[loc+1][1]) + a;
 
@@ -547,7 +561,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 double Euler1D::GetLambdaMax(vector<array<double,3>> &Field,int loc){
 
   double M = GetMachNumber(Field,loc); //cell-averaged Mach number
-  double a = abs(Field[loc][1]) * M; //cell-averaged speed of sound
+  double a = abs(Field[loc][1]) / M; //cell-averaged speed of sound
   //double a = absfield[loc][1] * M; //cell-averaged speed of sound
   double lambda_max = abs(Field[loc][1]) + a;
 
