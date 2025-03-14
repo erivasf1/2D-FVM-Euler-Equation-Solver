@@ -32,7 +32,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 32; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 80; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
@@ -116,11 +116,11 @@ int main() {
 
   // SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  Euler.SetInitialConditions(Field,xcoords);
+  //Euler.SetInitialConditions(Field,xcoords);
 
   //Debug: printing initial conditions
-  const char* filename = "InitialSolutions.txt"; 
-  Sols.OutputPrimitiveVariables(Field,Euler,filename);
+  //const char* filename = "InitialSolutions.txt"; 
+  //Sols.OutputPrimitiveVariables(Field,Euler,filename);
 
   // COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   vector<array<double,3>> ExactSol_Faces(cellnum+1);
@@ -141,6 +141,9 @@ int main() {
 
   //TODO: Temporarily set initial conditions to exact solutions
   Field = ExactField;
+  //Debug: printing initial conditions w/ no BCs
+  const char* filename = "InitialSolutions.txt"; 
+  Sols.OutputPrimitiveVariables(Field,Euler,filename);
   
 
   // SETTING BOUNDARY CONDITIONS
@@ -172,7 +175,9 @@ int main() {
   Tools::print("--Continuity:%e\n",InitNorms[0]);
   Tools::print("--X-Momentum:%e\n",InitNorms[1]);
   Tools::print("--Energy:%e\n",InitNorms[2]);
-  //return 0;
+  
+  const char* filename3 = "InitialLocalResiduals.txt";
+  InitResidSols.OutputLocalResiduals(InitResidual,filename3);
 
 
   // BEGIN OF MAIN LOOP

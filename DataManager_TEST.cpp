@@ -82,9 +82,11 @@ void SpaceVariables1D::OutputLocalResiduals(vector<array<double,3>> &Resid,const
     cerr<<"Error: Could Not Open File "<<filename<<endl;
     return;
   }
-  myfile<<"Global Residuals"<<endl;
-  //myfile<<"Continuity: "<<Resid<<"Density"<<"  "<<"Velocity"<<"  "<<"Pressure"<<"  "<<"Mach Number"<<endl;
-
+  myfile<<"Local Residuals"<<endl;
+  myfile<<"Cell"<<"  "<<"Continuity"<<"  "<<"Momentum"<<"  "<<"Energy"<<endl;
+  for (int n=0;n<(int)Resid.size();n++){
+    myfile<<n<<"  "<<Resid[n][0]<<"  "<<Resid[n][1]<<"  "<<Resid[n][2]<<endl;
+  }
   
   myfile.close(); //closing file writing to it
   //myfile.flush();

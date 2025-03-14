@@ -125,26 +125,29 @@ void Euler1D::ComputeTotalBoundaryConditions(vector<array<double,3>> &Field,bool
 //-----------------------------------------------------------
 void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 
-  //TODO: TEST THIS!!
   // Domain:
   // [G1,G2,I1,...,Imax,G3,G4] --> READ THIS!!!
   //Inflow -- linear extrapolation of Mach Number (refer to class notes section 3 slide 34)
   // note: use the absolute velocity when computing Mach number to prevent negative velocities at the inflow
+
+  // note[correction to previous note]: use the actual x-vel. value to compute M, but restrict it to a small positive value in the case it does want to go negative
   double M0,M1,M2; //temp. values
   double psi;
   double T,a;
+  double M_limit = 1.0e-3; //Mach num. limiter
   //Tools::print("ComputeInflowBC\n");
-  //for (int i=1;i>-1;i--){ //reverse for loop for ease of indexing!
   for (int i=1;i>-1;i--){ //reverse for loop for ease of indexing!
     // i=0 (G1) & i=1 (G2)
     //extrapolating Mach Number using slide 34, section 3 nomenclature
     M1 = GetMachNumber(Field,i+1);
     M2 = GetMachNumber(Field,i+2);
-    M0 = 2.0*M1 - M2;
-    psi = 1.0+ (gamma-1.0)*0.5 * pow(M0,2.0);
-    //Tools::print("at %d:M1=%f & M2=%f\n",i,M1,M2);
+    M0 = 2.0*M1 - M2; //extrapolated Mach Num.
+
+    //applying limiter
+    M0 = (M0<M_limit) ? M_limit : M0;
 
     //using isentropic conditions for thermodynamic variables
+    psi = 1.0 + (gamma-1.0)*0.5 * pow(M0,2.0);
     //pressure calc.
     Field[i][2] = pow(psi,gamma/(gamma-1.0));
     Field[i][2] = stag_pressure / Field[i][2]; 
@@ -155,7 +158,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 
     //velocity calc.
     a = sqrt(gamma*R*T); //local speed of sound
-    Field[i][1] = abs(M0*a);
+    Field[i][1] = M0 * a;
     
 
     //Tools::print("B.C.\n");
@@ -275,7 +278,7 @@ double Euler1D::ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<
   // pressure at i = loc
   double p = Field[loc][2];
   // source = P_i * (A_i+1/2 - A_i-1/2) / dx * dx
-  double res = p * (A_rface - A_lface)/dx;
+  double res = p * ((A_rface - A_lface)/dx);
 
   return res;
 
@@ -289,8 +292,8 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
   double Nuright = GetNu(Field,loc+1);
   double Nuright2 = GetNu(Field,loc+2);
 
-  double kappa2 = 1.0/3.0; //typically from 1/4<kappa2<1/2
-  kappa2 = 0.0;
+  double kappa2 = 1.0/2.0; //typically from 1/4<kappa2<1/2
+  //kappa2 = 0.0;
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -331,7 +334,8 @@ double Euler1D::GetMachNumber(vector<array<double,3>> &Field,int loc){
   //Using insentropic conditions only for thermodynamic variables
   double T = Field[loc][2] / (Field[loc][0]*R); //if T is negative than M will be -nan!!!
 
-  double M = abs(Field[loc][1]) / sqrt(gamma * R * T); //M = u/a
+  //using actual x-vel. value now
+  double M = Field[loc][1] / sqrt(gamma * R * T); //M = u/a
 
   /*if (M<0) { //uncomment for now
 
@@ -414,8 +418,7 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
   double res_pressure = lambda*epsilon*(field[loc+1][2] + field[loc+1][2]);
   */
   //array<double,3> res = {res_continuity,res_xmom,res_energy};
-  res[0]=0.0;res[1]=0.0;res[2]=0.0; //TODO: temporarily turning off
-  //array<double,3> res = {0.0,0.0,0.0}; //TODO: temporarily turning off
+  //res[0]=0.0;res[1]=0.0;res[2]=0.0; //TODO: temporarily turning off
 
   return res;
 
@@ -427,7 +430,7 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
 double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int loc){
 
   double epsilon2 = GetEpsilon2(Field,loc);
-  double kappa4 = 1.0/40.0; //typically ranges from: 1/64<kappa4<1/32
+  double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
   return res;
@@ -514,24 +517,11 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
       TotalF_right[i] = F_right[i] - (D2_right[i]+D4_right[i]);
       TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
     }
-    /*
-    //continuity
-    TotalF_right[0] = F_right[0] - (D2_right[0]+D4_right[0]);
-    TotalF_left[0] = F_left[0] - (D2_left[0]+D4_left[0]);
-    //Tools::print("Cont. Total F_right:%f\n",TotalF_right[0]);
-    //x-mom.
-    TotalF_right[1] = F_right[1] - (D2_right[1]+D4_right[1]);
-    TotalF_left[1] = F_left[1] - (D2_left[1]+D4_left[1]);
-    //energy
-    TotalF_right[2] = F_right[2] - (D2_right[2]+D4_right[2]);
-    TotalF_left[2] = F_left[2] - (D2_left[2]+D4_left[2]);
-    */
-
 
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[n-2]);
     A_right = Tools::AreaVal(xcoords[n-1]);
-    Tools::print("A_left:%f & A_right:%f\n",A_left,A_right);
+    //Tools::print("A_left:%f & A_right:%f\n",A_left,A_right);
     //cout<<"A_left: "<<A_left<<"& "<<"A_right: "<<A_right<<endl;
 
     //Residual cal.

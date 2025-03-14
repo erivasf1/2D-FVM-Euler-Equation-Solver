@@ -105,13 +105,13 @@ void EulerExplicit::SolutionLimiter(vector<array<double,3>> &Field){
 
     //Printing out message if limiter kicks in
     if (Field[n][0] == Density_max || Field[n][0] == Density_min)
-      Tools::print("Limiter was hit for density at cell %d\n",n);
+      Tools::print("Limiter was hit for density at cell %d | val is now:%e\n",n,Field[n][0]);
 
     if (Field[n][1] == Velocity_max || Field[n][1] == Velocity_min)
-      Tools::print("Limiter was hit for velocity at cell %d\n",n);
+      Tools::print("Limiter was hit for velocity at cell %d | val is now:%e\n",n,Field[n][1]);
 
     if (Field[n][2] == Pressure_max || Field[n][2] == Pressure_min)
-      Tools::print("Limiter was hit for pressure at cell %d\n",n);
+      Tools::print("Limiter was hit for pressure at cell %d | val is now:%e\n",n,Field[n][2]);
 
   }
   
