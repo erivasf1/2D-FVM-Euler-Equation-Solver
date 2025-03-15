@@ -115,7 +115,7 @@ double SuperSonicNozzle::ComputeMachNumber(){
   //debug:
   print("area: %f and tol.: %f\n",area,tol);
   
-  M0 = (cond == true) ? 0.2:3.0; // initial guess of 0.2 for subsonic & 3.0 for supersonic region
+  M0 = (cond == true) ? 0.1:4.0; // initial guess of 0.1 for subsonic & 4.0 for supersonic region
   //print("M0 initial guess:%f\n",M0); //for debugging
   M1 = M0; //initial guess & resid.
   resid = 1.0e5;  
@@ -154,18 +154,19 @@ void SuperSonicNozzle::ComputeExactSol(array<double,3> &sol){
   double T,P,Rho,V;
   double M,Psi;
   double R = Ru/MolMass; //specific gas constant
+  //stag_pressure *= 1000.0;
 
   //print("Point: %f and Area: %f\n",pts[n],area);
   M = ComputeMachNumber();
   //print("Mach Number: %f\n",M);
-  Psi = 1.0+(gamma-1.0)/2.0 * pow(M,2.0);
+  Psi = 1.0 + ((gamma-1.0)*0.5 * pow(M,2.0));
 
   //Temperature
   // Psi = 1 + (gamma-1/2)M^2
    T = stag_temp/Psi;
    //print("Temperature ratio: %f\n",T/stag_temp);
   
-  //Pressure
+  //Pressure -- convert from kPa
   // P = P0/[Psi^(gamma/gamma-1)] 
    P = stag_pressure / pow(Psi,gamma/(gamma-1.0));
    //print("Pressure ratio: %f\n",P/stag_pressure);

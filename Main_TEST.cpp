@@ -24,7 +24,7 @@ int main() {
   // Domain and Fluid Parameters
   double xmin = -1.0;
   double xmax = 1.0;
-  double stag_pressure = 300.0; //kPa
+  double stag_pressure = 300.0 * 1000.0; //kPa
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
   double area;
@@ -32,14 +32,15 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 80; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
   //Temporal Specifications
-  const int iter_max = 1e2; //max number of iterations
+  const int iter_max = 5; //max number of iterations
+  //const int iter_max = 1e2; //max number of iterations
   const int iterout = 1; //number of iterations per solution output
-  const double CFL = 0.5; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 1.0e-3; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{true}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
@@ -96,6 +97,10 @@ int main() {
   Tools::print("dx:%f\n",dx);
   Euler1D Euler(cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
 
+  //DEBUG: Displaying Areas
+  const char* filename_area = "Areas.txt";
+  Mesh.OutputNozzleAreas(xcoords,filename_area);
+
   // Printing out Temporal Stats
   Tools::print("-Temporal Statistics:\n");
   Tools::print("--CFL: %f\n",CFL);
@@ -116,7 +121,7 @@ int main() {
 
   // SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  //Euler.SetInitialConditions(Field,xcoords);
+  Euler.SetInitialConditions(Field,xcoords);
 
   //Debug: printing initial conditions
   //const char* filename = "InitialSolutions.txt"; 
@@ -127,8 +132,10 @@ int main() {
   //Tools::print("Exact Solution Output\n");
   //Computing and storing exact sol. at face
   for (int n=0;n<(int)ExactSol_Faces.size();n++) {
+    if (n==17)
+      Tools::print("here\n");
     area = tool.AreaVal(xcoords[n]);
-    cond = (xcoords[n] < 0) ? true:false; 
+    cond = (xcoords[n] < 0.0) ? true:false; 
     SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
     Nozzle.ComputeExactSol(ExactSol_Faces[n]); 
  
@@ -140,7 +147,7 @@ int main() {
   ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
 
   //TODO: Temporarily set initial conditions to exact solutions
-  Field = ExactField;
+  //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt"; 
   Sols.OutputPrimitiveVariables(Field,Euler,filename);

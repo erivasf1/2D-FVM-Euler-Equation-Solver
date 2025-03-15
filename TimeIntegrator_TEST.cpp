@@ -33,16 +33,24 @@ vector<double> EulerExplicit::ComputeLocalTimeStep(vector<array<double,3>> &Fiel
   return time_steps;
 }
 
-//-----------------------------------------------------------
-double EulerExplicit::ComputeGlobalTimeStep(const double &CFL,double &dx,double &lambda_max){
+//--------------------------------------------------------------------------
+vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>> &Field,Euler1D &Euler,const double &CFL,double &dx){
 
-  //TODO
+  //extracting smallest local time step of all cells
+  vector<double> time_steps = ComputeLocalTimeStep(Field,Euler,CFL,dx); //local time steps list for all cells
+  double min_time_step = 1.0e5; //temp. value for min time_step
 
-  double dt;
-  return dt;
+  for (int n=0;n<cellnumber;n++){
+    if (time_steps[n] < min_time_step)
+      min_time_step = time_steps[n];
+  }
+
+  vector<double> global_time_steps(cellnumber,min_time_step);
+
+  return global_time_steps;
 
 }
-//-----------------------------------------------------------
+//--------------------------------------------------------------------------
 void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,Euler1D &Euler,vector<double> &time_steps,vector<double> &xcoords,double &dx){
 
   double vol;

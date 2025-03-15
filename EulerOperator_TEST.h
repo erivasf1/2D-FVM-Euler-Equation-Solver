@@ -25,6 +25,7 @@ class Euler1D {
 
   // Primitive & Conserved variables fcns.
   array<double,3> ComputeConserved(vector<array<double,3>> &Field,int loc);
+
   void ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &Conserved,int loc);
 
   // Boundary + Initial Conditions Fcns.

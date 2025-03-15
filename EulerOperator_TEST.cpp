@@ -172,8 +172,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 //-----------------------------------------------------------
 void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool cond){
 
-  //TODO: TEST THIS!!!
-  // From Class Notes Slide 36, Section 3
+  // From Class Notes Slide 36, Section 3 -- extrapolating all primitive variables
 
   if (cond == false){ //supersonic case 
     //using simple extrapolation from class notes section 3 slide 36
@@ -505,17 +504,19 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
     // right face 
-    D2_right = Compute2ndOrderDamping(Field,n);
-    D4_right = Compute4thOrderDamping(Field,n);
+    //D2_right = Compute2ndOrderDamping(Field,n);
+    //D4_right = Compute4thOrderDamping(Field,n);
     // left face
-    D2_left = Compute2ndOrderDamping(Field,n-1);
-    D4_left = Compute4thOrderDamping(Field,n-1);
+    //D2_left = Compute2ndOrderDamping(Field,n-1);
+    //D4_left = Compute4thOrderDamping(Field,n-1);
 
 
     //Total Flux Terms
     for (int i=0;i<3;i++){
-      TotalF_right[i] = F_right[i] - (D2_right[i]+D4_right[i]);
-      TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
+      TotalF_right[i] = F_right[i] - (D2_right[i]-D4_right[i]);
+      TotalF_left[i] = F_left[i] - (D2_left[i]-D4_left[i]);
+      //TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
+      //TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
     }
 
     //Area Evaluations

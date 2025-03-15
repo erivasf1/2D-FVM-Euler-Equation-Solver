@@ -43,5 +43,41 @@ void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
 
 }
 //-----------------------------------------------------------
+void MeshGen1D::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
+
+  //Computing Areas
+  vector<double> Areas((int)xcoords.size());
+  for (int n=0;n<(int)xcoords.size();n++){
+    Areas[n] = Tools::AreaVal(xcoords[n]);
+  }
+
+
+  //Printing out in filename
+  ofstream myfile;
+  myfile.open(filename);
+  //ofstream myfile(filename);
+
+  if (!myfile.is_open()){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+    myfile<<"Areas"<<endl;
+    myfile<<"XCoord"<<"  "<<"Area"<<endl;
+    for (int i=0;i<(int)xcoords.size();i++){
+  
+      myfile<<xcoords[i]<<"  "<<Areas[i]<<endl;
+
+    }
+
+  
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
+
+  return;
+
+
+}
+
+//-----------------------------------------------------------
 
 MeshGen1D::~MeshGen1D(){}

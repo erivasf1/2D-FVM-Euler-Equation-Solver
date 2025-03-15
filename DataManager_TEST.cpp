@@ -129,7 +129,7 @@ void SpaceVariables1D::ComputeCellAveragedSol(vector<array<double,3>> &SolFace,v
 
   //SolFace has one more element than SolCell, due to more faces than cells
   // using trapezoidal to approximate integral
-  int rght_face,lft_face;
+  int rght_face,lft_face; //indexes
   double A_right,A_left;
   for (int n=0;n<(int)SolCell.size();n++){ //computing sol. at each cell
     lft_face = n;
