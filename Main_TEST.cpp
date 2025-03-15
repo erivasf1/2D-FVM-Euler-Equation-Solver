@@ -32,7 +32,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 40; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
 
@@ -41,7 +41,7 @@ int main() {
   //const int iter_max = 1e2; //max number of iterations
   const int iterout = 1; //number of iterations per solution output
   const double CFL = 1.0e-3; //CFL number (must <= 1 for Euler Explicit integration)
-  bool timestep{true}; //true = local time stepping; false = global time stepping
+  bool timestep_cond{false}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
   double cont_tol = 1e-3;
@@ -105,7 +105,7 @@ int main() {
   Tools::print("-Temporal Statistics:\n");
   Tools::print("--CFL: %f\n",CFL);
   Tools::print("Time-stepping method: ");
-  (timestep == true) ? Tools::print("Local time-stepping\n") : Tools::print("Global time-stepping\n");  
+  (timestep_cond == true) ? Tools::print("Local time-stepping\n") : Tools::print("Global time-stepping\n");  
 
 
   //debugging:
@@ -121,7 +121,7 @@ int main() {
 
   // SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  Euler.SetInitialConditions(Field,xcoords);
+  //Euler.SetInitialConditions(Field,xcoords);
 
   //Debug: printing initial conditions
   //const char* filename = "InitialSolutions.txt"; 
@@ -132,12 +132,16 @@ int main() {
   //Tools::print("Exact Solution Output\n");
   //Computing and storing exact sol. at face
   for (int n=0;n<(int)ExactSol_Faces.size();n++) {
-    if (n==17)
-      Tools::print("here\n");
     area = tool.AreaVal(xcoords[n]);
     cond = (xcoords[n] < 0.0) ? true:false; 
     SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
     Nozzle.ComputeExactSol(ExactSol_Faces[n]); 
+
+    if (n==17){ //debugging supersonic mach number at subsonic section
+      Tools::print("here\n");
+      const char* Mach_filename = "MachNumberVariation.txt";
+      Nozzle.OutputAllMachNumbers(Mach_filename,500);
+    }
  
     //Tools::print("Point %f\n",xcoords[i]);
     //Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
@@ -147,7 +151,7 @@ int main() {
   ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
 
   //TODO: Temporarily set initial conditions to exact solutions
-  //Field = ExactField;
+  Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt"; 
   Sols.OutputPrimitiveVariables(Field,Euler,filename);
@@ -187,7 +191,6 @@ int main() {
   InitResidSols.OutputLocalResiduals(InitResidual,filename3);
 
 
-  // BEGIN OF MAIN LOOP
   vector<double> time_steps;
   Residual = InitResidual;
 
@@ -200,6 +203,7 @@ int main() {
   myresids.open("SolResids.txt");
   myresids<<"Iteration"<<"  "<<"Contintuity"<<"  "<<"X-Momentum"<<"  "<<"Energy"<<endl;
 
+  // BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
 
     //debugging only
@@ -207,7 +211,7 @@ int main() {
   
     //COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
-    time_steps = Time.ComputeLocalTimeStep(Field,Euler,CFL,dx);
+    time_steps = (timestep_cond == true) ? Time.ComputeLocalTimeStep(Field,Euler,CFL,dx) : Time.ComputeGlobalTimeStep(Field,Euler,CFL,dx);
 
     //COMPUTE NEW SOL. VALUES 
     Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);

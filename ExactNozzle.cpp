@@ -76,6 +76,7 @@ SuperSonicNozzle::SuperSonicNozzle(double &a,double &b,double &c,double &d,bool 
 SuperSonicNozzle::~SuperSonicNozzle(){} //destructor
 
 
+//---------------------------------------------------------
 double SuperSonicNozzle::GetPhi(double M) {
 
   double phi = 2.0/(gamma+1.0);
@@ -84,6 +85,7 @@ double SuperSonicNozzle::GetPhi(double M) {
   return phi;
 }
 
+//---------------------------------------------------------
 double SuperSonicNozzle::GetF(double Phi,double ABar,double M) {
 
   double f = pow(Phi,(gamma+1.0)/(gamma-1.0));
@@ -92,6 +94,7 @@ double SuperSonicNozzle::GetF(double Phi,double ABar,double M) {
 
 }
 
+//---------------------------------------------------------
 double SuperSonicNozzle::GetFPrime(double Phi,double ABar,double M) {
 
   double fprime = 2.0 * M;
@@ -100,7 +103,40 @@ double SuperSonicNozzle::GetFPrime(double Phi,double ABar,double M) {
 
 }
 
+//---------------------------------------------------------
+void SuperSonicNozzle::OutputAllMachNumbers(const char* filename,int num){
 
+  ofstream myfile;
+  myfile.open(filename);
+
+  if (!myfile.is_open()){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  vector<double> MachNumbers = Tools::RetrievePoints(0.0,4.0,num); //arbitrary num. of Mach Numbers
+
+
+  double phi,F;
+  double area_bar = area/area_star;
+
+  myfile<<"Mach Number"<<"  "<<"F(Residual)"<<endl;
+  for (int n=0;n<num;n++){
+    phi = GetPhi(MachNumbers[n]);  
+    F = GetF(phi,area_bar,MachNumbers[n]);
+  
+    myfile<<MachNumbers[n]<<"  "<<F<<endl;
+  
+  }
+  
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
+
+  return;
+
+}
+
+//---------------------------------------------------------
 double SuperSonicNozzle::ComputeMachNumber(){
 //F[m] = [2/gamma+1(1+(gamma-1)/2)M^2]^[(gamma+1)/(gamma-1)]
 // F'[M] = 2M[Phi^(2/gamma-1)-\Bar{A}^2] & Phi = [2/gamma+1(1+(gamma-1)/2)M^2]
@@ -148,6 +184,7 @@ double SuperSonicNozzle::ComputeMachNumber(){
 
 }
 
+//---------------------------------------------------------
 void SuperSonicNozzle::ComputeExactSol(array<double,3> &sol){
 
   //vector<double> sol;

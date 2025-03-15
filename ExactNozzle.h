@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <stdarg.h>
 #include <array>
+#include <fstream>
+
 using namespace std;
 
 class Tools{
@@ -47,6 +49,7 @@ class SuperSonicNozzle : public Tools{
  
   static double GetFPrime(double Phi,double ABar,double M); //Used for Mach Number computation
 
+  void OutputAllMachNumbers(const char* filename,int num); //outputs specified"num" value of arbitrary Mach numbers to visualize the non Mach Number sol. profile
 
   double ComputeMachNumber(); //Computes mach number using area-mach number relationship via Newton's method
   void ComputeExactSol(array<double,3> &sol); //Computes the exact solution for density,pressure, velocity & Mach Number
