@@ -160,20 +160,50 @@ double SuperSonicNozzle::ComputeMachNumber(){
   double phi_init = GetPhi(M0);
   double F_init = GetF(phi_init,ABar,M0);
   
-  //Employing Newton's Method to solve nonlinear equation
+  //Employing Hybrid Bracketing (Bisection) Newton's Method to solve nonlinear equation
+
+  double Ma,Mb; //end brackets for M 
+  double Fa,Fb; //function vals(Fs) for end brackets
+  double phi_a,phi_b; //end bracket phi values
+
+  Ma = (cond == true) ? 1.0e-4:1.0; //1st end bracket (true for subsonic case)
+  Mb = (cond == true) ? 1.0:5.0; //2nd end bracket (true for subsonic case)
   for (int i=0;i<maxiter;i++) {
     if (resid <= tol) break;
 
+    // End interval function values
+    phi_a = GetPhi(Ma);
+    phi_b = GetPhi(Mb);
+    Fa = GetF(phi_a,ABar,Ma);
+    Fb = GetF(phi_b,ABar,Mb);
+    if ((Fa > 0.0 && Fb > 0.0) || (Fa < 0.0 && Fb < 0.0)){
+      print("End intervals are same functional sign. No solution exists!\n"); 
+      return 0.0;
+    }
+    
+
+    // Stepping via Newton's Method
     phi = GetPhi(M1);
     F = GetF(phi,ABar,M1);
     Fprime = GetFPrime(phi,ABar,M1);
     M1 -= F/Fprime;
+
+    // Checking if M1 is outside interval
+    if (M1>Mb || M1<Ma)
+      M1 = (Mb+Ma) / 2.0; //M1 computed via bi-section method
     
 
     //checking residual
     phi = GetPhi(M1);
     F = GetF(phi,ABar,M1);
     resid = abs(F/F_init);
+
+    // updating end brackets
+    if ((Fa > 0.0 && F > 0.0) || (Fa < 0.0 && F < 0.0)) //updating Ma case
+      Ma = M1;
+
+    if ((Fb > 0.0 && F > 0.0) || (Fb < 0.0 && F < 0.0)) //updating Mb case
+      Mb = M1;
     //resid = abs(F);
     //F_init = F;
 
