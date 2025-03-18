@@ -301,7 +301,7 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
   double Nuright2 = GetNu(Field,loc+2);
 
   double kappa2 = 1.0/2.0; //typically from 1/4<kappa2<1/2
-  //kappa2 = 0.0; //TEMP: Turning off 2nd order damping effects
+  kappa2 = 0.0; //TEMP: Turning off 2nd order damping effects
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -327,7 +327,7 @@ double Euler1D::GetNu(vector<array<double,3>> &Field,int loc){
 
   if (loc == 0){ //check for evaluating new at 1st inflow ghost cell
     res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc][2]; //assuming Pressure is same at cell loc
-    res = Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc][2]; //assuming Pressure is same at cell loc
+    res /= Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc][2]; //assuming Pressure is same at cell loc
     return res; 
   }
     
