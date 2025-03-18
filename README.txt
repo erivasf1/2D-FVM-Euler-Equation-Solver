@@ -17,3 +17,6 @@
 
 CURRENTLY:
 Copies labeled "TEST" are copies of its corresponding file with the main nuance being the absence of pointers. Try getting this to run first (hopefully converge) and then use pointers
+
+THINGS LEARNED:
+1) Residuals really are just checks on how well the cell(or domain) satisfies the governing equations (i.e. conservation laws). If the residual is high then solver will want to "greatly" change the values in the cell in hopes of it generating a lesser residual
