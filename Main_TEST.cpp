@@ -32,7 +32,7 @@ int main() {
   bool cond{false}; //true for subsonic & false for supersonic
 
   //Mesh Specifications
-  int cellnum = 40; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
@@ -40,15 +40,15 @@ int main() {
 
   //Temporal Specifications
   //const int iter_max = 10; //max number of iterations
-  const int iter_max = 50; //max number of iterations
-  const int iterout = 1; //number of iterations per solution output
-  const double CFL = 1.0e-3; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 5e4; //max number of iterations
+  const int iterout = 30; //number of iterations per solution output
+  const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
-  double cont_tol = 1e-3;
-  double xmom_tol = 1e-3;
-  double energy_tol = 1e-3;
+  double cont_tol = 1e-9;
+  double xmom_tol = 1e-9;
+  double energy_tol = 1e-9;
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -123,7 +123,7 @@ int main() {
 
   // SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  //Euler.SetInitialConditions(Field,xcoords);
+  Euler.SetInitialConditions(Field,xcoords);
 
   //Debug: printing initial conditions
   //const char* filename = "InitialSolutions.txt"; 
@@ -153,7 +153,7 @@ int main() {
   ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
 
   //TODO: Temporarily set initial conditions to exact solutions
-  Field = ExactField;
+  //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt"; 
   Sols.OutputPrimitiveVariables(Field,Euler,filename);
@@ -277,6 +277,10 @@ int main() {
     Tools::print("Failed to converge!\n");
 
   else {
+    Tools::print("\n");
+    Tools::print("------------------------------------------------------------\n");
+    Tools::print("CONGRATS you converged!\n");
+    Tools::print("Continuity: %e\nX-Momentum: %e\nEnergy: %e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
     const char* filename_final = "ConvergedSolution.txt" ; 
     Sols.OutputPrimitiveVariables(Field,Euler,filename_final);
   }

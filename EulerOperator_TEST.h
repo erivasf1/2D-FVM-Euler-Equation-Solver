@@ -13,6 +13,14 @@ class Euler1D {
   double gamma;
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   
   const double MolMass = 28.96; // kg/kmol
+
+  double Density_min = 1.0e-4; //primitive variable sol. limits
+  double Velocity_min = 1.0e-7;
+  double Pressure_min = 1.0e-4;
+
+  double Density_max = 1.0e6;
+  double Velocity_max = 1.0e6;
+  double Pressure_max = 1.0e9;
  
 
   public:
@@ -20,6 +28,7 @@ class Euler1D {
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions) -- gets assigned value in SetBoundaryConditions fcn.
   double R = Ru / MolMass; //specific gas constant
+  
 
   Euler1D(); //empty constructor for unit testing
 
@@ -53,7 +62,8 @@ class Euler1D {
  
   double GetLambda(vector<array<double,3>> &Field,int loc);
   double GetNu(vector<array<double,3>> &Field,int loc); //switching fcn.
-  double GetMachNumber(vector<array<double,3>> &Field,int loc); //used for GetLambda fcn.
+  double GetMachNumber(vector<array<double,3>> &Field,int loc); //computing Mach Number given known primitve varialbes
+  //double ComputeIsentropicMachNumber(vector<array<double,3>> &Field,int loc); //computing Mach Number using isentropic conditions -- only used for
   
   // Supplemental Fcns. (may be used for other fcns. of other classes)
   double GetLambdaMax(vector<array<double,3>> &Field,int loc); //extracts largest eigenvalue for a given cell

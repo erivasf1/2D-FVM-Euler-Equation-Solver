@@ -18,13 +18,13 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
   //TODO: Check for any negative values here
   array<double,3> res; //to store conserved variables
 
-  //continuity
+  //density(i.e. continuity)
   res[0] = Field[loc][0]; 
 
   //x-mom.
   res[1] = Field[loc][0]*Field[loc][1]; 
 
-  //total energy density (now changed to rho*u, used to be rho*p)
+  //total energy density 
   res[2] = Field[loc][2]/(gamma-1.0) + 0.5*Field[loc][0]*pow(Field[loc][1],2.0);
   //res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2); 
 
@@ -50,9 +50,12 @@ void Euler1D::ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &C
   //pressure
   Field[loc][2] = (gamma-1.0) * (Conserved[2]-0.5*(pow(Conserved[1],2.0)/Conserved[0]));
 
-  if (Field[loc][0] < 0.0 || Field[loc][1] < 0.0 || Field[loc][2] < 0.0)
-    Tools::print("ComputePrimitive Negative value detected Roy!!! & val is: %f,%f,%f\n",Field[loc][0],Field[loc][1],Field[loc][2]);
-
+  /*if (Field[loc][0] < 0.0 || Field[loc][1] < 0.0 || Field[loc][2] < 0.0){ //solution limiter
+    Tools::print("Limiter enforced when computing primitive to conserved\n");
+    std::min(Density_max,std::max(Density_min,Field[loc][0])); 
+    std::min(Velocity_max,std::max(Velocity_min,Field[loc][1])); 
+    std::min(Pressure_max,std::max(Pressure_min,Field[loc][2])); 
+  }*/
 
   return;
 }
@@ -109,7 +112,7 @@ void Euler1D::SetBoundaryConditions(vector<array<double,3>> &Field,bool &cond){
   Field.push_back(empty); 
   Field.push_back(empty); 
 
-  total_cellnum = Field.size(); //!< saving the new total num. of cells (w/ ghost cells)
+  total_cellnum = (int)Field.size(); //!< saving the new total num. of cells (w/ ghost cells)
   //Tools::print("total number of cells after set BC:%d\n",total_cellnum);
 
   //Calculating Boundary Condition values
@@ -154,7 +157,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
     //applying limiter
     M0 = (M0<M_limit) ? M_limit : M0;
 
-    //using isentropic conditions for thermodynamic variables
+    //USING ISENTROPIC CONDITIONS for thermodynamic variables
 
     psi = 1.0 + (gamma-1.0)*0.5 * pow(M0,2.0);
     //pressure calc.
@@ -285,8 +288,9 @@ double Euler1D::ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<
   double A_lface = Tools::AreaVal(xcoords[loc-2]);
   // pressure at i = loc
   double p = Field[loc][2];
+  double dAdx = (A_rface-A_lface) / dx;
   // source = P_i * (A_i+1/2 - A_i-1/2) / dx * dx
-  double res = p * ((A_rface - A_lface)/dx);
+  double res = p * dAdx;
 
   return res;
 
@@ -409,7 +413,7 @@ double Euler1D::GetLambda(vector<array<double,3>> &Field,int loc){
   double lambda_iright = GetLambdaMax(Field,loc+1); //Lambda_right bar
   //double lambda_iright = abs(Field[loc+1][1]) + a;
 
-  double res = (lambda_i + lambda_iright) / 2.0;
+  double res = 0.5 * (lambda_i + lambda_iright);
   return res;
 
 }
@@ -457,7 +461,8 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
 double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int loc){
 
   double epsilon2 = GetEpsilon2(Field,loc);
-  double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
+  double kappa4 = 1.0/5.0; //typically ranges from: 1/64<kappa4<1/32
+  //double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
   return res;
@@ -592,7 +597,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 double Euler1D::GetLambdaMax(vector<array<double,3>> &Field,int loc){
 
   double M = GetMachNumber(Field,loc); //cell-averaged Mach number
-  double a = abs(Field[loc][1]) / M; //cell-averaged speed of sound
+  double a = Field[loc][1] / M; //cell-averaged speed of sound
   //double a = absfield[loc][1] * M; //cell-averaged speed of sound
   double lambda_max = abs(Field[loc][1]) + a;
 
