@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -g -std=gnu++17
+CXX_FLAGS = -g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -ffpe-trap=zero,underflow,overflow,invalid -std=gnu++17
 

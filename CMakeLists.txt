@@ -18,8 +18,10 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Enable debug symbols
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address")
+set(CMAKE_C_FLAGS_DEBUG "-g3 -fsanitize=address")
+
+
 
 # Define source files
 set(SOURCES
@@ -65,7 +67,7 @@ set(TESTHEADERS
 )
 
 # Create the executable
-add_executable(nozzle ${SOURCES} ${HEADERS})
+#add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
 add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
 

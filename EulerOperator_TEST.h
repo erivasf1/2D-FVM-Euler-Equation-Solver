@@ -4,6 +4,8 @@
 #include "ExactNozzle.h"
 #include "MeshGen.h"
 
+using namespace std;
+
 class Euler1D {
   //vector<double> &xcoords;
   double stag_pressure; //stagnation pressure

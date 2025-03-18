@@ -20,6 +20,8 @@ class SpaceVariables1D {
 
   void OutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,const char *filename);
 
+  void AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter);
+
   void OutputLocalResiduals(vector<array<double,3>> &Resid,const char *filename); //TODO
 
   void OutputResidualTerms(array<double,3> F_right,array<double,3> F_left,double S,array<double,3> D2_right,array<double,3> D2_left,array<double,3> D4_right,array<double,3> D4_left,const char* filename);

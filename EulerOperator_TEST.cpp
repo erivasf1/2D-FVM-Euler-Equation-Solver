@@ -25,14 +25,18 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>> &Field,int loc
   res[1] = Field[loc][0]*Field[loc][1]; 
 
   //total energy density (now changed to rho*u, used to be rho*p)
-  res[2] = Field[loc][2]/(gamma-1.0) + 0.5*Field[loc][0]*pow(Field[loc][1],2);
-  //res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2); -old
+  res[2] = Field[loc][2]/(gamma-1.0) + 0.5*Field[loc][0]*pow(Field[loc][1],2.0);
+  //res[2] = 1.0/(gamma-1.0) + (0.5)*Field[loc][0]*pow(Field[loc][1],2); 
+
+
+  if (res[0] < 0.0 || res[1] < 0.0 || res[2] < 0.0)
+    Tools::print("ComputeConserved Negative value detected Roy!!! & val is: %f,%f,%f\n",res[0],res[1],res[2]);
 
   return res;
 
 }
 
-//-----------------------------------------------------------
+//-------------------------------------------------------------
 void Euler1D::ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &Conserved,int loc) {
 
   // TODO: Check for negative values here
@@ -44,7 +48,11 @@ void Euler1D::ComputePrimitive(vector<array<double,3>> &Field,array<double,3> &C
   Field[loc][1] = Conserved[1] / Conserved[0];
 
   //pressure
-  Field[loc][2] = (gamma-1.0) * (Conserved[2]-0.5*(pow(Conserved[1],2)/Conserved[0]));
+  Field[loc][2] = (gamma-1.0) * (Conserved[2]-0.5*(pow(Conserved[1],2.0)/Conserved[0]));
+
+  if (Field[loc][0] < 0.0 || Field[loc][1] < 0.0 || Field[loc][2] < 0.0)
+    Tools::print("ComputePrimitive Negative value detected Roy!!! & val is: %f,%f,%f\n",Field[loc][0],Field[loc][1],Field[loc][2]);
+
 
   return;
 }
@@ -127,7 +135,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
 
   // Domain:
   // [G1,G2,I1,...,Imax,G3,G4] --> READ THIS!!!
-  //Inflow -- linear extrapolation of Mach Number (refer to class notes section 3 slide 34)
+  //Inflow -- linear extrapolation of MACH NUMBER (refer to class notes section 3 slide 34)
   // note: use the absolute velocity when computing Mach number to prevent negative velocities at the inflow
 
   // note[correction to previous note]: use the actual x-vel. value to compute M, but restrict it to a small positive value in the case it does want to go negative
@@ -147,6 +155,7 @@ void Euler1D::ComputeInflowBoundaryConditions(vector<array<double,3>> &Field){
     M0 = (M0<M_limit) ? M_limit : M0;
 
     //using isentropic conditions for thermodynamic variables
+
     psi = 1.0 + (gamma-1.0)*0.5 * pow(M0,2.0);
     //pressure calc.
     Field[i][2] = pow(psi,gamma/(gamma-1.0));
@@ -250,13 +259,13 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>> &Field,int l
   //Fi = Field[loc][0]*pow(Field[loc][1],2) + Field[loc][2]; //rho*u^2 + P
   //F_nbor = Field[nbor][0]*pow(Field[nbor][1],2) + Field[nbor][2]; 
   //flux[1] = 0.5*(F_nbor + Fi); 
-  flux[1] = V_face[0]*pow(V_face[1],2) + V_face[2]; //rho*u^2 + P
+  flux[1] = V_face[0]*pow(V_face[1],2.0) + V_face[2]; //rho*u^2 + P
 
   //Energy Flux
   //Fi = (gamma/(gamma-1.0))*Field[loc][2]*Field[loc][1] + (Field[loc][0]*pow(Field[loc][1],3))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
   //F_nbor = (gamma/(gamma-1.0))*Field[nbor][2]*Field[nbor][1] + (Field[nbor][0]*pow(Field[nbor][1],3))*0.5;
   //flux[2] = 0.5*(F_nbor + Fi); 
-  flux[2] =(gamma/(gamma-1.0))*V_face[2]*V_face[1] + (V_face[0]*pow(V_face[1],3))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
+  flux[2] =(gamma/(gamma-1.0))*V_face[2]*V_face[1] + (V_face[0]*pow(V_face[1],3.0))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
 
   return flux; 
 
@@ -292,7 +301,7 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
   double Nuright2 = GetNu(Field,loc+2);
 
   double kappa2 = 1.0/2.0; //typically from 1/4<kappa2<1/2
-  //kappa2 = 0.0;
+  //kappa2 = 0.0; //TEMP: Turning off 2nd order damping effects
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -304,7 +313,26 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
 //-----------------------------------------------------------
 double Euler1D::GetNu(vector<array<double,3>> &Field,int loc){
 
-  double res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc-1][2];
+  int total_cells = (int)Field.size();
+  double res;
+  //Tools::print("loc:%d\n",loc);
+
+  if (loc == total_cells){ //check for evaluating nu at last outflow ghost cell
+    //Tools::print("I was called\n");
+    res = Field[loc][2] - (2.0*Field[loc][2]) +  Field[loc-1][2]; //assuming Pressure is same at cell loc
+    res /= Field[loc][2] + (2.0*Field[loc][2]) +  Field[loc-1][2]; //assuming Pressure is same at cell loc
+    //res = 0.0;
+    return res;
+  }
+
+  if (loc == 0){ //check for evaluating new at 1st inflow ghost cell
+    res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc][2]; //assuming Pressure is same at cell loc
+    res = Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc][2]; //assuming Pressure is same at cell loc
+    return res; 
+  }
+    
+  
+  res = Field[loc+1][2] - (2.0*Field[loc][2]) +  Field[loc-1][2]; //normal case
   res /= Field[loc+1][2] + (2.0*Field[loc][2]) +  Field[loc-1][2];
   res = abs(res);
 
@@ -487,6 +515,9 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     
     Tools::print("cell index:%d\n",n);
 
+    //if (n==total_cellnum-3)
+      //Tools::print("Ans to 3.5^3 is: %f\n",pow(3.5,3.0));
+    
 
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
@@ -504,18 +535,27 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
     // right face 
-    //D2_right = Compute2ndOrderDamping(Field,n);
-    //D4_right = Compute4thOrderDamping(Field,n);
+    D2_right = Compute2ndOrderDamping(Field,n);
+    D4_right = Compute4thOrderDamping(Field,n);
     // left face
-    //D2_left = Compute2ndOrderDamping(Field,n-1);
-    //D4_left = Compute4thOrderDamping(Field,n-1);
+    D2_left = Compute2ndOrderDamping(Field,n-1);
+    D4_left = Compute4thOrderDamping(Field,n-1);
+
+    //temp: for now setting damping terms to 0
+    /*array<double,3> Zero{0.0,0.0,0.0};
+    D2_right = Zero; D4_right = Zero;
+    D2_left = Zero; D4_left = Zero;
+    */
+    
+    
 
 
-    //Total Flux Terms
+    //TODO: Total Flux Terms (look into how the damping terms get summed up!)
+    // correct form is D(2)-D(4) due to it really being a switching fcn. of the 2nd and 4th order
     for (int i=0;i<3;i++){
       TotalF_right[i] = F_right[i] - (D2_right[i]-D4_right[i]);
       TotalF_left[i] = F_left[i] - (D2_left[i]-D4_left[i]);
-      //TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
+      //TotalF_right[i] = F_right[i] - (D2_right[i]+D4_right[i]);
       //TotalF_left[i] = F_left[i] - (D2_left[i]+D4_left[i]);
     }
 

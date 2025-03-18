@@ -59,30 +59,36 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
   // Field still has ghost cells
   //First, convert to conservative to compute conservative values at new time step
   //Second, extract primitive variables from newly calculated conservative variables
-  for (int i=0;i<cellnumber;i++){ //i+2 to skip inflow ghost cells
+  for (int n=0;n<cellnumber;n++){ //i+2 to skip inflow ghost cells
     
-    vol = MeshGen1D::GetCellVolume(i,dx,xcoords); //acquiring cell vol
+    vol = MeshGen1D::GetCellVolume(n,dx,xcoords); //acquiring cell vol
     //Tools::print("Volume of cell %d:%f\n",i,vol);
-    conserve = Euler.ComputeConserved(Field,i+2); //!< computing conservative values
+    conserve = Euler.ComputeConserved(Field,n+2); //!< computing conservative values
+
+    for (int i=0;i<3;i++) // advancing to new timestep of conservative varialbe
+      conserve[i] -= (time_steps[i] / vol) * Resid[n][i];
+
+    Euler.ComputePrimitive(Field,conserve,n+2); //!< extracting new primitive variables
+
+  }
 
     //new continuity
     //Tools::print("previous density :%f\n",Field[i+2][0]);
-    conserve[0] -= (time_steps[i] / vol) * Resid[i][0];
+    //conserve[0] -= (time_steps[i] / vol) * Resid[i][0];
     //Tools::print("time step :%f\n",time_steps[i]);
     //Tools::print("continuity Resid :%f\n",Resid[i][0]);
     //Tools::print("new density :%f\n",Field[i+2][0]);
 
     //new velocity
     //Tools::print("previous velocity :%f\n",Field[i+2][1]);
-    conserve[1] -= (time_steps[i] / vol) * Resid[i][1];
+    //conserve[1] -= (time_steps[i] / vol) * Resid[i][1];
     //Tools::print("X-mom. Resid :%f\n",Resid[i][1]);
 
     //new pressure
     //Tools::print("previous pressure :%f\n",Field[i+2][2]);
-    conserve[2] -= (time_steps[i] / vol) * Resid[i][2];
+    //conserve[2] -= (time_steps[i] / vol) * Resid[i][2];
     //Tools::print("Energy Resid :%f\n",Resid[i][2]);
 
-    Euler.ComputePrimitive(Field,conserve,i+2); //!< extracting new primitive variables
 
     //Applying Solution Limiter 
     //SolutionLimiter(Field[i+2]);
@@ -94,7 +100,7 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
     Tools::print("------\n");
     */ 
 
-  }
+  //}
 
 }
 

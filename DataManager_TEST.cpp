@@ -53,7 +53,7 @@ void SpaceVariables1D::OutputPrimitiveVariables(vector<array<double,3>> &Field,E
   }
     double M; //temp. variable for Mach number
     myfile<<"Primitive Variable Solutions (Including Ghost Cells)"<<endl;
-    myfile<<"Cell#"<<"  "<<"Density"<<"  "<<"Velocity"<<"  "<<"Pressure"<<"  "<<"Mach Number"<<endl;
+    myfile<<"Cell#"<<"  "<<"Density(kg/m^3)"<<"  "<<"Velocity(m/s)"<<"  "<<"Pressure(Pa)"<<"  "<<"Mach Number"<<endl;
     for (int i=0;i<(int)Field.size();i++){
   
       //Computing Mach Number for checking the initial conditions
@@ -68,6 +68,53 @@ void SpaceVariables1D::OutputPrimitiveVariables(vector<array<double,3>> &Field,E
   //myfile.flush();
 
 return;
+}
+
+//---------------------------------------------------------
+void SpaceVariables1D::AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter){
+
+  cell_number = Field.size()-4; //number of interior cells
+  std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
+  //myfile.open(filename);
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  if (cond==false)
+    myfile<<"variables= \"cell index\" \"rho(kg/m^3)\" \"u(m/s)\"  \"Press(N/m^2)\"\"Mach\""<<endl;
+
+//Repeat the following each time you want to write out the solution
+/*
+write(40,*) 'zone T="',num_iter,'" '
+write(40,*) 'I=',imax
+write(40,*) 'DATAPACKING=POINT'
+write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
+& DOUBLE DOUBLE )'
+  */
+
+  myfile<<"zone T= "<<"\""<<iter<<"\""<<endl;
+  myfile<<"I="<<cell_number<<endl;
+  myfile<<"DATAPACKING=POINT"<<endl;
+  myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+
+  double M;
+
+  for (int n=0;n<cell_number;n++){
+    //Computing Mach Number for checking the initial conditions
+    M = Euler.GetMachNumber(Field,n+2);
+    myfile<<n+1<<"  ";
+    myfile<<Field[n][0]<<"  "<<Field[n][1]<<"  "<<Field[n][2]<<"  "<<M<<endl;
+
+  }
+
+  
+  
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
+
+  return;
 }
 
 //---------------------------------------------------------

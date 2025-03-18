@@ -63,7 +63,6 @@ CMAKE_BINARY_DIR = /home/erivas/Adv_CFD/HW2
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/nozzle.dir/all
 all: CMakeFiles/testnozzle.dir/all
 .PHONY : all
 
@@ -72,35 +71,8 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/nozzle.dir/clean
 clean: CMakeFiles/testnozzle.dir/clean
 .PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/nozzle.dir
-
-# All Build rule for target.
-CMakeFiles/nozzle.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nozzle.dir/build.make CMakeFiles/nozzle.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nozzle.dir/build.make CMakeFiles/nozzle.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9 "Built target nozzle"
-.PHONY : CMakeFiles/nozzle.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/nozzle.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/erivas/Adv_CFD/HW2/CMakeFiles 9
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/nozzle.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/erivas/Adv_CFD/HW2/CMakeFiles 0
-.PHONY : CMakeFiles/nozzle.dir/rule
-
-# Convenience name for target.
-nozzle: CMakeFiles/nozzle.dir/rule
-.PHONY : nozzle
-
-# clean rule for target.
-CMakeFiles/nozzle.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nozzle.dir/build.make CMakeFiles/nozzle.dir/clean
-.PHONY : CMakeFiles/nozzle.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/testnozzle.dir
@@ -109,7 +81,7 @@ CMakeFiles/nozzle.dir/clean:
 CMakeFiles/testnozzle.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testnozzle.dir/build.make CMakeFiles/testnozzle.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/testnozzle.dir/build.make CMakeFiles/testnozzle.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=10,11,12,13,14,15,16,17 "Built target testnozzle"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/erivas/Adv_CFD/HW2/CMakeFiles --progress-num=1,2,3,4,5,6,7,8 "Built target testnozzle"
 .PHONY : CMakeFiles/testnozzle.dir/all
 
 # Build rule for subdir invocation for target.

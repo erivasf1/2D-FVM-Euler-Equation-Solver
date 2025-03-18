@@ -24,7 +24,7 @@ int main() {
   // Domain and Fluid Parameters
   double xmin = -1.0;
   double xmax = 1.0;
-  double stag_pressure = 300.0 * 1000.0; //kPa
+  double stag_pressure = 300.0 * 1000.0; //kPa -> Pa
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
   double area;
@@ -35,10 +35,12 @@ int main() {
   int cellnum = 40; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
+  //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
+
 
   //Temporal Specifications
-  const int iter_max = 5; //max number of iterations
-  //const int iter_max = 1e2; //max number of iterations
+  //const int iter_max = 10; //max number of iterations
+  const int iter_max = 50; //max number of iterations
   const int iterout = 1; //number of iterations per solution output
   const double CFL = 1.0e-3; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
@@ -137,11 +139,11 @@ int main() {
     SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
     Nozzle.ComputeExactSol(ExactSol_Faces[n]); 
 
-    if (n==17){ //debugging supersonic mach number at subsonic section
-      Tools::print("here\n");
-      const char* Mach_filename = "MachNumberVariation.txt";
-      Nozzle.OutputAllMachNumbers(Mach_filename,500);
-    }
+    //if (n==17){ //debugging supersonic mach number at subsonic section
+      //Tools::print("here\n");
+      //const char* Mach_filename = "MachNumberVariation.txt";
+      //Nozzle.OutputAllMachNumbers(Mach_filename,500);
+    //}
  
     //Tools::print("Point %f\n",xcoords[i]);
     //Tools::print("Density,Velocity,& Pressure: %f,%f,%f\n",field[i][0],field[i][1],field[i][2]);
@@ -203,6 +205,10 @@ int main() {
   myresids.open("SolResids.txt");
   myresids<<"Iteration"<<"  "<<"Contintuity"<<"  "<<"X-Momentum"<<"  "<<"Energy"<<endl;
 
+  //Printing to TECPLOT
+  std::string filename_totalsols = "AllSolutions.dat";
+  Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,false,0);
+
   // BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
 
@@ -232,6 +238,10 @@ int main() {
       name += ".txt";
       const char* filename_iter = name.c_str(); 
       Sols.OutputPrimitiveVariables(Field,Euler,filename_iter);
+ 
+      //Printing to TECPLOT
+      Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,true,iter);
+      //Sols.AllOutputPrimitiveVariables(Field,Euler,"AllSolutions.txt",true,iter);
       
     }
 
@@ -245,7 +255,7 @@ int main() {
     Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
     myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
 
-    if (ResidualNorms[0]/InitNorms[0] <= cont_tol || ResidualNorms[1]/InitNorms[1] <= xmom_tol || ResidualNorms[2]/InitNorms[2] <= energy_tol)
+    if (ResidualNorms[0]/InitNorms[0] <= cont_tol && ResidualNorms[1]/InitNorms[1] <= xmom_tol && ResidualNorms[2]/InitNorms[2] <= energy_tol)
       break;
     
     //debug:
@@ -273,6 +283,9 @@ int main() {
 
   //Closing Residuals file
   myresids.close();
+
+
+  
 
   //Evaluate discretization norms for grid convergence
 
