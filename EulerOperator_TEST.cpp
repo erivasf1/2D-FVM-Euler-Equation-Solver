@@ -305,7 +305,7 @@ double Euler1D::GetEpsilon2(vector<array<double,3>> &Field,int loc) {
   double Nuright2 = GetNu(Field,loc+2);
 
   double kappa2 = 1.0/2.0; //typically from 1/4<kappa2<1/2
-  kappa2 = 0.0; //TEMP: Turning off 2nd order damping effects
+  //kappa2 = 0.0; //TEMP: Turning off 2nd order damping effects
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -461,8 +461,8 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>> &Field,i
 double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int loc){
 
   double epsilon2 = GetEpsilon2(Field,loc);
-  double kappa4 = 1.0/5.0; //typically ranges from: 1/64<kappa4<1/32
-  //double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
+  //double kappa4 = 1.0/5.0; //typically ranges from: 1/64<kappa4<1/32
+  double kappa4 = 1.0/32.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
   return res;

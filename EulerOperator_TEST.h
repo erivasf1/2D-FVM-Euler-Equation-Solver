@@ -14,12 +14,12 @@ class Euler1D {
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   
   const double MolMass = 28.96; // kg/kmol
 
-  double Density_min = 1.0e-4; //primitive variable sol. limits
+  double Density_min = 1.0e-7; //primitive variable sol. limits
   double Velocity_min = 1.0e-7;
-  double Pressure_min = 1.0e-4;
+  double Pressure_min = 1.0e-7;
 
-  double Density_max = 1.0e6;
-  double Velocity_max = 1.0e6;
+  double Density_max = 1.0e9;
+  double Velocity_max = 1.0e9;
   double Pressure_max = 1.0e9;
  
 

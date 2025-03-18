@@ -42,7 +42,7 @@ int main() {
   //const int iter_max = 10; //max number of iterations
   const int iter_max = 5e4; //max number of iterations
   const int iterout = 30; //number of iterations per solution output
-  const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
 
   //Governing Eq. Residuals
