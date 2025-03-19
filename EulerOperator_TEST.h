@@ -9,6 +9,7 @@ using namespace std;
 class Euler1D {
   //vector<double> &xcoords;
   double stag_pressure; //stagnation pressure
+  double back_pressure; //back pressure
   double stag_temperature; //stagnation temperature
   double gamma;
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   
@@ -32,7 +33,7 @@ class Euler1D {
 
   Euler1D(); //empty constructor for unit testing
 
-  Euler1D(int &cellnum,double &P0,double &T0,double &g); //constructor for Main file
+  Euler1D(int &cellnum,double &P0,double &BP,double &T0,double &g); //constructor for Main file
 
   // Primitive & Conserved variables fcns.
   array<double,3> ComputeConserved(vector<array<double,3>> &Field,int loc);

@@ -27,6 +27,9 @@ class EulerExplicit {
   void FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,Euler1D &Euler,vector<double> &time_steps,vector<double> &xcoords,double &dx); //Computing the new solution at the next time step
 
   void SolutionLimiter(vector<array<double,3>> &Sol); //Re-assigning primitive variables to specified max and min limits
+
+ // TODO: Adaptive Under-relaxation
+ //void UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,vector<array<double,3>> &Field,double omega,
   
 
   ~EulerExplicit();

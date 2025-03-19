@@ -3,8 +3,8 @@
 
 // EULER1D DEFINITIONS
 
-Euler1D::Euler1D(int& cellnum,double &P0,double &T0,double &g)
-  : interior_cellnum(cellnum), stag_pressure(P0) , stag_temperature(T0) 
+Euler1D::Euler1D(int& cellnum,double &P0,double &BP,double &T0,double &g)
+  : interior_cellnum(cellnum), stag_pressure(P0) , back_pressure(BP) , stag_temperature(T0) 
   , gamma(g) {}
 
 
@@ -197,27 +197,21 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bo
       Field[(i+c)][1] = 2.0*Field[(i+c)-1][1] - Field[(i+c)-2][1]; //velocity
       Field[(i+c)][2] = 2.0*Field[(i+c)-1][2] - Field[(i+c)-2][2]; //pressure
 
-      //debug:
-      /*
-      Tools::print("OutflowB.C.\n");
-      Tools::print("Cell index:%d\n",i);
-      Tools::print("[LeftNeighbor] Density: %f, Velocity:%f,Pressure:%f\n",field[i-1][0],field[i-1][1],field[i-1][2]);
-      Tools::print("Density: %f, Velocity:%f,Pressure:%f\n",field[i][0],field[i][1],field[i][2]);
-      */
     }
 
   }
 
   else { //subsonic
     //fixing back pressure at boundary, not at ghost cell
-    int G3 = total_cellnum-2; //index for 1st outflow ghost cell
-    double Pb = 120.0; //kPa
-    Field[G3][2] = 2.0*Pb - Field[G3-1][2]; //pressure at G3
-    Field[G3+1][2] = 2.0*Field[G3][2] - Field[G3-2][2]; //extrapolated pressure for G4
+    int c = (int)Field.size() - 2; //index for 1st outflow ghost cell
+    Field[c][2] = 2.0*back_pressure - Field[c-1][2]; //extrapolated pressure with back pressure enforced
+    Field[c+1][2] = 2.0*Field[c][2] - Field[c-1][2]; //regular extrapolated pressure for last ghost cell
 
-    for (int i=total_cellnum-2;i<total_cellnum;i++){ //reg. extrapolation
-      Field[i][0] = 2.0*Field[i-1][0] - Field[i-2][0]; //density
-      Field[i][1] = 2.0*Field[i-1][1] - Field[i-2][1]; //velocity
+    for (int n=c;n<c+2;n++){ //reg. extrapolation
+      for (int i=0;i<1;i++) //only iterating for density & velocity
+        Field[n][i] = 2.0*Field[n-1][i] - Field[n-2][i];
+      //Field[n][0] = 2.0*Field[n-1][0] - Field[n-2][0]; //density
+      //Field[n][1] = 2.0*Field[n-1][1] - Field[n-2][1]; //velocity
     }
 
 

@@ -25,11 +25,13 @@ int main() {
   double xmin = -1.0;
   double xmax = 1.0;
   double stag_pressure = 300.0 * 1000.0; //kPa -> Pa
+  double back_pressure = 120.0 * 1000.0; //kPa -> Pa (for subsonic outflow cond.)
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
   double area;
   double area_star = Tools::AreaVal(0.5*(xmin+xmax)); //area at throat (midpoint of xmin and xmax)
-  bool cond{false}; //true for subsonic & false for supersonic
+  bool cond{false}; //true for subsonic & false for supersonic (FOR EXACT SOL.)
+  bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
   int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
@@ -97,7 +99,7 @@ int main() {
   Mesh.GenerateMesh(xcoords); //stores all coords in xcoords list
   double dx = abs(xcoords[0]-xcoords[1]); //delta x distance
   Tools::print("dx:%f\n",dx);
-  Euler1D Euler(cellnum,stag_pressure,stag_temp,gamma); //for solving Euler eqs.
+  Euler1D Euler(cellnum,stag_pressure,back_pressure,stag_temp,gamma); //for solving Euler eqs.
 
   //DEBUG: Displaying Areas
   const char* filename_area = "Areas.txt";
@@ -161,23 +163,15 @@ int main() {
 
   // SETTING BOUNDARY CONDITIONS
   // Note: Was found that extrapolating values at boundary gave a negative pressure
-  Euler.SetBoundaryConditions(Field,cond);
+  Euler.SetBoundaryConditions(Field,cond_bc);
 
-  //for (int i=0;i<(int)Field.size();i++) //!< Applying sol. limiter for every cell
   Time.SolutionLimiter(Field);
 
   
-
+  //!< outputting initial solutions with BC's
   const char* filename2 = "InitSolutionswBCs.txt"; 
   Sols.OutputPrimitiveVariables(Field,Euler,filename2);
 
-  //debug
-  /*
-  array<double,3> init{10,50,100};
-  Tools::print("Size of Field before set BC: %d\n",Field.size());
-  Euler.SetBoundaryConditions(Field,init);
-  Tools::print("Size of Field after set BC: %d\n",Field.size());
-  */
 
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
@@ -195,6 +189,8 @@ int main() {
 
   vector<double> time_steps;
   Residual = InitResidual;
+
+  //array<double,3> ResidPrevNorms = InitNorms; //used for storing the residual norms of the previous iteration
 
 
   string it,name,resid; //used for outputting file name
@@ -227,7 +223,7 @@ int main() {
     //ResidSols.ComputeSolutionNorms(Residual);
 
     //COMPUTE BOUNDARY CONDITIONS
-    Euler.ComputeTotalBoundaryConditions(Field,cond);
+    Euler.ComputeTotalBoundaryConditions(Field,cond_bc);
     Time.SolutionLimiter(Field); //temporarily reapplying the limiter
 
     //OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
@@ -258,16 +254,9 @@ int main() {
     if (ResidualNorms[0]/InitNorms[0] <= cont_tol && ResidualNorms[1]/InitNorms[1] <= xmom_tol && ResidualNorms[2]/InitNorms[2] <= energy_tol)
       break;
     
-    //debug:
-    //resid = Residual.data();
-    //Tools::print("(Before)1st resid of continuity:%e\n",resid[0][0]);
-    //Tools::print("(Before)1st Resid of continuity:%e\n",Residual[0][0]);
-    //Tools::print("(After)1st resid of continuity:%e\n",resid[0][0]);
 
-    //Compute new Boundary Conditions
-    //Output sol. every "iterout" steps
+    //UNDER-RELAXATION CHECK
 
-    //Cal. residual norms and see if it is within iterative convergence tolerance
 
   }
 
