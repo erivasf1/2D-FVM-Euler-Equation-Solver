@@ -34,7 +34,7 @@ int main() {
   bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 60; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
@@ -42,10 +42,15 @@ int main() {
 
   //Temporal Specifications
   //const int iter_max = 10; //max number of iterations
-  const int iter_max = 5e4; //max number of iterations
-  const int iterout = 30; //number of iterations per solution output
+  const int iter_max = 1e5; //max number of iterations
+  const int iterout = 50; //number of iterations per solution output
   const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
+
+  //Under-Relaxation Parameters
+  double C = 1.2; //residual norm check
+  array<double,3> Omega{1.0,1.0,1.0}; //FWD Advance Limiter
+  int subiter_max = 1e2; //max number of relaxation sub-iterations
 
   //Governing Eq. Residuals
   double cont_tol = 1e-9;
@@ -78,6 +83,11 @@ int main() {
   vector<array<double,3>> ExactField(cellnum); //stores the exact sol. at all cells
   vector<array<double,3>> Residual(cellnum); //stores the residuals for all interior cells
   vector<array<double,3>> InitResidual(cellnum); //stores the initial residuals for all interior cells
+
+  //intermediate variables for under-relaxation 
+  vector<array<double,3>> ResidualStar(cellnum); 
+  array<double,3> ResidualStarNorms;
+  array<bool,3> check{false,false,false}; //false by default
 
 
   MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
@@ -154,7 +164,7 @@ int main() {
   //Computing cell-average sol. for all cells
   ExactSols.ComputeCellAveragedSol(ExactSol_Faces,ExactField,xcoords,dx);
 
-  //TODO: Temporarily set initial conditions to exact solutions
+  //Debug: Temporarily set initial conditions to exact solutions
   //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt"; 
@@ -189,9 +199,7 @@ int main() {
 
   vector<double> time_steps;
   Residual = InitResidual;
-
-  //array<double,3> ResidPrevNorms = InitNorms; //used for storing the residual norms of the previous iteration
-
+  ResidualNorms = InitNorms;
 
   string it,name,resid; //used for outputting file name
   int iter; //iteration number
@@ -205,6 +213,10 @@ int main() {
   std::string filename_totalsols = "AllSolutions.dat";
   Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,false,0);
 
+  //Setting up intermediate values
+  vector<array<double,3>> FieldStar(Field); 
+  ResidualStar = Residual;
+
   // BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
 
@@ -216,15 +228,70 @@ int main() {
     time_steps = (timestep_cond == true) ? Time.ComputeLocalTimeStep(Field,Euler,CFL,dx) : Time.ComputeGlobalTimeStep(Field,Euler,CFL,dx);
 
     //COMPUTE NEW SOL. VALUES 
-    Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);
-    Time.SolutionLimiter(Field); //applies solution limiter to all cells (including ghost cells)
-
-    //COMPUTE RESIDUAL NORMS
-    //ResidSols.ComputeSolutionNorms(Residual);
+    Time.FWDEulerAdvance(FieldStar,ResidualStar,Euler,time_steps,xcoords,dx,Omega);
+    Time.SolutionLimiter(FieldStar); //applies solution limiter to all cells (including ghost cells)
+    //Time.FWDEulerAdvance(Field,Residual,Euler,time_steps,xcoords,dx);
+    //Time.SolutionLimiter(Field); //applies solution limiter to all cells (including ghost cells)
 
     //COMPUTE BOUNDARY CONDITIONS
-    Euler.ComputeTotalBoundaryConditions(Field,cond_bc);
-    Time.SolutionLimiter(Field); //temporarily reapplying the limiter
+    Euler.ComputeTotalBoundaryConditions(FieldStar,cond_bc);
+    Time.SolutionLimiter(FieldStar); //temporarily reapplying the limiter
+
+
+    //UNDER-RELAXATION CHECK
+    // compute residuals and norms
+    // check if under-relaxation is needed
+    // if "good" then set residual to residul new and same for Field
+    // if "bad", then redo Euler FWD Advance with under-relaxation factor & set new values to Field
+    // Euler.ComputeResidual(ResidStar,FieldStar,xcoords,dx);
+    // ResidStarNorms = ResidSols.ComputeSolutionNorms(ResidStar);
+    // Time.UnderRelaxationCheck();
+    // if (any in check array is true) -- only checking for bad residual
+    //   FieldStar = Field; --> resetting to previous timestep sol.
+    //   for max number of relaxation sub-iterations 
+    //     for (i=0;i<2;i++) --> setting omega individually
+    //       if (check[i] == true) Omega[i] /= 2
+    //     Euler.FWDEulerAdvance(FieldStar,ResidStar,Omega);
+    //     Euler.ComputeResidual(ResidStar,FieldStar,xcoords,dx);
+    //     ResidStarNorms = ResidSols.ComputeSolutionNorms(ResidStar);
+    //     Time.UnderRelaxationCheck(ResidPrevNorm,ResidStarNorm,C,check);
+    //     if (check==false) {
+    //       for (i=0;i<2;i++) --> resetting omega back to 1
+    //         Omega[i] = 1; 
+    //       break;
+    //     }
+    //     if (subiter = maxnumsubiter) print("Under-relaxation failed");
+    //   end
+    //  Residual = ResidStar; Field = FieldStar; ResidualNorms = ResidStarNorms --> assigning the star values to next time step values
+    Euler.ComputeResidual(ResidualStar,FieldStar,xcoords,dx);
+    ResidualStarNorms = ResidSols.ComputeSolutionNorms(ResidualStar);
+    Time.UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
+
+    if (check[0]==true || check[1] == true || check[2] == true){ //perform under-relaxation if any of these are true
+      for (int j=0;j<subiter_max;j++){
+        for (int i=0;i<3;i++) //!< reassigns omega to half of current value if under-relaxation detected
+          Omega[i] = (check[i] == true) ?  Omega[i] /= 2.0 : Omega[i] = 1.0;
+
+        FieldStar = Field; //resetting primitive variables to previous time step values
+        Time.FWDEulerAdvance(FieldStar,ResidualStar,Euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor
+        Euler.ComputeResidual(ResidualStar,FieldStar,xcoords,dx);
+        ResidualStarNorms = ResidSols.ComputeSolutionNorms(ResidualStar);
+        Time.UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
+
+        if (check[0]==false && check[1] == false && check[2] == false){ //checking if new residuals now do not need under-relaxation
+        for (int i=0;i<3;i++) //!< resetting omega to 1
+          Omega[i] = 1.0; 
+        break;
+        }
+
+        if (j == subiter_max)
+          Tools::print("Under-relaxation Failed!\n");
+      }
+    }
+    
+    //assigning new time step values to intermediate values
+    Field = FieldStar; 
+    Residual = ResidualStar; ResidualNorms = ResidualStarNorms;
 
     //OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
     if (iter % iterout == 0) {
@@ -241,21 +308,19 @@ int main() {
       
     }
 
-    //COMPUTE NEW RESIDUALS 
-    Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
+    //COMPUTE NEW RESIDUALS (Will be replaced by under-relaxation)
+    //Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
 
 
-    //COMPUTE RESIDUAL NORMS & CHECK FOR CONVERGENCE
-    ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
-    Tools::print("Norms\n");
+    //COMPUTE RESIDUAL NORMS (Will be replacewd by under-relaxation) & CHECK FOR CONVERGENCE
+    //ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
+    //Tools::print("Norms\n");
     Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
     myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
 
     if (ResidualNorms[0]/InitNorms[0] <= cont_tol && ResidualNorms[1]/InitNorms[1] <= xmom_tol && ResidualNorms[2]/InitNorms[2] <= energy_tol)
       break;
     
-
-    //UNDER-RELAXATION CHECK
 
 
   }

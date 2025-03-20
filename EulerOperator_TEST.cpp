@@ -315,11 +315,11 @@ double Euler1D::GetNu(vector<array<double,3>> &Field,int loc){
   double res;
   //Tools::print("loc:%d\n",loc);
 
-  if (loc == total_cells){ //check for evaluating nu at last outflow ghost cell
+  if (loc == total_cells-1){ //check for evaluating nu at last outflow ghost cell
     //Tools::print("I was called\n");
     res = Field[loc][2] - (2.0*Field[loc][2]) +  Field[loc-1][2]; //assuming Pressure is same at cell loc
     res /= Field[loc][2] + (2.0*Field[loc][2]) +  Field[loc-1][2]; //assuming Pressure is same at cell loc
-    //res = 0.0;
+    res = 0.0;
     return res;
   }
 
@@ -507,13 +507,14 @@ void Euler1D::ComputeResidual(vector<array<double,3>> &Resid,vector<array<double
 
   //Tools::print("------In Euler.ComputeResidual---------\n");
   total_cellnum = (int)Field.size();
-  Tools::print("Total Size: %d\n",total_cellnum);
+  //Tools::print("Total Size: %d\n",total_cellnum);
   for (int n=0;n<total_cellnum;n++){ //looping through all interior nodes
     if (n==0 | n==1 | n==total_cellnum-2 | n==total_cellnum-1) //skipping the ghost cell nodes
       continue;
     
-    Tools::print("cell index:%d\n",n);
+    //Tools::print("cell index:%d\n",n);
 
+    //debug:
     //if (n==total_cellnum-3)
       //Tools::print("Ans to 3.5^3 is: %f\n",pow(3.5,3.0));
     

@@ -51,7 +51,7 @@ vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>> &Fie
 
 }
 //--------------------------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,Euler1D &Euler,vector<double> &time_steps,vector<double> &xcoords,double &dx){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<double,3>> &Resid,Euler1D &Euler,vector<double> &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega){
 
   double vol;
   array<double,3> conserve;
@@ -65,8 +65,8 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>> &Field,vector<array<
     //Tools::print("Volume of cell %d:%f\n",i,vol);
     conserve = Euler.ComputeConserved(Field,n+2); //!< computing conservative values
 
-    for (int i=0;i<3;i++) // advancing to new timestep of conservative varialbe
-      conserve[i] -= (time_steps[i] / vol) * Resid[n][i];
+    for (int i=0;i<3;i++) // advancing to new timestep of conservative variable
+      conserve[i] -= Omega[i]*(time_steps[i] / vol) * Resid[n][i];
 
     Euler.ComputePrimitive(Field,conserve,n+2); //!< extracting new primitive variables
 
@@ -131,6 +131,18 @@ void EulerExplicit::SolutionLimiter(vector<array<double,3>> &Field){
   
   return;
 
+}
+
+//-----------------------------------------------------------
+void EulerExplicit::UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check){
+
+  for (int i=0;i<3;i++){
+    if (ResidNorm[i] > C*ResidPrevNorm[i])
+      check[i] = true; //assigning true to corresponding equation
+  } 
+
+
+  return;
 }
 
 //-----------------------------------------------------------

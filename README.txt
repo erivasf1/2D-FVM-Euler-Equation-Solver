@@ -18,5 +18,13 @@
 CURRENTLY:
 Copies labeled "TEST" are copies of its corresponding file with the main nuance being the absence of pointers. Try getting this to run first (hopefully converge) and then use pointers
 
+3) Under-relaxation Algorithm (enforced after the 1st timestep & is equation specific for now)
+  3.1) Forward Euler Advance to obtain new primtive variable solutions at next time step (this will be stored as an intermediate step)
+  3.2) Compute the Residual of the intermediate step
+  3.3) Check if residual norm of intermediate step is in "bad state" (i.e. if greater than previous residual by a factor of C (typical values are 1.1-1.5))
+  3.4a) if residual norm is in "bad state", then recompute Euler Advance with a smaller CFL (i.e. reduce time-step)
+  3.4b) if residual norm is in "good state", then assign new time step values to the intermediate values
+  3.5) Repeat
+
 THINGS LEARNED:
 1) Residuals really are just checks on how well the cell(or domain) satisfies the governing equations (i.e. conservation laws). If the residual is high then solver will want to "greatly" change the values in the cell in hopes of it generating a lesser residual
