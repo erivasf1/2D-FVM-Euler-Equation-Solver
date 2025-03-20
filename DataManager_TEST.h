@@ -20,7 +20,7 @@ class SpaceVariables1D {
 
   void OutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,const char *filename);
 
-  void AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter);
+  void AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter,vector<double> &xcoords);
 
   void OutputLocalResiduals(vector<array<double,3>> &Resid,const char *filename); //TODO
 

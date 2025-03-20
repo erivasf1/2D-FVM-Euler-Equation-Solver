@@ -34,7 +34,7 @@ int main() {
   bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
-  int cellnum = 60; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
@@ -42,9 +42,9 @@ int main() {
 
   //Temporal Specifications
   //const int iter_max = 10; //max number of iterations
-  const int iter_max = 1e5; //max number of iterations
-  const int iterout = 50; //number of iterations per solution output
-  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e6; //max number of iterations
+  const int iterout = 10; //number of iterations per solution output
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
 
   //Under-Relaxation Parameters
@@ -53,9 +53,9 @@ int main() {
   int subiter_max = 1e2; //max number of relaxation sub-iterations
 
   //Governing Eq. Residuals
-  double cont_tol = 1e-9;
-  double xmom_tol = 1e-9;
-  double energy_tol = 1e-9;
+  double cont_tol = 1e-10;
+  double xmom_tol = 1e-10;
+  double energy_tol = 1e-10;
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells
@@ -211,7 +211,7 @@ int main() {
 
   //Printing to TECPLOT
   std::string filename_totalsols = "AllSolutions.dat";
-  Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,false,0);
+  Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,false,0,xcoords);
 
   //Setting up intermediate values
   vector<array<double,3>> FieldStar(Field); 
@@ -303,7 +303,7 @@ int main() {
       Sols.OutputPrimitiveVariables(Field,Euler,filename_iter);
  
       //Printing to TECPLOT
-      Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,true,iter);
+      Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,true,iter,xcoords);
       //Sols.AllOutputPrimitiveVariables(Field,Euler,"AllSolutions.txt",true,iter);
       
     }
@@ -343,9 +343,10 @@ int main() {
   myresids.close();
 
 
-  
+  //Evaluate discretization norms for grid convergence and print out to file
+  //
 
-  //Evaluate discretization norms for grid convergence
+
 
   return 0;
 }

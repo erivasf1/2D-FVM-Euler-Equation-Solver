@@ -71,7 +71,7 @@ return;
 }
 
 //---------------------------------------------------------
-void SpaceVariables1D::AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter){
+void SpaceVariables1D::AllOutputPrimitiveVariables(vector<array<double,3>> &Field,Euler1D &Euler,string filename,bool cond,int iter,vector<double> &xcoords){
 
   cell_number = Field.size()-4; //number of interior cells
   std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
@@ -83,7 +83,7 @@ void SpaceVariables1D::AllOutputPrimitiveVariables(vector<array<double,3>> &Fiel
   }
 
   if (cond==false)
-    myfile<<"variables= \"cell index\" \"rho(kg/m^3)\" \"u(m/s)\"  \"Press(N/m^2)\"\"Mach\""<<endl;
+    myfile<<"variables= \"cell index\" \"rho(kg/m^3)\" \"u(m/s)\"  \"Press(N/m^2)\" \"Mach\" \"Xcoords\""<<endl;
 
 //Repeat the following each time you want to write out the solution
 /*
@@ -97,7 +97,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   myfile<<"zone T= "<<"\""<<iter<<"\""<<endl;
   myfile<<"I="<<cell_number<<endl;
   myfile<<"DATAPACKING=POINT"<<endl;
-  myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+  myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
 
   double M;
 
@@ -105,7 +105,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
     //Computing Mach Number for checking the initial conditions
     M = Euler.GetMachNumber(Field,n+2);
     myfile<<n+1<<"  ";
-    myfile<<Field[n][0]<<"  "<<Field[n][1]<<"  "<<Field[n][2]<<"  "<<M<<endl;
+    myfile<<Field[n][0]<<"  "<<Field[n][1]<<"  "<<Field[n][2]<<"  "<<M<<"  "<<xcoords[n]<<endl;
 
   }
 
