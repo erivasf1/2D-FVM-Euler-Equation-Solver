@@ -34,7 +34,7 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
-  int cellnum = 200; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
@@ -42,7 +42,7 @@ int main() {
 
   //Temporal Specifications
   const int iter_max = 1e6; //max number of iterations
-  const int iterout = 10; //number of iterations per solution output
+  const int iterout = 50; //number of iterations per solution output
   const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep_cond{false}; //true = local time stepping; false = global time stepping
 
@@ -223,7 +223,7 @@ int main() {
   for (iter=1;iter<iter_max;iter++){
 
     //debugging only
-    Tools::print("------Iteration #: %d----------\n",iter);
+    //Tools::print("------Iteration #: %d----------\n",iter);
   
     //COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
@@ -306,25 +306,21 @@ int main() {
  
       //Printing to TECPLOT
       Sols.AllOutputPrimitiveVariables(Field,Euler,filename_totalsols,true,iter,xcoords);
-      //Sols.AllOutputPrimitiveVariables(Field,Euler,"AllSolutions.txt",true,iter);
       
+      //Printing Residual Norms to Screen
+      Tools::print("------Iteration #: %d----------\n",iter);
+      Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
+
+      // Writing Residuals history to "SolResids.txt" file
+      myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
+
     }
 
-    //COMPUTE NEW RESIDUALS (Will be replaced by under-relaxation)
-    //Euler.ComputeResidual(Residual,Field,xcoords,dx); //computing residuals per cell
 
-
-    //COMPUTE RESIDUAL NORMS (Will be replacewd by under-relaxation) & CHECK FOR CONVERGENCE
-    //ResidualNorms = ResidSols.ComputeSolutionNorms(Residual);
-    //Tools::print("Norms\n");
-    Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
-    myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
-
+    //CHECK FOR CONVERGENCE (w/ respect to the intial residual norms)
     if (ResidualNorms[0]/InitNorms[0] <= cont_tol && ResidualNorms[1]/InitNorms[1] <= xmom_tol && ResidualNorms[2]/InitNorms[2] <= energy_tol)
       break;
     
-
-
   }
 
   //Final Output of Solution
