@@ -208,7 +208,7 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bo
     Field[c+1][2] = 2.0*Field[c][2] - Field[c-1][2]; //regular extrapolated pressure for last ghost cell
 
     for (int n=c;n<c+2;n++){ //reg. extrapolation
-      for (int i=0;i<1;i++) //only iterating for density & velocity
+      for (int i=0;i<2;i++) //only iterating for density & velocity
         Field[n][i] = 2.0*Field[n-1][i] - Field[n-2][i];
       //Field[n][0] = 2.0*Field[n-1][0] - Field[n-2][0]; //density
       //Field[n][1] = 2.0*Field[n-1][1] - Field[n-2][1]; //velocity

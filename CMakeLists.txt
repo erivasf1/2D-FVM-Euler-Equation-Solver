@@ -46,6 +46,16 @@ set(TESTSOURCES
     #UnitTest.cpp #for unit testing
 )
 
+set(OUTPUTSOURCES
+    DataManager_TEST.cpp
+    DiscretizationErrorOutput.cpp
+    EulerOperator_TEST.cpp
+    ExactNozzle.cpp
+    Output.cpp
+    MeshGen.cpp
+    TimeIntegrator_TEST.cpp
+)
+
 # Define header files
 set(HEADERS
     DataManager.h
@@ -66,10 +76,20 @@ set(TESTHEADERS
     TimeIntegrator_TEST.h
 )
 
+set(OUTPUTHEADERS
+    DataManager_TEST.h
+    EulerOperator.h
+    ExactNozzle.h
+    MeshGen.h
+    Output.h
+    TimeIntegrator.h
+)
+
 # Create the executable
 #add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
 add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
+add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
 
 # Include directories (if needed)
 #target_include_directories(NozzleSimulation PRIVATE ${CMAKE_SOURCE_DIR})

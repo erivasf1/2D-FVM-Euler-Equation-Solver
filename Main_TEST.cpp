@@ -31,17 +31,16 @@ int main() {
   double area;
   double area_star = Tools::AreaVal(0.5*(xmin+xmax)); //area at throat (midpoint of xmin and xmax)
   bool cond{false}; //true for subsonic & false for supersonic (FOR EXACT SOL.)
-  bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
+  bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 200; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
 
 
   //Temporal Specifications
-  //const int iter_max = 10; //max number of iterations
   const int iter_max = 1e6; //max number of iterations
   const int iterout = 10; //number of iterations per solution output
   const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
@@ -98,6 +97,9 @@ int main() {
   SpaceVariables1D ExactSols; 
   SpaceVariables1D ResidSols; 
   SpaceVariables1D InitResidSols; 
+
+  //for calculating the discretization error
+  Output Error;
 
   array<double,3> ResidualNorms; //stores the norms of the residuals
 
@@ -344,8 +346,14 @@ int main() {
 
 
   //Evaluate discretization norms for grid convergence and print out to file
-  //
+  if (cond_bc == false){
+    Field.erase(Field.begin()); Field.erase(Field.begin()); //!< erasing ghost cells
+    Field.erase(Field.end()); Field.erase(Field.end());
+    
+    vector<array<double,3>> Errors(Field);
 
+    Error.DiscretizationErrorNorms(Field,ExactField,Errors,Sols);   
+  }
 
 
   return 0;
