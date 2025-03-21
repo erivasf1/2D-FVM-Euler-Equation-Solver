@@ -31,7 +31,7 @@ int main() {
   double area;
   double area_star = Tools::AreaVal(0.5*(xmin+xmax)); //area at throat (midpoint of xmin and xmax)
   bool cond{false}; //true for subsonic & false for supersonic (FOR EXACT SOL.)
-  bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
+  bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
   int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
@@ -208,8 +208,14 @@ int main() {
 
   //Opening File that stores residuals
   ofstream myresids;
-  myresids.open("SolResids.txt");
-  myresids<<"Iteration"<<"  "<<"Contintuity"<<"  "<<"X-Momentum"<<"  "<<"Energy"<<endl;
+  myresids.open("SolResids.dat");
+  myresids<<"variables= \"Iteration num.\" \"Continuity\" \"Momentum\"  \"Energy\""<<endl;
+  myresids<<"zone T= "<<"\""<<0<<"\""<<endl;
+  myresids<<"DATAPACKING=POINT"<<endl;
+  myresids<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+  //myresids<<"Iteration"<<"  "<<"Contintuity"<<"  "<<"X-Momentum"<<"  "<<"Energy"<<endl;
+
+  myresids<<0<<"  "<<InitNorms[0]<<"  "<<InitNorms[1]<<"  "<<InitNorms[2]<<endl; //printing out the initial residuals first
 
   //Printing to TECPLOT
   std::string filename_totalsols = "AllSolutions.dat";
