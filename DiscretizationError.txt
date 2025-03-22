@@ -1,0 +1,30 @@
+Cell Size: 25
+Density: 2.264311e-03
+Velocity: 4.988414e+00
+Pressure: 6.012257e+02
+-----------------------
+Cell Size: 50
+Density: 7.361816e-04
+Velocity: 7.313388e-01
+Pressure: 1.891584e+02
+-----------------------
+Cell Size: 100
+Density: 2.038997e-04
+Velocity: 1.298632e-01
+Pressure: 5.288248e+01
+-----------------------
+Cell Size: 200
+Density: 4.882986e-05
+Velocity: 2.800966e-02
+Pressure: 1.334559e+01
+-----------------------
+Cell Size: 400
+Density: 1.167768e-05
+Velocity: 6.579478e-03
+Pressure: 3.327234e+00
+-----------------------
+Cell Size: 800
+Density: 2.835330e-06
+Velocity: 1.600186e-03
+Pressure: 8.289138e-01
+-----------------------
