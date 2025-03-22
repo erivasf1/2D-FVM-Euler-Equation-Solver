@@ -136,9 +136,9 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
 
   double r = 2.0; //mesh refinement factor
   for (int n=0;n<(int)CellSize.size()-1;n++){ 
-    PHat_density[n] = (log(Density[n]) / log(Density[n+1])) / log(r);
-    PHat_velocity[n] = (log(Velocity[n]) / log(Velocity[n+1])) / log(r);
-    PHat_pressure[n] = (log(Pressure[n]) / log(Pressure[n+1])) / log(r);
+    PHat_density[n] = (log(Density[n]/Density[n+1])) / log(r);
+    PHat_velocity[n] = (log(Velocity[n]/Velocity[n+1])) / log(r);
+    PHat_pressure[n] = (log(Pressure[n]/Pressure[n+1])) / log(r);
  }
 
   vector<double> h; //grid spacing 

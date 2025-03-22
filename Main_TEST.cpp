@@ -52,9 +52,9 @@ int main() {
   int subiter_max = 1e2; //max number of relaxation sub-iterations
 
   //Governing Eq. Residuals
-  double cont_tol = 1e-10;
-  double xmom_tol = 1e-10;
-  double energy_tol = 1e-10;
+  double cont_tol = 1.0e-10;
+  double xmom_tol = 1.0e-10;
+  double energy_tol = 1.0e-10;
 
   // ALGORITHM:
   // Create Mesh (verified) -- may have to add ghost cells

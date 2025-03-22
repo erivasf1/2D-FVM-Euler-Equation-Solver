@@ -66,11 +66,12 @@ TEST_CASE(" EulerOperator " ){
 
   //Fluid properties
   double P0 = 300.0;
+  double Pb = 100.0;
   double T0 = 600.0;
   double gamma = 1.4; //specific heat ratio
   bool cond{false}; //flow condition (false = supersonic & true = subsonic)
 
-  Euler1D Euler(cellnum,P0,T0,gamma);
+  Euler1D Euler(cellnum,P0,Pb,T0,gamma);
   array<double,3> empty{0.0,0.0,0.0};
   vector<array<double,3>> Field(cellnum,empty); //initilizing Field vecor
   vector<array<double,3>> expected = Field; //stores the expected values of the whole field
