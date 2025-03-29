@@ -22,7 +22,7 @@ vector<double> EulerExplicit::ComputeLocalTimeStep(vector<array<double,3>>* &fie
     lambda_max = euler->GetLambdaMax(field,i); //obtaining largest eigenvalue per cell
     if (std::isnan(lambda_max)){
       Tools::print("Infinitiy detected!\n");
-      Tools::print("Velocity at loc(%d): %f\n",i,*field[i][0]);
+      Tools::print("Velocity at loc(%d): %f\n",i,(*field)[i][0]);
       Tools::print("Mach # at loc(%d): %f\n",i,euler->GetMachNumber(field,i));
     }
     time_steps[i-2] = CFL * (dx/lambda_max);
@@ -51,7 +51,7 @@ vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>>* &fi
 
 }
 //-----------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,vector<double> &time_steps,vector<double> &xcoords,double &dx){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega){
 
   double vol;
   array<double,3> conserve;
@@ -66,7 +66,7 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array
     conserve = euler->ComputeConserved(field,n+2); //!< computing conservative values
 
     for (int i=0;i<3;i++) // advancing to new timestep of conservative variable
-      conserve[i] -= Omega[i]*(time_steps[i] / vol) * resid[n][i];
+      conserve[i] -= Omega[i]*((*time_steps)[i] / vol) * (*resid)[n][i];
 
     euler->ComputePrimitive(field,conserve,n+2); //!< extracting new primitive variables
 
@@ -81,23 +81,23 @@ void EulerExplicit::SolutionLimiter(vector<array<double,3>>* &field){
 
   for (int n=0;n<(int)field->size();n++){
     //Density
-    *field[n][0] = std::min(Density_max,std::max(Density_min,*field[n][0]));
+    (*field)[n][0] = std::min(Density_max,std::max(Density_min,(*field)[n][0]));
 
     //Velocity
-    *field[n][1] = std::min(Velocity_max,std::max(Velocity_min,*field[n][1]));
+    (*field)[n][1] = std::min(Velocity_max,std::max(Velocity_min,(*field)[n][1]));
 
     //Pressure
-    *field[n][2] = std::min(Pressure_max,std::max(Pressure_min,*field[n][2]));
+    (*field)[n][2] = std::min(Pressure_max,std::max(Pressure_min,(*field)[n][2]));
 
     //Printing out message if limiter kicks in
-    if (*field[n][0] == Density_max || *field[n][0] == Density_min)
-      Tools::print("Limiter was hit for density at cell %d | val is now:%e\n",n,*field[n][0]);
+    if ((*field)[n][0] == Density_max || (*field)[n][0] == Density_min)
+      Tools::print("Limiter was hit for density at cell %d | val is now:%e\n",n,(*field)[n][0]);
 
-    if (*field[n][1] == Velocity_max || *field[n][1] == Velocity_min)
-      Tools::print("Limiter was hit for velocity at cell %d | val is now:%e\n",n,*field[n][1]);
+    if ((*field)[n][1] == Velocity_max || (*field)[n][1] == Velocity_min)
+      Tools::print("Limiter was hit for velocity at cell %d | val is now:%e\n",n,(*field)[n][1]);
 
-    if (*field[n][2] == Pressure_max || *field[n][2] == Pressure_min)
-      Tools::print("Limiter was hit for pressure at cell %d | val is now:%e\n",n,*field[n][2]);
+    if ((*field)[n][2] == Pressure_max || (*field)[n][2] == Pressure_min)
+      Tools::print("Limiter was hit for pressure at cell %d | val is now:%e\n",n,(*field)[n][2]);
 
   }
 

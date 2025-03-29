@@ -51,7 +51,7 @@ set(OUTPUTSOURCES
     DiscretizationErrorOutput.cpp
     EulerOperator_TEST.cpp
     ExactNozzle.cpp
-    Output.cpp
+    Output_TEST.cpp
     MeshGen.cpp
     TimeIntegrator_TEST.cpp
 )
@@ -81,7 +81,7 @@ set(OUTPUTHEADERS
     EulerOperator.h
     ExactNozzle.h
     MeshGen.h
-    Output.h
+    Output_TEST.h
     TimeIntegrator.h
 )
 

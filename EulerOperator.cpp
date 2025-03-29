@@ -24,7 +24,7 @@ array<double,3> Euler1D::ComputeConserved(vector<array<double,3>>* &field,int lo
   res[1] = (*field)[loc][0] * (*field)[loc][1]; 
 
   //energy
-  res[2] = (*field)[loc][2]/(gamma-1.0) + (0.5)* (*field)[loc][0]*pow((*field)[loc][2],2.0);
+  res[2] = (*field)[loc][2]/(gamma-1.0) + (0.5)* (*field)[loc][0]*pow((*field)[loc][1],2.0);
 
   return res;
 
@@ -173,7 +173,7 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,b
   if (cond == false){ //supersonic case 
     //using simple extrapolation from class notes section 3 slide 36
     int c = (int)field->size() - 2; //index of the 1st outflow ghost cell
-    for (int i=total_cellnum-2;i<total_cellnum;i++){ //for both outflow ghost cells
+    for (int i=0;i<2;i++){ //for both outflow ghost cells
       (*field)[i+c][0] = 2.0* (*field)[(i+c)-1][0] - (*field)[(i+c)-2][0]; //density
       (*field)[i+c][1] = 2.0* (*field)[(i+c)-1][1] - (*field)[(i+c)-2][1]; //velocity
       (*field)[i+c][2] = 2.0* (*field)[(i+c)-1][2] - (*field)[(i+c)-2][2]; //pressure
@@ -243,14 +243,14 @@ double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector
 }
 
 //-----------------------------------------------------------
-double Euler1D::GetEpsilon2(vector<array<double,3>>* &field,int &loc) {
+double Euler1D::GetEpsilon2(vector<array<double,3>>* &field,int loc) {
 
   double Nu = GetNu(field,loc);
   double Nuleft = GetNu(field,loc-1);
   double Nuright = GetNu(field,loc+1);
   double Nuright2 = GetNu(field,loc+2);
 
-  double kappa2 = 0.35; //typically from 1/4<kappa2<1/2
+  double kappa2 = 1.0/2.0; //typically from 1/4<kappa2<1/2
   
   double max = std::max({Nu,Nuleft,Nuright,Nuright2}); //acquring max nu
   double res = kappa2 * max;
@@ -338,10 +338,10 @@ array<double,3> Euler1D::Compute2ndOrderDamping(vector<array<double,3>>* &field,
 
 
 //-----------------------------------------------------------
-double Euler1D::GetEpsilon4(vector<array<double,3>>* &field,int &loc){
+double Euler1D::GetEpsilon4(vector<array<double,3>>* &field,int loc){
 
   double epsilon2 = GetEpsilon2(field,loc);
-  double kappa4 = 1.0/50.0; //typically ranges from: 1/64<kappa4<1/32
+  double kappa4 = 1.0/30.0; //typically ranges from: 1/64<kappa4<1/32
   double res = std::max(0.0,(kappa4 - epsilon2));
 
   return res;
@@ -393,6 +393,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
     S = ComputeSourceTerm(field,n,xcoords);
+    Source[1] = S; //adding scalar to vector
 
     //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
     //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
@@ -416,7 +417,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
 
     //Residual cal.
     for (int i=0;i<3;i++)
-      Resid[n-2][i] = (TotalF_right[i]*A_right - TotalF_left[i]*A_left) - Source[i]*dx;
+      (*resid)[n-2][i] = (TotalF_right[i]*A_right - TotalF_left[i]*A_left) - Source[i]*dx;
     
 
   }
@@ -425,7 +426,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
 }
 
 //-----------------------------------------------------------
-double Euler1D::GetLambdaMax(vector<array<double,3>>* &field,int &loc){
+double Euler1D::GetLambdaMax(vector<array<double,3>>* &field,int loc){
 
   double M = GetMachNumber(field,loc); //cell-averaged Mach number
   double a = abs((*field)[loc][1]) / M; //cell-averaged speed of sound

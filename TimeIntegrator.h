@@ -21,7 +21,7 @@ class EulerExplicit {
   vector<double> ComputeLocalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx); // Outputting the local time step for every cell in the domain
   vector<double> ComputeGlobalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx); // Outputting the local time step for every cell in the domain
 
-  void FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,vector<double> &time_steps,vector<double> &xcoords,double &dx); //Computing the new solution at the next time step
+  void FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega); //Computing the new solution at the next time step
 
   void SolutionLimiter(vector<array<double,3>>* &field); //Re-assigning primitive variables to specified max and min limits
 

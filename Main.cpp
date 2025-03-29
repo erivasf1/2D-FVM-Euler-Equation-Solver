@@ -25,7 +25,7 @@ int main() {
   // Constants
   double xmin = -1.0;
   double xmax = 1.0;
-  double stag_pressure = 300.0; //kPa
+  double stag_pressure = 300.0 * 1000.0; //kPa -> Pa
   double back_pressure = 120.0 * 1000.0; //kPa -> Pa (for subsonic outflow cond.)
   double stag_temp = 600.0; //K
   double gamma = 1.4; //specific heat ratio
@@ -36,11 +36,11 @@ int main() {
   bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 40; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
-  const int iter_max = 1e6;
+  const int iter_max = 1e5;
   const int iterout = 50; //number of iterations per solution output
   const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
@@ -68,6 +68,7 @@ int main() {
   vector<array<double,3>> InitResidual(cellnum); //stores the initial residual
 
   vector<double> TimeSteps; //for storing the time step (delta_t) for each cell
+  array<double,3> ResidualNorms; //for storing the global residual norms
 
   //Pointers to Field variables
   vector<array<double,3>>* field = &Field; //pointer to Field solutions
@@ -94,7 +95,7 @@ int main() {
 
   //Pointers to Objects
   MeshGen1D* mesh = &Mesh;
-  SpaceVariables1D sols = &Sols;
+  SpaceVariables1D* sols = &Sols;
   Euler1D* euler = &Euler;
   EulerExplicit* time = &Time;
   Output* error = &Error;
@@ -133,35 +134,36 @@ int main() {
   //! COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   if (cond_bc == false){ //Compute Exact Solution if isentropic case is selected
     array<double,3> sol;
-    for (int i=0;i<(int)ExactSol_Faces.size();i++) {
+    double area;
+    for (int i=0;i<(int)exact_faces->size();i++) {
       area = tool.AreaVal(xcoords[i]);
-      cond = (xcoords[i] < 0) ? true:false; 
-      SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond);
+      cond_loc = (xcoords[i] < 0) ? true:false; 
+      SuperSonicNozzle Nozzle(area,area_star,stag_pressure,stag_temp,cond_loc);
       Nozzle.ComputeExactSol(sol);
  
-      *exact_faces[i] = sol; //assigning to exact faces vector
+      (*exact_faces)[i] = sol; //assigning to exact faces vector
     
     }
   }
 
   // Computing cell-average sol. for all cells
-  exact_sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
+  sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
 
   //Debug: Temporarily set initial conditions to exact solutions
   //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt";
-  Sols.OutputPrimitiveVariables(Field,Euler,filename);
+  sols->OutputPrimitiveVariables(field,euler,filename);
 
 
   // SETTING BOUNDARY CONDITIONS
-  euler->SetBoundaryConditions(Field,field,cond_bc);
+  euler->SetBoundaryConditions(field,cond_bc);
 
-  time->SolutionLimiter(Field);
+  time->SolutionLimiter(field);
 
   //!< Outputting initial solutions with BC's
   const char* filename2 = "InitSolutionswBCs.txt";
-  sols->OutputPrimitiveVariables(Field,Euler,filename2);
+  sols->OutputPrimitiveVariables(field,euler,filename2);
 
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
@@ -174,10 +176,10 @@ int main() {
   Tools::print("--Energy:%e\n",InitNorms[2]);
 
 
-  *resid_star = *init_resid;//!< setting initial residual to intermediate
+  (*resid) = (*init_resid);//!< setting initial residual to intermediate
   ResidualNorms = InitNorms;
 
-  string it,name,resid; //used for outputting file name
+  string it,name; //used for outputting file name
   int iter; //iteration number
 
   //Opening File that stores residuals
@@ -195,6 +197,9 @@ int main() {
   std::string filename_totalsols = "AllSolutions.dat";
   sols->AllOutputPrimitiveVariables(field,euler,filename_totalsols,false,0,xcoords);
 
+  //Assigning Intermediate Field to Initial Field (including residuals)
+  (*field_star) = (*field);
+  (*resid_star) = (*resid);
 
   //! BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
@@ -205,11 +210,11 @@ int main() {
     //! COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
     //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);//TESTING
-    *time_steps = (timestep_cond == true) ? time->ComputeLocalTimeStep(field,euler,CFL,dx) : time->ComputeGlobalTimeStep(field,euler,CFL,dx);
+    (*time_steps) = (timestep == true) ? time->ComputeLocalTimeStep(field,euler,CFL,dx) : time->ComputeGlobalTimeStep(field,euler,CFL,dx);
     //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
 
     //! COMPUTE NEW SOL. VALUES 
-    time->FWDEulerAdvance(field,resid,time_steps,xcoords,dx,Omega);//TESTING
+    time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega);//TESTING
     time->SolutionLimiter(field_star); //applies solution limiter to all cells (including ghost cells)
 
     //! COMPUTE BOUNDARY CONDITIONS
@@ -228,8 +233,9 @@ int main() {
         for (int i=0;i<3;i++) //!< reassigns omega to half of current value if under-relaxation detected
           Omega[i] = (check[i] == true) ?  Omega[i] /= 2.0 : Omega[i] = 1.0;
 
-        *field_star = *field; //resetting primitive variables to previous time step values
+        (*field_star) = (*field); //resetting primitive variables to previous time step values
         time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
+        euler->ComputeResidual(resid_star,field_star,xcoords,dx); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
@@ -245,8 +251,8 @@ int main() {
     }
 
     //Assinging New Time Step Values to Intermediate Values
-    *field = *field_star;
-    *resid = *resid_star; ResidualNorms = ResidualStarNorms;
+    (*field) = (*field_star);
+    (*resid) = (*resid_star); ResidualNorms = ResidualStarNorms;
 
 
     //! OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
