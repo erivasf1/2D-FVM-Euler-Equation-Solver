@@ -60,15 +60,15 @@ void Output::PrintResidualNorm(int &cellnum,int &n){
 }
 */
 //-----------------------------------------------------------
-void Output::DiscretizationErrorNorms(vector<array<double,3>> &Field,vector<array<double,3>> &ExactField,vector<array<double,3>> &Errors,SpaceVariables1D Sols){
+void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* sols){
 
-  for (int n=0;n<(int)Field.size();n++){ //calculating errors
+  for (int n=0;n<(int)field->size();n++){ //calculating errors
     for (int i=0;i<3;i++)
-      Errors[n][i] = Field[n][i] - ExactField[n][i];
+      (*errors)[n][i] = (*field)[n][i] - (*exact_field)[n][i];
   }
   
   //L2 Norms of Error
-  array<double,3> ErrorNorms = Sols.ComputeSolutionNorms(Errors);
+  array<double,3> ErrorNorms = sols->ComputeSolutionNorms(errors);
 
   Tools::print("-------------------------\n");
   Tools::print("Discretization Error Norms\n");

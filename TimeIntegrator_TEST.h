@@ -28,8 +28,7 @@ class EulerExplicit {
 
   void SolutionLimiter(vector<array<double,3>> &Sol); //Re-assigning primitive variables to specified max and min limits
 
- // TODO: Adaptive Under-relaxation Check
- void UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check); //looks for residual norm increase to mark needed under-relaxation for each equation
+  void UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check); //looks for residual norm increase to mark needed under-relaxation for each equation
   
 
   ~EulerExplicit();

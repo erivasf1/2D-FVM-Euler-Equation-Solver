@@ -6,7 +6,7 @@
 
 #include "ExactNozzle.h"
 #include "MeshGen.h"
-#include "DataManager_TEST.h"
+#include "DataManager.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ class Output {
   
   void PrintResidualNorm(int &cellnum,int &n);
 
-  void DiscretizationErrorNorms(vector<array<double,3>> &Field,vector<array<double,3>> &ExactField,vector<array<double,3>> &ExactSols,SpaceVariables1D Sols);
+  void DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* sols);
 
   void CalculateOrderofAccuracy(const char *filename_read,const char *filename_write); //creates a new file containing the order of accuracy value given the discretization error file.txt
  

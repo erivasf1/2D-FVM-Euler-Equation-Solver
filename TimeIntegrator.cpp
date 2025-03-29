@@ -9,17 +9,22 @@ EulerExplicit::EulerExplicit(int &c)
 {}
 
 //-----------------------------------------------------------
-vector<double> EulerExplicit::ComputeLocalTimeStep(array<double,3>* &field,Euler1D &Euler,const double &CFL,double &dx){
+vector<double> EulerExplicit::ComputeLocalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx){
 
   double lambda_max;
   vector<double> time_steps(cellnumber);
 
   //array<double,cellnumber> time_steps; //stores the computed time steps per interior cell
-  for (int i=0;i<Euler.total_cellnum;i++){ //looping through all interior no|int nbor)
-    if (i==0 | i==1 | i==Euler.total_cellnum-2 | i==Euler.total_cellnum-1) //skiping the ghost cells
+  for (int i=0;i<euler->total_cellnum;i++){ //looping through all interior no|int nbor)
+    if (i==0 | i==1 | i==euler->total_cellnum-2 | i==euler->total_cellnum-1) //skiping the ghost cells
       continue;
 
-    lambda_max = Euler.GetLambdaMax(field,i); //obtaining largest eigenvalue per cell
+    lambda_max = euler->GetLambdaMax(field,i); //obtaining largest eigenvalue per cell
+    if (std::isnan(lambda_max)){
+      Tools::print("Infinitiy detected!\n");
+      Tools::print("Velocity at loc(%d): %f\n",i,*field[i][0]);
+      Tools::print("Mach # at loc(%d): %f\n",i,euler->GetMachNumber(field,i));
+    }
     time_steps[i-2] = CFL * (dx/lambda_max);
     //Tools::print("CFL:%f,dx: %f,lambda_max:%f\n",CFL,dx,lambda_max);
      
@@ -29,46 +34,87 @@ vector<double> EulerExplicit::ComputeLocalTimeStep(array<double,3>* &field,Euler
 }
 
 //-----------------------------------------------------------
-double EulerExplicit::ComputeGlobalTimeStep(const double &CFL,double &dx,double &lambda_max){
+vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx){
 
-  //TODO
+  //extracting smallest local time step of all cells
+  vector<double> time_steps = ComputeLocalTimeStep(field,euler,CFL,dx); //local time steps list for all cells
+  double min_time_step = 1.0e5; //temp. value for min time_step
 
-  double dt;
-  return dt;
+  for (int n=0;n<cellnumber;n++){
+    if (time_steps[n] < min_time_step)
+      min_time_step = time_steps[n];
+  }
+
+  vector<double> global_time_steps(cellnumber,min_time_step);
+
+  return global_time_steps;
 
 }
 //-----------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(array<double,3>* &field,array<double,3>* &resid,vector<double> &time_steps,vector<double> &xcoords,double &dx){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,vector<double> &time_steps,vector<double> &xcoords,double &dx){
 
   double vol;
-  //use indexing of interior cells!
-  //Need to convert to Conservative variables
-  for (int i=0;i<cellnumber;i++){ //i+2 to skip inflow ghost cells
-    
-    vol = MeshGen1D::GetCellVolume(i,dx,xcoords); //acquiring cell vol
-    Tools::print("Volume of cell %d:%f\n",i,vol);
-    //new density
-    Tools::print("previous density :%f\n",field[i+2][0]);
-    field[i+2][0] -= (time_steps[i] / vol) * resid[i][0];
-    Tools::print("time step :%f\n",time_steps[i]);
-    Tools::print("continuity resid :%f\n",resid[i][0]);
-    Tools::print("new density :%f\n",field[i+2][0]);
+  array<double,3> conserve;
+  //use indexing of interior cells for Resid!
+  // Field still has ghost cells
+  //First, convert to conservative to compute conservative values at new time step
+  //Second, extract primitive variables from newly calculated conservative variables
+  for (int n=0;n<cellnumber;n++){ //i+2 to skip inflow ghost cells
 
-    //new velocity
-    Tools::print("previous velocity :%f\n",field[i+2][1]);
-    field[i+2][1] -= (time_steps[i] / vol) * resid[i][1];
-    Tools::print("X-mom. resid :%f\n",resid[i][1]);
-    Tools::print("new velocity :%f\n",field[i+2][1]);
+    vol = MeshGen1D::GetCellVolume(n,dx,xcoords); //acquiring cell vol
+    //Tools::print("Volume of cell %d:%f\n",i,vol);
+    conserve = euler->ComputeConserved(field,n+2); //!< computing conservative values
 
-    //new pressure
-    Tools::print("previous pressure :%f\n",field[i+2][2]);
-    field[i+2][2] -= (time_steps[i] / vol) * resid[i][2];
-    Tools::print("Energy resid :%f\n",resid[i][2]);
-    Tools::print("new pressure :%f\n",field[i+2][2]);
-    Tools::print("------\n");
+    for (int i=0;i<3;i++) // advancing to new timestep of conservative variable
+      conserve[i] -= Omega[i]*(time_steps[i] / vol) * resid[n][i];
+
+    euler->ComputePrimitive(field,conserve,n+2); //!< extracting new primitive variables
+
+  }
+  
+  return;
+
+}
+
+//-----------------------------------------------------------
+void EulerExplicit::SolutionLimiter(vector<array<double,3>>* &field){
+
+  for (int n=0;n<(int)field->size();n++){
+    //Density
+    *field[n][0] = std::min(Density_max,std::max(Density_min,*field[n][0]));
+
+    //Velocity
+    *field[n][1] = std::min(Velocity_max,std::max(Velocity_min,*field[n][1]));
+
+    //Pressure
+    *field[n][2] = std::min(Pressure_max,std::max(Pressure_min,*field[n][2]));
+
+    //Printing out message if limiter kicks in
+    if (*field[n][0] == Density_max || *field[n][0] == Density_min)
+      Tools::print("Limiter was hit for density at cell %d | val is now:%e\n",n,*field[n][0]);
+
+    if (*field[n][1] == Velocity_max || *field[n][1] == Velocity_min)
+      Tools::print("Limiter was hit for velocity at cell %d | val is now:%e\n",n,*field[n][1]);
+
+    if (*field[n][2] == Pressure_max || *field[n][2] == Pressure_min)
+      Tools::print("Limiter was hit for pressure at cell %d | val is now:%e\n",n,*field[n][2]);
 
   }
 
+  return;
+
+}
+
+//-----------------------------------------------------------
+void EulerExplicit::UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check){
+
+  for (int i=0;i<3;i++){
+    if (ResidNorm[i] > C*ResidPrevNorm[i])
+      check[i] = true; //assigning true to corresponding equation
+  }
+
+
+  return;
 }
 
 //-----------------------------------------------------------

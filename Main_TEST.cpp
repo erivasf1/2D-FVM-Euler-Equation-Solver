@@ -13,7 +13,7 @@
 #include "MeshGen.h"
 #include "EulerOperator_TEST.h"
 #include "DataManager_TEST.h"
-#include "Output.h"
+#include "Output_TEST.h"
 #include "TimeIntegrator_TEST.h" 
 
 using namespace std;
@@ -273,7 +273,7 @@ int main() {
     //  Residual = ResidStar; Field = FieldStar; ResidualNorms = ResidStarNorms --> assigning the star values to next time step values
     Euler.ComputeResidual(ResidualStar,FieldStar,xcoords,dx);
     ResidualStarNorms = ResidSols.ComputeSolutionNorms(ResidualStar);
-    Time.UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
+    Time.UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check); //C refers to factor of resid increase
 
     if (check[0]==true || check[1] == true || check[2] == true){ //perform under-relaxation if any of these are true
       for (int j=0;j<subiter_max;j++){

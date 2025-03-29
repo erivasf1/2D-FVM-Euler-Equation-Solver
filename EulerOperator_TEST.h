@@ -48,11 +48,11 @@ class Euler1D {
   void ComputeOutflowBoundaryConditions(vector<array<double,3>> &Field,bool cond); //only computes their values
 
   // Residual
-  void ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx); //TODO: Computes the residual vector (uses artificial viscosity and dampening
+  void ComputeResidual(vector<array<double,3>> &Resid,vector<array<double,3>> &Field,vector<double> &xcoords,double &dx); 
 
   // Spatial Fluxes Fcns. (including source term)
-  array<double,3> ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor);//TODO
-  double ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<double> &xcoords);//TODO: May have to look into Pi
+  array<double,3> ComputeSpatialFlux(vector<array<double,3>> &Field,int loc,int nbor);
+  double ComputeSourceTerm(vector<array<double,3>> &Field,int loc,vector<double> &xcoords);
 
   // Artificial Dissipaton Fcns. (using JST Dampening)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>> &Field,int loc); // viscous term for shocks (c(2))

@@ -31,7 +31,7 @@ set(SOURCES
     MeshGen.cpp
     Main.cpp
     Output.cpp
-    Test.cpp
+    #Test.cpp
     TimeIntegrator.cpp
 )
 # Define unit testing source files
@@ -41,7 +41,7 @@ set(TESTSOURCES
     ExactNozzle.cpp
     Main_TEST.cpp #for system level testing
     MeshGen.cpp
-    Output.cpp
+    Output_TEST.cpp
     TimeIntegrator_TEST.cpp
     #UnitTest.cpp #for unit testing
 )
@@ -63,7 +63,7 @@ set(HEADERS
     ExactNozzle.h
     MeshGen.h
     Output.h
-    Test.h
+    #Test.h
     TimeIntegrator.h
 )
 
@@ -72,7 +72,7 @@ set(TESTHEADERS
     EulerOperator_TEST.h
     ExactNozzle.h
     MeshGen.h
-    Output.h
+    Output_TEST.h
     TimeIntegrator_TEST.h
 )
 
@@ -86,7 +86,7 @@ set(OUTPUTHEADERS
 )
 
 # Create the executable
-#add_executable(nozzle ${SOURCES} ${HEADERS})
+add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
 add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
 add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
