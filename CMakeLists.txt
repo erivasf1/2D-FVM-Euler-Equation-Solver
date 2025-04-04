@@ -18,7 +18,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Enable debug symbols
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi")
 set(CMAKE_C_FLAGS_DEBUG "-g3 -fsanitize=address")
 
 

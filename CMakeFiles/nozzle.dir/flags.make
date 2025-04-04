@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -std=gnu++17
+CXX_FLAGS = -g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi -std=gnu++17
 

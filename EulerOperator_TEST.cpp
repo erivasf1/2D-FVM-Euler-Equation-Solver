@@ -457,7 +457,7 @@ double Euler1D::GetEpsilon4(vector<array<double,3>> &Field,int loc){
   double epsilon2 = GetEpsilon2(Field,loc);
   //double kappa4 = 1.0/5.0; //typically ranges from: 1/64<kappa4<1/32
   double kappa4 = 1.0/30.0; //typically ranges from: 1/64<kappa4<1/32
-  kappa4 *= 40.0; //TEMP: solely for seeing effects of damping terms (normally is in recommended range)
+  //kappa4 *= 40.0; //TEMP: solely for seeing effects of damping terms (normally is in recommended range)
   //kappa4 = kappa4 + (kappa4*0.5); //TEMP: solely for seeing effects of damping terms (normally is in recommended range)
   double res = std::max(0.0,(kappa4 - epsilon2));
 

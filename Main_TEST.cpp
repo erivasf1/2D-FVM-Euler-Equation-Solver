@@ -21,6 +21,10 @@ using namespace std;
 
 int main() {
 
+  //Timing Purposes
+  double start_time,stop_time;//TODO:
+  start_time = MPI_Wtime();
+
   // Domain and Fluid Parameters
   double xmin = -1.0;
   double xmax = 1.0;
@@ -34,7 +38,7 @@ int main() {
   bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   //Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 50; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //!< stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   //Tools::print("DNE xcoords val:%f\n",xcoords[10]);
@@ -357,6 +361,8 @@ int main() {
     Error.DiscretizationErrorNorms(Field,ExactField,Errors,Sols);   
   }
 
+  stop_time = MPI_Wtime();
+  Tools::print("Elapsed time: %fs\n",stop_time-start_time);
 
   return 0;
 }

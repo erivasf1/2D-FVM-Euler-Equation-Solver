@@ -200,7 +200,7 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,b
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>>* &field,int loc,int nbor){
+array<double,3> Euler1D::ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor){
 
   array<double,3> V_face; //primitive variable vector
 
@@ -224,6 +224,109 @@ array<double,3> Euler1D::ComputeSpatialFlux(vector<array<double,3>>* &field,int 
 
 }
 
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool &method,int loc,int nbor){
+
+  array<double,3> flux; //total flux
+  array<double,3> flux_right; //right state flux (for upwinding in +c wave speed)
+  array<double,3> flux_left; //left state flux (for upwinding in -c wave speed)
+
+  if (method == true){ //Van Leer Method
+    flux_right = VanLeerCompute(field,nbor,false); //false for negative c case
+    flux_left = VanLeerCompute(field,loc,true); //true for positive c case
+   
+  }
+//  if (method == false) //Roe's Method
+ //   flux = RoeCompute();
+
+  for (int n=0;n<3;n++) //summing up left and right state fluxes
+    flux[n] = flux_right[n] + flux_left[n];
+
+
+  return flux;
+}
+//-----------------------------------------------------------
+array<double,3> Euler1D::VanLeerCompute(vector<array<double,3>>* &field,int loc,bool sign){
+
+  array<double,3> flux;
+  //scalars
+  double M = GetMachNumber(field,loc); //local Mach Number
+  double a = (*field)[loc][1] / M; //local speed of sound
+ 
+  //total energy term(h_t)
+  double ht = (gamma/(gamma-1.0))*((*field)[loc][2]/(*field)[loc][0]); //pressure work
+  ht += pow((*field)[loc][1],2.0) / 2.0; //kinetic energy
+
+  //vectors
+  array<double,3> convect_vec{1.0,(*field)[loc][1],ht}; //vector multiple for convective flux
+  array<double,3> pressure_vec{0.0,(*field)[loc][2],0.0}; //vector multiple for pressure flux
+
+  //Convective Flux
+  double C = GetC(M,sign);
+  for (int n=0;n<3;n++)
+    flux[n] = (*field)[loc][0]*a*C*convect_vec[n]; 
+
+  //Pressure Flux
+  double D = GetD(M,sign);
+  for (int n=0;n<3;n++)
+    flux[n] += D*(*field)[loc][0]*a*C*(*field)[loc][n]; 
+  
+
+  return flux;
+}
+
+//-----------------------------------------------------------
+double Euler1D::GetC(double M,bool sign){
+
+  double alpha = GetAlpha(M,sign);
+  double beta = GetBeta(M);
+
+  double C = alpha*(1.0+beta)*M - beta*M;
+ 
+  return C;
+
+}
+//-----------------------------------------------------------
+double Euler1D::GetAlpha(double M,bool sign){
+
+  double alpha = (sign == true) ? 0.5*(1+std::copysign(1.0,M)) : 0.5*(1-std::copysign(1.0,M));
+
+  return alpha;
+
+}
+//-----------------------------------------------------------
+double Euler1D::GetBeta(double M){
+
+  double beta = -std::max(0.0,1.0-(int)abs(M)); //(int) discards decimal
+
+  return beta;
+}
+//-----------------------------------------------------------
+double Euler1D::GetVanLeerM(double M,bool sign){
+  
+  double M_VL = (sign == true) ? 0.25*pow((M+1.0),2.0) : -0.25*pow((M-1.0),2.0);
+  return M_VL;
+}
+//-----------------------------------------------------------
+double Euler1D::GetD(double M,bool sign){
+
+  double alpha = GetAlpha(M,sign);
+  double beta = GetBeta(M);
+  double p2bar = GetP2Bar(M,sign);
+
+  double D = alpha*(1.0+beta) - beta*p2bar;
+
+  return D;
+}
+//-----------------------------------------------------------
+double Euler1D::GetP2Bar(double M,bool sign){
+
+  double M_vl = GetVanLeerM(M,sign);
+
+  double p2bar = (sign == true) ? M_vl*(-M+2.0) : M_vl*(-M-2.0);
+
+  return p2bar;
+}
 //-----------------------------------------------------------
 double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords) {
 
@@ -381,14 +484,14 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
   double A_left,A_right; //Area of corresponding faces
 
   for (int n=0;n<total_cellnum;n++){ //looping through all interior nodes
-    if (n==0 | n==1 | n==total_cellnum-2 | n==total_cellnum-1) //skipping the ghost cell nodes
+    if ((n==0) | (n==1) | (n==total_cellnum-2) | (n==total_cellnum-1)) //skipping the ghost cell nodes
       continue;
 
 
     //Spatial Flux Term
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
-    F_right = ComputeSpatialFlux(field,n,n+1);
-    F_left = ComputeSpatialFlux(field,n-1,n);
+    F_right = ComputeSpatialFlux_BASE(field,n,n+1);
+    F_left = ComputeSpatialFlux_BASE(field,n-1,n);
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?

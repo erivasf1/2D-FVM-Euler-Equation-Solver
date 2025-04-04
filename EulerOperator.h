@@ -39,11 +39,28 @@ class Euler1D {
   void ComputeInflowBoundaryConditions(vector<array<double,3>>* &field); //only computes their values
   void ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,bool& cond); //only computes their values
 
-  // Residual
+  // Residual Fcns.
   void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx);
 
   // Spatial Fluxes Fcns. (including source term)
-  array<double,3> ComputeSpatialFlux(vector<array<double,3>>* &field,int loc,int nbor);
+  // Central Difference using Central quadrature fcn.
+  array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor);
+  //Upwind Schemes
+  array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool &method,int loc,int rnbor); //1st order upwind schemes
+  array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(bool &method); //2nd order upwind schemes
+  //VanLeer Fcns.
+  array<double,3> VanLeerCompute(vector<array<double,3>>* &field,int loc,bool sign); //returns convective+pressure flux of specified state (either right or left)
+  double GetC(double M,bool sign); //c value
+  double GetAlpha(double M,bool sign); //alpha value
+  double GetBeta(double M); //beta value
+  double GetVanLeerM(double M,bool sign); //Van Leer MachNumber
+  double GetD(double M,bool sign); //D value
+  double GetP2Bar(double M,bool sign); //Pressure double bar
+  // TODO: Add Upwind Schemes here: Van Leer and Roe's Method
+  //Upwind fcn. -- this will sum right and left states
+  //VanLeerCompute -- evaluates either specified left or right state via Van Leer's Method
+  //RoeCompute -- evaluates either specified left or right state via Roe's Method
+
   double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords);
 
   // Artificial Dissipaton Fcns. (using JST Dampening)
