@@ -225,22 +225,22 @@ array<double,3> Euler1D::ComputeSpatialFlux_BASE(vector<array<double,3>>* &field
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool &method,int loc,int nbor){
+array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor){
 
   array<double,3> flux; //total flux
-  array<double,3> flux_right; //right state flux (for upwinding in +c wave speed)
-  array<double,3> flux_left; //left state flux (for upwinding in -c wave speed)
+  array<double,3> flux_rtstate; //right state flux (for upwinding in +c wave speed)
+  array<double,3> flux_ltstate; //left state flux (for upwinding in -c wave speed)
 
   if (method == true){ //Van Leer Method
-    flux_right = VanLeerCompute(field,nbor,false); //false for negative c case
-    flux_left = VanLeerCompute(field,loc,true); //true for positive c case
+    flux_rtstate = VanLeerCompute(field,nbor,false); //false for negative c case
+    flux_ltstate = VanLeerCompute(field,loc,true); //true for positive c case
    
   }
 //  if (method == false) //Roe's Method
  //   flux = RoeCompute();
 
   for (int n=0;n<3;n++) //summing up left and right state fluxes
-    flux[n] = flux_right[n] + flux_left[n];
+    flux[n] = flux_rtstate[n] + flux_ltstate[n];
 
 
   return flux;
@@ -269,7 +269,7 @@ array<double,3> Euler1D::VanLeerCompute(vector<array<double,3>>* &field,int loc,
   //Pressure Flux
   double D = GetD(M,sign);
   for (int n=0;n<3;n++)
-    flux[n] += D*(*field)[loc][0]*a*C*(*field)[loc][n]; 
+    flux[n] += D*pressure_vec[n];
   
 
   return flux;
@@ -280,8 +280,9 @@ double Euler1D::GetC(double M,bool sign){
 
   double alpha = GetAlpha(M,sign);
   double beta = GetBeta(M);
+  double M_vl = GetVanLeerM(M,sign);
 
-  double C = alpha*(1.0+beta)*M - beta*M;
+  double C = alpha*(1.0+beta)*M - beta*M_vl;
  
   return C;
 
@@ -289,7 +290,8 @@ double Euler1D::GetC(double M,bool sign){
 //-----------------------------------------------------------
 double Euler1D::GetAlpha(double M,bool sign){
 
-  double alpha = (sign == true) ? 0.5*(1+std::copysign(1.0,M)) : 0.5*(1-std::copysign(1.0,M));
+  //sign = true for positive and false for negative
+  double alpha = (sign == true) ? 0.5*(1.0+std::copysign(1.0,M)) : 0.5*(1.0-std::copysign(1.0,M));
 
   return alpha;
 
@@ -297,7 +299,7 @@ double Euler1D::GetAlpha(double M,bool sign){
 //-----------------------------------------------------------
 double Euler1D::GetBeta(double M){
 
-  double beta = -std::max(0.0,1.0-(int)abs(M)); //(int) discards decimal
+  double beta = -std::max(0.0,1.0-(int)abs(M)); //(int) -- explicit type conversion
 
   return beta;
 }
@@ -473,11 +475,11 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>>* &field,
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx){ 
+void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme){ 
 
   //following nomenclature from class notes
-  array<double,3> F_right,F_left; //left and right face spatial fluxes 
-  array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
+  [[maybe_unused]] array<double,3> F_right,F_left; //left and right face spatial fluxes 
+  [[maybe_unused]] array<double,3> D2_right,D2_left,D4_right,D4_left; //left and right face damping terms
   array<double,3> TotalF_right,TotalF_left; //left and right total fluxes (spatial + damping)
   array<double,3> Source{0.0,0.0,0.0}; //source term vector
   double S; //source term (only for x-mom. eq.)
@@ -488,31 +490,43 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
       continue;
 
 
-    //Spatial Flux Term
+    //Fluxes Evaluation
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
-    F_right = ComputeSpatialFlux_BASE(field,n,n+1);
-    F_left = ComputeSpatialFlux_BASE(field,n-1,n);
+    if (flux_scheme == true){ //JST Damping Case -- central quadrature
+      // Spatial Fluxes
+       F_right = ComputeSpatialFlux_BASE(field,n,n+1);
+       F_left = ComputeSpatialFlux_BASE(field,n-1,n);
+
+      //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
+      //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
+      // right face
+      D2_right = Compute2ndOrderDamping(field,n);
+      D4_right = Compute4thOrderDamping(field,n);
+      // left face
+      D2_left = Compute2ndOrderDamping(field,n-1);
+      D4_left = Compute4thOrderDamping(field,n-1);
+
+      //Total Flux Terms
+      for (int i=0;i<3;i++){
+        TotalF_right[i] = F_right[i] - (D2_right[i]-D4_right[i]);
+        TotalF_left[i] = F_left[i] - (D2_left[i]-D4_left[i]);
+      }
+    }
+
+    //TODO: Upwind Cases
+    else{
+      if (flux_accuracy == true){ //1st order accurate case
+        TotalF_right = ComputeSpatialFlux_UPWIND1stOrder(field,upwind_scheme,n,n+1);
+        TotalF_left = ComputeSpatialFlux_UPWIND1stOrder(field,upwind_scheme,n-1,n);
+
+      }
+    }
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
     S = ComputeSourceTerm(field,n,xcoords);
     Source[1] = S; //adding scalar to vector
 
-    //JST Damping Terms (need a D2_left flux and D2_right flux vector; similar for D4)
-    //note: \arrow{D}_(i-1/2) is same as \arrow{D}_(i+1/2) of cell to the left!
-    // right face
-    D2_right = Compute2ndOrderDamping(field,n);
-    D4_right = Compute4thOrderDamping(field,n);
-    // left face
-    D2_left = Compute2ndOrderDamping(field,n-1);
-    D4_left = Compute4thOrderDamping(field,n-1);
-
-    //Total Flux Terms
-    for (int i=0;i<3;i++){
-      TotalF_right[i] = F_right[i] - (D2_right[i]-D4_right[i]);
-      TotalF_left[i] = F_left[i] - (D2_left[i]-D4_left[i]);
-    }
- 
 
     //Area Evaluations
     A_left = Tools::AreaVal(xcoords[n-2]);

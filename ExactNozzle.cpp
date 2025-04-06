@@ -149,7 +149,7 @@ double SuperSonicNozzle::ComputeMachNumber(){
   double resid; // residual
 
   //debug:
-  print("area: %f and tol.: %f\n",area,tol);
+  //print("area: %f and tol.: %f\n",area,tol);
   
   M0 = (cond == true) ? 0.1:4.0; // initial guess of 0.1 for subsonic & 4.0 for supersonic region
   //print("M0 initial guess:%f\n",M0); //for debugging

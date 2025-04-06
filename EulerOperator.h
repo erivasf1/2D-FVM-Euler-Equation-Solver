@@ -40,13 +40,13 @@ class Euler1D {
   void ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,bool& cond); //only computes their values
 
   // Residual Fcns.
-  void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx);
+  void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme);
 
   // Spatial Fluxes Fcns. (including source term)
   // Central Difference using Central quadrature fcn.
   array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor);
   //Upwind Schemes
-  array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool &method,int loc,int rnbor); //1st order upwind schemes
+  array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int rnbor); //1st order upwind schemes
   array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(bool &method); //2nd order upwind schemes
   //VanLeer Fcns.
   array<double,3> VanLeerCompute(vector<array<double,3>>* &field,int loc,bool sign); //returns convective+pressure flux of specified state (either right or left)

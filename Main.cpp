@@ -22,7 +22,7 @@ using namespace std;
 int main() {
 
   //Timing Purposes
-  double start_time,stop_time;//TODO:
+  double start_time,stop_time;
   start_time = MPI_Wtime();
 
   //! INITIALIZATION
@@ -45,9 +45,14 @@ int main() {
 
   // Temporal Specifications
   const int iter_max = 1e5;
-  const int iterout = 50; //number of iterations per solution output
-  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iterout = 100; //number of iterations per solution output
+  const double CFL = 0.3; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
+
+  // Flux Specifications
+  const bool flux_scheme{false}; //true for JST Damping & false for Upwind
+  const bool upwind_scheme{true}; //true for Van Leer & false for Rhoe
+  const bool flux_accuracy{true}; //true for 1st order & false for 2nd order
 
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
@@ -129,6 +134,16 @@ int main() {
   Tools::print("--CFL: %f\n",CFL);
   Tools::print("--Time-stepping method: ");
   (timestep == true) ? Tools::print("Local time-stepping\n") : Tools::print("Global time-stepping\n");  
+  // Temporal Stats
+  Tools::print("-Flux Statistics:");
+  if (flux_scheme == false){ //Upwind Schemes
+    if (flux_accuracy == true)//1st order
+      (upwind_scheme == true) ? Tools::print(" 1st Order Van Leer Scheme\n") : Tools::print(" 1st Order Rhoe's Scheme\n");
+    else if (flux_accuracy == false)//2nd order
+      (upwind_scheme == true) ? Tools::print(" 2nd Order Van Leer Scheme\n") : Tools::print(" 2nd Order Rhoe's Scheme\n");
+  }
+  else
+    Tools::print(" JST Damping\n");
 
 
   //! SETTING INITIAL CONDITIONS
@@ -172,12 +187,12 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  euler->ComputeResidual(init_resid,field,xcoords,dx); //computing residuals per cell
+  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme); //computing residuals per cell
   InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
   Tools::print("--X-Momentum:%e\n",InitNorms[1]);
-  Tools::print("--Energy:%e\n",InitNorms[2]);
+  Tools::print("--Energy:%e\n\n",InitNorms[2]);
 
 
   (*resid) = (*init_resid);//!< setting initial residual to intermediate
@@ -226,7 +241,7 @@ int main() {
     time->SolutionLimiter(field_star); //temporarily reapplying the limiter
 
 
-    euler->ComputeResidual(resid_star,field_star,xcoords,dx);
+    euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme);
     ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
     time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
@@ -239,7 +254,7 @@ int main() {
 
         (*field_star) = (*field); //resetting primitive variables to previous time step values
         time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
-        euler->ComputeResidual(resid_star,field_star,xcoords,dx); //compute under-relaxed residual
+        euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
