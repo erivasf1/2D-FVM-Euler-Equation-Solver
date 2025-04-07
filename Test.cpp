@@ -81,7 +81,7 @@ TEST_CASE(" EulerOperator " ){
   //Testing location
   int loc = cellnum/2; int nbor = (cellnum/2) + 1;
 
-  SECTION( "Rho-Avg. Computation" ){
+  SECTION( "Roe-Avg. Computation" ){ //Verified
     
     //Testing fcn.
     double abar_test;
@@ -113,7 +113,7 @@ TEST_CASE(" EulerOperator " ){
   double abar;
   array<double,3> roe_avg = euler->ComputeRoeAvgVars(field,loc,nbor,abar);
 
-  SECTION( "Roe Eigen-values" ){
+  SECTION( "Roe Eigen-values" ){ //Verified
 
     //Tested fcn.
     array<double,3> test_eigenvals = euler->ComputeRoeEigenVals(roe_avg,abar);
@@ -130,6 +130,105 @@ TEST_CASE(" EulerOperator " ){
     }
     
 
+
+  }
+
+
+  SECTION( "Roe Eigen-vectors" ){  //Verified
+
+    //Tested fcn.
+    array<array<double,3>,3> test_eigenvecs = euler->ComputeRoeEigenVecs(roe_avg,abar);
+
+    //Expected fcn.
+    array<array<double,3>,3> expected_eigenvectors;
+
+    double rho_bar = roe_avg[0];
+    double u_bar = roe_avg[1];
+    double ht_bar = roe_avg[2];
+
+    double r2_scale = rho_bar / (2.0*abar);
+    double r3_scale = -rho_bar / (2.0*abar);
+    //1st eigenvector
+    expected_eigenvectors[0][0] = 1.0; 
+    expected_eigenvectors[0][1] = u_bar; 
+    expected_eigenvectors[0][2] = pow(u_bar,2.0)*0.5; 
+
+    //2nd eigenvector
+    expected_eigenvectors[1][0] = 1.0; 
+    expected_eigenvectors[1][1] = u_bar + abar; 
+    expected_eigenvectors[1][2] = ht_bar + (u_bar*abar);
+
+    //3rd eigenvector
+    expected_eigenvectors[2][0] = 1.0; 
+    expected_eigenvectors[2][1] = u_bar - abar; 
+    expected_eigenvectors[2][2] = ht_bar - (u_bar*abar);
+
+    //Scaling 2nd and 3rd eigenvectors
+    for (int n=0;n<3;n++)
+      expected_eigenvectors[1][n] *= r2_scale;
+
+    for (int n=0;n<3;n++)
+      expected_eigenvectors[2][n] *= r3_scale;
+    
+    for (int i=0;i<3;i++){
+      for (int j=0;j<3;j++)
+      REQUIRE(test_eigenvecs[i][j] == Approx(expected_eigenvectors[i][j]));
+    }
+
+  }
+
+  SECTION( "Roe Wave Amps" ){ //Verified
+
+    //Tested fcn.
+    array<double,3> test_waveamps = euler->ComputeRoeWaveAmps(roe_avg,field,abar,loc,nbor);
+
+    //Expected fcn.
+    array<double,3> expected_waveamps;
+    double drho = (*field)[nbor][0] - (*field)[loc][0];
+    double du = (*field)[nbor][1] - (*field)[loc][1];
+    double dP = (*field)[nbor][2] - (*field)[loc][2];
+
+    double rho_bar = roe_avg[0];
+    double u_bar = roe_avg[1];
+    double ht_bar = roe_avg[2];
+
+    expected_waveamps[0] = drho - (dP/pow(abar,2.0));
+    expected_waveamps[1] = du + (dP/(rho_bar*abar));
+    expected_waveamps[2] = du - (dP/(rho_bar*abar));
+
+    for (int i=0;i<3;i++)
+    REQUIRE(test_waveamps[i] == Approx(expected_waveamps[i]));
+
+
+  }
+
+  array<double,3> eigenvals = euler->ComputeRoeEigenVals(roe_avg,abar);
+  array<array<double,3>,3> eigenvecs = euler->ComputeRoeEigenVecs(roe_avg,abar);
+  array<double,3> wave_amps = euler->ComputeRoeWaveAmps(roe_avg,field,abar,loc,nbor);
+
+  SECTION( "Roe Flux" ){ 
+    //Test fcn.
+    array<double,3> test_roeflux = euler->ComputeRoeFlux(field,loc,nbor);
+
+    //Expected fcn.
+    array<double,3> expected_roeflux;
+    array<double,3> flux_loc = euler->ComputeSpatialFlux_CELL(field,loc);
+    array<double,3> flux_nbor = euler->ComputeSpatialFlux_CELL(field,nbor);
+    array<double,3> shock_tube;
+   
+    //shock tube portion
+    for (int i=0;i<3;i++){
+      for (int j=0;j<3;j++) 
+        shock_tube[i] = 0.5*abs(eigenvals[i])*wave_amps[i]*eigenvecs[i][j];
+    }
+
+    for (int i=0;i<3;i++)
+      expected_roeflux[i] = 0.5*(flux_loc[i]+flux_nbor[i]) - shock_tube[i];
+
+
+
+    for (int i=0;i<3;i++)
+      REQUIRE(test_roeflux[i] == Approx(expected_roeflux[i]));
 
   }
 

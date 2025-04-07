@@ -415,6 +415,12 @@ array<double,3> Euler1D::ComputeRoeEigenVals(array<double,3> &roe_vars,double ab
 
   array<double,3> roe_eigenvals{roe_vars[1],roe_vars[1]+abar,roe_vars[1]-abar};
 
+
+  //TODO: Add modification to eigenvalues by Harten,1983 to handle rarefaction fans
+  double epsilon = 1.0e-3;
+  for (int i=0;i<3;i++)
+    roe_eigenvals[i] = (abs(roe_eigenvals[i]) < 2.0*epsilon*abar) ? (pow(roe_eigenvals[i],2.0)/(4.0*epsilon*abar)) + (epsilon*abar) : roe_eigenvals[i];
+
   return roe_eigenvals;
 
 }
