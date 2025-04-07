@@ -32,19 +32,20 @@ class Euler1D {
 
   void ComputePrimitive(vector<array<double,3>>* &field,array<double,3> &Conserved,int loc);
 
-  // Boundary + Initial Conditions Fcns.
+  // BOUNDARY + INITIAL CONDITIONS FCNS.
   void SetInitialConditions(vector<array<double,3>>* &field,vector<double> &xcoords); //Complete (tested)
   void SetBoundaryConditions(vector<array<double,3>>* &field,bool &cond); //ADDS ghost cells nodes and computes their values
   void ComputeTotalBoundaryConditions(vector<array<double,3>>* &field,bool &cond); //only computes their values
   void ComputeInflowBoundaryConditions(vector<array<double,3>>* &field); //only computes their values
   void ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,bool& cond); //only computes their values
 
-  // Residual Fcns.
+  // RESIDUAL FCNS.
   void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme);
 
-  // Spatial Fluxes Fcns. (including source term)
+  // SPATIAL FLUXES FCNS. (INCLUDING SOURCE TERM)
   // Central Difference using Central quadrature fcn.
-  array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor);
+  array<double,3> ComputeSpatialFlux_CELL(vector<array<double,3>>* &field,int loc); //at cell
+  array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor); //at cell interface
   //Upwind Schemes
   array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int rnbor); //1st order upwind schemes
   array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(bool &method); //2nd order upwind schemes
@@ -56,14 +57,17 @@ class Euler1D {
   double GetVanLeerM(double M,bool sign); //Van Leer MachNumber
   double GetD(double M,bool sign); //D value
   double GetP2Bar(double M,bool sign); //Pressure double bar
-  // TODO: Add Upwind Schemes here: Van Leer and Roe's Method
-  //Upwind fcn. -- this will sum right and left states
-  //VanLeerCompute -- evaluates either specified left or right state via Van Leer's Method
+  //Roe Fcns.
   //RoeCompute -- evaluates either specified left or right state via Roe's Method
+  array<double,3> ComputeRoeFlux(vector<array<double,3>>* &field,int loc,int nbor); //rho-avg eigenvalues
+  array<double,3> ComputeRoeWaveAmps(array<double,3> &roe_vars,vector<array<double,3>>* &field,double abar,int loc,int nbor); //rho-avg eigenvalues
+  array<double,3> ComputeRoeEigenVals(array<double,3> &rho_vars,double abar); //rho-avg eigenvalues
+  array<array<double,3>,3> ComputeRoeEigenVecs(array<double,3> &roe_vars,double abar); //rho-avg eigenvectors
+  array<double,3> ComputeRoeAvgVars(vector<array<double,3>>* &field,int loc,int nbor,double &abar); //rho-avg. vars
 
   double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords);
 
-  // Artificial Dissipaton Fcns. (using JST Dampening)
+  // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>>* &field,int loc); // viscous term for shocks (c(2))
   array<double,3> Compute4thOrderDamping(vector<array<double,3>>* &field,int loc); // prevents odd-even decoupling (c(4))
   
@@ -74,7 +78,7 @@ class Euler1D {
   double GetNu(vector<array<double,3>>* &field,int loc); //switching fcn.
   double GetMachNumber(vector<array<double,3>>* &field,int loc); //used for GetLambda fcn.
   
-  // Supplemental Fcns. (may be used for other fcns. of other classes)
+  // SUPPLEMENTAL FCNS. (MAY BE USED FOR OTHER FCNS. OF OTHER CLASSES)
   double GetLambdaMax(vector<array<double,3>>* &field,int loc); //extracts largest eigenvalue for a given cell
   static double GetCellAverageSol(double &A_left,double &A_right,double &dx,array<double,3> &sol_left,array<double,3> &sol_right); //testing x-velocity for now
 

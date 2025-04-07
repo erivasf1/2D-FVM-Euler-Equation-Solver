@@ -44,14 +44,14 @@ int main() {
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
-  const int iter_max = 1e5;
-  const int iterout = 100; //number of iterations per solution output
-  const double CFL = 0.3; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e2;
+  const int iterout = 1; //number of iterations per solution output
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
   // Flux Specifications
   const bool flux_scheme{false}; //true for JST Damping & false for Upwind
-  const bool upwind_scheme{true}; //true for Van Leer & false for Rhoe
+  const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
   const bool flux_accuracy{true}; //true for 1st order & false for 2nd order
 
   // Under-Relaxation Parameters

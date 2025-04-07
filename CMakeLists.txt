@@ -31,19 +31,17 @@ set(SOURCES
     MeshGen.cpp
     Main.cpp
     Output.cpp
-    #Test.cpp
     TimeIntegrator.cpp
 )
 # Define unit testing source files
 set(TESTSOURCES
-    DataManager_TEST.cpp
-    EulerOperator_TEST.cpp
+    DataManager.cpp
+    EulerOperator.cpp
     ExactNozzle.cpp
-    Main_TEST.cpp #for system level testing
     MeshGen.cpp
-    Output_TEST.cpp
-    TimeIntegrator_TEST.cpp
-    #UnitTest.cpp #for unit testing
+    Output.cpp
+    TimeIntegrator.cpp
+    Test.cpp
 )
 
 set(OUTPUTSOURCES
@@ -63,17 +61,16 @@ set(HEADERS
     ExactNozzle.h
     MeshGen.h
     Output.h
-    #Test.h
     TimeIntegrator.h
 )
 
 set(TESTHEADERS
-    DataManager_TEST.h
-    EulerOperator_TEST.h
+    DataManager.h
+    EulerOperator.h
     ExactNozzle.h
     MeshGen.h
-    Output_TEST.h
-    TimeIntegrator_TEST.h
+    Output.h
+    TimeIntegrator.h
 )
 
 set(OUTPUTHEADERS

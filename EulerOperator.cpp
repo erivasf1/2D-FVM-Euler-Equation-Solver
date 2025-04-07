@@ -200,6 +200,23 @@ void Euler1D::ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,b
 }
 
 //-----------------------------------------------------------
+array<double,3> Euler1D::ComputeSpatialFlux_CELL(vector<array<double,3>>* &field,int loc){
+
+  array<double,3> flux;
+
+  //Continuity Flux
+  flux[0] = (*field)[loc][0] * (*field)[loc][1]; //rho*u
+
+  //X-Momentum Flux
+  flux[1] = (*field)[loc][0]*pow((*field)[loc][1],2.0) + (*field)[loc][2]; //rho*u^2 + P
+
+  //Energy Flux
+  flux[2] =(gamma/(gamma-1.0))*(*field)[loc][2]*(*field)[loc][1] + ((*field)[loc][0]*pow((*field)[loc][1],3.0))*0.5; //(gamma/gamma-1)*P*u + (rho*u^3)/2
+
+  return flux; 
+
+}
+//-----------------------------------------------------------
 array<double,3> Euler1D::ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor){
 
   array<double,3> V_face; //primitive variable vector
@@ -227,6 +244,7 @@ array<double,3> Euler1D::ComputeSpatialFlux_BASE(vector<array<double,3>>* &field
 //-----------------------------------------------------------
 array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor){
 
+  //NOTE: assumes loc is left state and nbor is right state (for 1st order accuracy)
   array<double,3> flux; //total flux
   array<double,3> flux_rtstate; //right state flux (for upwinding in +c wave speed)
   array<double,3> flux_ltstate; //left state flux (for upwinding in -c wave speed)
@@ -235,12 +253,12 @@ array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3
     flux_rtstate = VanLeerCompute(field,nbor,false); //false for negative c case
     flux_ltstate = VanLeerCompute(field,loc,true); //true for positive c case
    
-  }
-//  if (method == false) //Roe's Method
- //   flux = RoeCompute();
+    for (int n=0;n<3;n++) //summing up left and right state fluxes
+      flux[n] = flux_rtstate[n] + flux_ltstate[n];
 
-  for (int n=0;n<3;n++) //summing up left and right state fluxes
-    flux[n] = flux_rtstate[n] + flux_ltstate[n];
+  }
+  else if (method == false) //Roe's Method
+    flux = ComputeRoeFlux(field,loc,nbor);
 
 
   return flux;
@@ -328,6 +346,106 @@ double Euler1D::GetP2Bar(double M,bool sign){
   double p2bar = (sign == true) ? M_vl*(-M+2.0) : M_vl*(-M-2.0);
 
   return p2bar;
+}
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRoeFlux(vector<array<double,3>>* &field,int loc,int nbor){ 
+
+  array<double,3> flux;
+  array<double,3> flux_loc = ComputeSpatialFlux_CELL(field,loc);
+  array<double,3> flux_nbor = ComputeSpatialFlux_CELL(field,nbor);
+  
+  double abar; //roe-avg speed of sound -> assigned in subsequent fcn.
+  array<double,3> roe_vars = ComputeRoeAvgVars(field,loc,nbor,abar); //roe-avg. variables
+
+  array<double,3> roe_eigenvals = ComputeRoeEigenVals(roe_vars,abar); 
+  array<array<double,3>,3> roe_eigenvecs = ComputeRoeEigenVecs(roe_vars,abar);
+  array<double,3> wave_amps = ComputeRoeWaveAmps(roe_vars,field,abar,loc,nbor); 
+
+  //shock-tube problem waves
+  array<double,3> shock_waves;
+  for (int n=0;n<3;n++){ //computing 1st wave
+    for (int m=0;m<3;m++)
+      shock_waves[n] = 0.5 * abs(roe_eigenvals[n])*wave_amps[n]*roe_eigenvecs[n][m];
+  }
+
+  for (int n=0;n<3;n++) 
+    flux[n] = 0.5*(flux_loc[n]+flux_nbor[n]) - shock_waves[n];
+
+  return flux;
+}
+
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRoeWaveAmps(array<double,3> &roe_vars,vector<array<double,3>>* &field,double abar,int loc,int nbor){
+
+  array<double,3> wave_amps;
+  double delta_rho = (*field)[nbor][0] - (*field)[loc][0];
+  double delta_u = (*field)[nbor][1] - (*field)[loc][1];
+  double delta_p = (*field)[nbor][2] - (*field)[loc][2];
+
+  wave_amps[0] = delta_rho - (delta_p / pow(abar,2.0));
+  wave_amps[1] = delta_u + (delta_p / (roe_vars[0]*abar));
+  wave_amps[2] = delta_u - (delta_p / (roe_vars[0]*abar));
+
+  return wave_amps;
+
+}
+
+//-----------------------------------------------------------
+array<array<double,3>,3> Euler1D::ComputeRoeEigenVecs(array<double,3> &roe_vars,double abar){
+ 
+  //Refer to notes: Section 6, Page 44
+
+  array<double,3> evec1{1.0,roe_vars[1],pow(roe_vars[1],2.0)*0.5};
+  array<double,3> evec2{1.0,roe_vars[1]+abar,roe_vars[2]+(roe_vars[1]*abar)};
+  array<double,3> evec3{1.0,roe_vars[1]-abar,roe_vars[2]-(roe_vars[1]*abar)};
+
+  for (int n=0;n<3;n++) //multiplying by scaling factor
+    evec2[n] *= roe_vars[0]/(2.0*abar);
+
+  for (int n=0;n<3;n++) //multiplying by scaling factor
+    evec3[n] *= -roe_vars[0]/(2.0*abar);
+
+  array<array<double,3>,3> FullEigenVecs{evec1,evec2,evec3};
+
+  return FullEigenVecs;
+}
+
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRoeEigenVals(array<double,3> &roe_vars,double abar){
+
+  array<double,3> roe_eigenvals{roe_vars[1],roe_vars[1]+abar,roe_vars[1]-abar};
+
+  return roe_eigenvals;
+
+}
+
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRoeAvgVars(vector<array<double,3>>* &field,int loc,int nbor,double &abar){
+
+  //preliminary terms
+  array<double,3> roe_avg;
+  double R_ihalf = sqrt((*field)[nbor][0]/(*field)[loc][0]);
+
+  double ht_loc = (gamma/(gamma-1.0))*((*field)[loc][2]/(*field)[loc][0]); //pressure work
+  ht_loc += pow((*field)[loc][1],2.0) / 2.0; //kinetic energy
+
+  double ht_nbor = (gamma/(gamma-1.0))*((*field)[nbor][2]/(*field)[nbor][0]); //pressure work
+  ht_nbor += pow((*field)[nbor][1],2.0) / 2.0; //kinetic energy
+
+  //Rho-avg.
+  roe_avg[0] = R_ihalf * (*field)[loc][0];
+
+  //U-avg.
+  roe_avg[1] = (R_ihalf * (*field)[nbor][1] + (*field)[loc][1]) / (R_ihalf + 1.0); 
+
+  //ht-avg.
+  roe_avg[2] = (R_ihalf * ht_nbor + ht_loc) / (R_ihalf + 1.0);
+
+  //a-avg
+  abar = sqrt((gamma-1.0) * (roe_avg[2] - (pow(roe_avg[1],2.0)*0.5)));
+
+  return roe_avg;
+
 }
 //-----------------------------------------------------------
 double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords) {
