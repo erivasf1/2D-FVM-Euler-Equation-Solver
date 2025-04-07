@@ -44,9 +44,10 @@ int main() {
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
-  const int iter_max = 1e2;
-  const int iterout = 1; //number of iterations per solution output
-  const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e5;
+  const int iterout = 100; //number of iterations per solution output
+  const double CFL = 0.3; //CFL number (must <= 1 for Euler Explicit integration)
+  //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
   // Flux Specifications
@@ -57,8 +58,8 @@ int main() {
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
   array<double,3> Omega{1.0,1.0,1.0}; //FWD Advance Limiter
-  int subiter_max = 0; //max number of relaxation sub-iterations
-  //int subiter_max = 1e2; //max number of relaxation sub-iterations
+  //int subiter_max = 0; //max number of relaxation sub-iterations
+  int subiter_max = 1e2; //max number of relaxation sub-iterations
 
   // Governing Eq. Residuals
   double cont_tol = 1.0e-10;
@@ -139,9 +140,9 @@ int main() {
   Tools::print("-Flux Statistics:");
   if (flux_scheme == false){ //Upwind Schemes
     if (flux_accuracy == true)//1st order
-      (upwind_scheme == true) ? Tools::print(" 1st Order Van Leer Scheme\n") : Tools::print(" 1st Order Rhoe's Scheme\n");
+      (upwind_scheme == true) ? Tools::print(" 1st Order Van Leer Scheme\n") : Tools::print(" 1st Order Roe's Scheme\n");
     else if (flux_accuracy == false)//2nd order
-      (upwind_scheme == true) ? Tools::print(" 2nd Order Van Leer Scheme\n") : Tools::print(" 2nd Order Rhoe's Scheme\n");
+      (upwind_scheme == true) ? Tools::print(" 2nd Order Van Leer Scheme\n") : Tools::print(" 2nd Order Roe's Scheme\n");
   }
   else
     Tools::print(" JST Damping\n");
@@ -149,7 +150,7 @@ int main() {
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  //euler->SetInitialConditions(field,xcoords);
+  euler->SetInitialConditions(field,xcoords);
 
   //! COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   if (cond_bc == false){ //Compute Exact Solution if isentropic case is selected
@@ -170,7 +171,7 @@ int main() {
   sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
 
   //Debug: Temporarily set initial conditions to exact solutions
-  Field = ExactField;
+  //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt";
   sols->OutputPrimitiveVariables(field,euler,filename);

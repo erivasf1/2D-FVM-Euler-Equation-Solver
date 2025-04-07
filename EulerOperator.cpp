@@ -361,12 +361,20 @@ array<double,3> Euler1D::ComputeRoeFlux(vector<array<double,3>>* &field,int loc,
   array<array<double,3>,3> roe_eigenvecs = ComputeRoeEigenVecs(roe_vars,abar);
   array<double,3> wave_amps = ComputeRoeWaveAmps(roe_vars,field,abar,loc,nbor); 
 
-  //shock-tube problem waves
+  //shock-tube problem waves (assuming Riemann problem)
   array<double,3> shock_waves;
-  for (int n=0;n<3;n++){ //computing 1st wave
+  array<array<double,3>,3> j_vec;
+  for (int j=0;j<3;j++){ //computing j vectors
+    for (int n=0;n<3;n++)
+    j_vec[j][n] = abs(roe_eigenvals[j])*wave_amps[j]*roe_eigenvecs[j][n];
+  }
+  for (int j=0;j<3;j++) //summing up j vectors
+    shock_waves[j] = 0.5*(j_vec[0][j]+j_vec[1][j]+j_vec[2][j]);
+  
+  /*for (int n=0;n<3;n++){ //computing 1st wave
     for (int m=0;m<3;m++)
       shock_waves[n] = 0.5 * abs(roe_eigenvals[n])*wave_amps[n]*roe_eigenvecs[n][m];
-  }
+  }*/
 
   for (int n=0;n<3;n++) 
     flux[n] = 0.5*(flux_loc[n]+flux_nbor[n]) - shock_waves[n];
@@ -448,7 +456,8 @@ array<double,3> Euler1D::ComputeRoeAvgVars(vector<array<double,3>>* &field,int l
   roe_avg[2] = (R_ihalf * ht_nbor + ht_loc) / (R_ihalf + 1.0);
 
   //a-avg
-  abar = sqrt((gamma-1.0) * (roe_avg[2] - (pow(roe_avg[1],2.0)*0.5)));
+  abar = (gamma-1.0) * (roe_avg[2] - (pow(roe_avg[1],2.0)*0.5));
+  abar = sqrt(abar);
 
   return roe_avg;
 

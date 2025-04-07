@@ -99,7 +99,8 @@ TEST_CASE(" EulerOperator " ){
 
     double R_ihalf = sqrt(rho_nbor/rho_loc);
 
-    expected_roeavg[0] = R_ihalf * rho_loc;
+    expected_roeavg[0] = sqrt(rho_loc*rho_nbor);
+    //expected_roeavg[0] = R_ihalf * rho_loc;
     expected_roeavg[1] = ((R_ihalf*u_nbor) + u_loc) / (R_ihalf + 1.0);
     expected_roeavg[2] = ((R_ihalf*ht_nbor) + ht_loc) / (R_ihalf + 1.0);
     
