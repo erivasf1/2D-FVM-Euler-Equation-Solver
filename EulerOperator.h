@@ -44,13 +44,13 @@ class Euler1D {
 
   // SPATIAL FLUXES FCNS. (INCLUDING SOURCE TERM)
   // Central Difference using Central quadrature fcn.
-  array<double,3> ComputeSpatialFlux_CELL(vector<array<double,3>>* &field,int loc); //at cell
+  array<double,3> ComputeSpatialFlux_CELL(array<double,3> &field_state); //at cell
   array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor); //at cell interface
-  //Upwind Schemes
-  array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int rnbor); //1st order upwind schemes
-  array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(bool &method); //2nd order upwind schemes
+  // Upwind Schemes
+  array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor); //1st order upwind schemes
+  array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc, int nbor); //2nd order upwind schemes
   //VanLeer Fcns.
-  array<double,3> VanLeerCompute(vector<array<double,3>>* &field,int loc,bool sign); //returns convective+pressure flux of specified state (either right or left)
+  array<double,3> VanLeerCompute(array<double,3> &field_state,bool sign); //returns convective+pressure flux of specified state (either right or left)
   double GetC(double M,bool sign); //c value
   double GetAlpha(double M,bool sign); //alpha value
   double GetBeta(double M); //beta value
@@ -58,14 +58,15 @@ class Euler1D {
   double GetD(double M,bool sign); //D value
   double GetP2Bar(double M,bool sign); //Pressure double bar
   //Roe Fcns.
-  //RoeCompute -- evaluates either specified left or right state via Roe's Method
-  array<double,3> ComputeRoeFlux(vector<array<double,3>>* &field,int loc,int nbor); //rho-avg eigenvalues
-  array<double,3> ComputeRoeWaveAmps(array<double,3> &roe_vars,vector<array<double,3>>* &field,double abar,int loc,int nbor); //rho-avg eigenvalues
+  array<double,3> ComputeRoeFlux(array<double,3> &field_ltstate,array<double,3> &field_rtstate); //rho-avg eigenvalues
+  array<double,3> ComputeRoeWaveAmps(array<double,3> &roe_vars,array<double,3> &field_ltstate,array<double,3> &field_rtstate,double abar); //rho-avg eigenvalues
   array<double,3> ComputeRoeEigenVals(array<double,3> &rho_vars,double abar); //rho-avg eigenvalues
   array<array<double,3>,3> ComputeRoeEigenVecs(array<double,3> &roe_vars,double abar); //rho-avg eigenvectors
-  array<double,3> ComputeRoeAvgVars(vector<array<double,3>>* &field,int loc,int nbor,double &abar); //rho-avg. vars
-
+  array<double,3> ComputeRoeAvgVars(array<double,3> &field_ltstate,array<double,3> &field_rtstate,double &abar); //rho-avg. vars
   double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords);
+
+  // MUSCL extrapolation
+  array<array<double,3>,3> MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor); //outputs the left and right state primitive variables
 
   // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>>* &field,int loc); // viscous term for shocks (c(2))
@@ -81,6 +82,7 @@ class Euler1D {
   // SUPPLEMENTAL FCNS. (MAY BE USED FOR OTHER FCNS. OF OTHER CLASSES)
   double GetLambdaMax(vector<array<double,3>>* &field,int loc); //extracts largest eigenvalue for a given cell
   static double GetCellAverageSol(double &A_left,double &A_right,double &dx,array<double,3> &sol_left,array<double,3> &sol_right); //testing x-velocity for now
+  double ComputeMachNumber(array<double,3> &sols); //computes Mach number for solution vars. that are not part of the field -- same formula as GetMachNumber
 
   ~Euler1D();
 

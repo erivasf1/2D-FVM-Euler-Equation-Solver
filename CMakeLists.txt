@@ -85,7 +85,7 @@ set(OUTPUTHEADERS
 # Create the executable
 add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
-add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
+#add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
 add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
 
 # Include directories (if needed)

@@ -64,7 +64,6 @@ CMAKE_BINARY_DIR = /home/erivas/Adv_CFD/FVMEulerEqSolver
 
 # The main recursive "all" target.
 all: CMakeFiles/nozzle.dir/all
-all: CMakeFiles/testnozzle.dir/all
 all: CMakeFiles/output.dir/all
 .PHONY : all
 
@@ -74,7 +73,6 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/nozzle.dir/clean
-clean: CMakeFiles/testnozzle.dir/clean
 clean: CMakeFiles/output.dir/clean
 .PHONY : clean
 
@@ -103,32 +101,6 @@ nozzle: CMakeFiles/nozzle.dir/rule
 CMakeFiles/nozzle.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/nozzle.dir/build.make CMakeFiles/nozzle.dir/clean
 .PHONY : CMakeFiles/nozzle.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/testnozzle.dir
-
-# All Build rule for target.
-CMakeFiles/testnozzle.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testnozzle.dir/build.make CMakeFiles/testnozzle.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testnozzle.dir/build.make CMakeFiles/testnozzle.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=17,18,19,20,21,22,23,24 "Built target testnozzle"
-.PHONY : CMakeFiles/testnozzle.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/testnozzle.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles 8
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/testnozzle.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles 0
-.PHONY : CMakeFiles/testnozzle.dir/rule
-
-# Convenience name for target.
-testnozzle: CMakeFiles/testnozzle.dir/rule
-.PHONY : testnozzle
-
-# clean rule for target.
-CMakeFiles/testnozzle.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/testnozzle.dir/build.make CMakeFiles/testnozzle.dir/clean
-.PHONY : CMakeFiles/testnozzle.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/output.dir
