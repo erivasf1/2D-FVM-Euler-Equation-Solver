@@ -67,6 +67,8 @@ class Euler1D {
 
   // MUSCL extrapolation
   array<array<double,3>,3> MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor); //outputs the left and right state primitive variables
+  array<array<double,3>,2> ComputeFluxLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta); //computes the flux limiter(Psi)
+  array<array<double,3>,2> ComputeRVariation(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor); //consecutive variation
 
   // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>>* &field,int loc); // viscous term for shocks (c(2))

@@ -504,15 +504,27 @@ array<array<double,3>,3> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
   double kappa = -1.0;
   double epsilon = 1.0; //setting the order of accuracy
 
+  //computing flux limiters(beta limiters)
+  //NOTE: Refer to Lecture Notes: Section 7 Page 24
+  //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
+  double beta = 1.5;
+  array<array<double,3>,2> psi_central = ComputeFluxLimiter(field,loc,nbor,nbor+1,loc-1,beta);
+  array<array<double,3>,2> psi_upwind_ltstate = ComputeFluxLimiter(field,loc-1,nbor-1,nbor+1-1,loc-1-1,beta);
+  array<array<double,3>,2> psi_upwind_rtstate = ComputeFluxLimiter(field,loc+1,nbor+1,nbor+1+1,loc-1+1,beta);
+
+  array<double,3> psi_central_plus = psi_central[0];
+  array<double,3> psi_central_minus = psi_central[1];
+  array<double,3> psi_leftupwind_plus = psi_upwind_ltstate[0];
+  array<double,3> psi_rightupwind_minus = psi_upwind_rtstate[1];
 
   //computing left state
   for (int n=0;n<3;n++){
-    left_state[n] = (1.0-kappa)*((*field)[loc][n]-(*field)[nbor][n]) + (1.0+kappa)*((*field)[nbor][n] - (*field)[loc][n]);
+    left_state[n] = (1.0-kappa)*psi_leftupwind_plus[n]*((*field)[loc][n]-(*field)[nbor][n]) + (1.0+kappa)*psi_central_minus[n]*((*field)[nbor][n] - (*field)[loc][n]);
     left_state[n] = (*field)[loc][n] + ((epsilon/4.0)*left_state[n]);
   }
   //computing right state
   for (int n=0;n<3;n++){
-    right_state[n] = (1.0+kappa)*((*field)[nbor][n]-(*field)[loc][n]) + (1.0-kappa)*((*field)[nbor+1][n] - (*field)[nbor][n]);
+    right_state[n] = (1.0+kappa)*psi_rightupwind_minus[n]*((*field)[nbor][n]-(*field)[loc][n]) + (1.0-kappa)*psi_central_plus[n]*((*field)[nbor+1][n] - (*field)[nbor][n]);
     right_state[n] = (*field)[nbor][n] - ((epsilon/4.0)*right_state[n]);
   }
 
@@ -521,6 +533,62 @@ array<array<double,3>,3> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
   total_state[1] = right_state;
 
   return total_state;
+}
+
+//-----------------------------------------------------------
+array<array<double,3>,2> Euler1D::ComputeFluxLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta){
+
+  array<array<double,3>,2> r_vec = ComputeRVariation(field,loc,nbor,r_nbor,l_nbor); //consecutive variation ratios
+
+  //psi+ limiter
+  array<double,3> psi_plus;
+  for (int n=0;n<3;n++)
+    psi_plus[n] = std::max(0.0,std::max(std::min(beta*r_vec[0][n],1.0),std::min(r_vec[0][n],beta)));
+
+  //psi- limiter
+  array<double,3> psi_minus;
+  for (int n=0;n<3;n++){
+    psi_plus[n] = std::max(0.0,std::max(std::min(beta*r_vec[1][n],1.0),std::min(r_vec[1][n],beta))); //need 2 max fcns. b/c std::max only takes 2 arguments by default
+ 
+  }
+
+  //combining + and - psi limiter
+  array<array<double,3>,2> psi_total{psi_plus,psi_minus};
+
+  return psi_total;
+
+}
+
+//-----------------------------------------------------------
+array<array<double,3>,2> Euler1D::ComputeRVariation(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor){
+
+  //r+ vector
+  array<double,3> r_plus;
+  if (r_nbor == total_cellnum){ //boundary conditions case for r+ - outflow 
+    for (int n=0;n<3;n++) 
+      r_plus[n] = 1.0; //TODO: assumes the consecutive variation is 1 due to the outflow BC
+  }
+  else{ //normal case
+    for (int n=0;n<3;n++) 
+      r_plus[n] = ((*field)[r_nbor][n] - (*field)[nbor][n]) / ((*field)[nbor][n] - (*field)[loc][n]);
+  }
+
+  //r- vector
+  array<double,3> r_minus;
+  if (loc==0){ //boundary condition case for r- - inflow
+    for (int n=0;n<3;n++) 
+      r_minus[n] = 1.0; //TODO: assumes the consecutive variation is 1 due to the inflow BC
+  }
+  else{
+  for (int n=0;n<3;n++) 
+    r_minus[n] = ((*field)[loc][n] - (*field)[l_nbor][n]) / ((*field)[nbor][n] - (*field)[loc][n]);
+  }
+
+  //total r vectors
+  array<array<double,3>,2> total_r{r_plus,r_minus};
+
+  return total_r;
+
 }
 
 //-----------------------------------------------------------

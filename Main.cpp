@@ -46,13 +46,13 @@ int main() {
   // Temporal Specifications
   const int iter_max = 1e5;
   const int iterout = 100; //number of iterations per solution output
-  const double CFL = 0.3; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
   // Flux Specifications
   const bool flux_scheme{false}; //true for JST Damping & false for Upwind
-  const bool upwind_scheme{true}; //true for Van Leer & false for Rhoe
+  const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
 
   // Under-Relaxation Parameters
@@ -150,7 +150,7 @@ int main() {
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  euler->SetInitialConditions(field,xcoords);
+  //euler->SetInitialConditions(field,xcoords);
 
   //! COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   if (cond_bc == false){ //Compute Exact Solution if isentropic case is selected
@@ -171,7 +171,7 @@ int main() {
   sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
 
   //Debug: Temporarily set initial conditions to exact solutions
-  //Field = ExactField;
+  Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt";
   sols->OutputPrimitiveVariables(field,euler,filename);
