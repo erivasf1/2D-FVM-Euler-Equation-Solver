@@ -54,7 +54,7 @@ double SpaceVariables1D::ComputeRampValue(array<double,3> CurrentNorms,array<dou
   
   double InitVal = ComputeNormAvg(InitNorms);
   double CurrentVal = ComputeNormAvg(CurrentNorms);
-  double p =  2.0; //used to accelerate or deaccelerate the ramping fcn.
+  double p =  20.0; //used to accelerate or deaccelerate the ramping fcn.
 
   double ramp_val = (log10(InitVal) - log10(CurrentVal)) / (log10(CurrentVal) - log10(FinalVal));
   ramp_val = pow(ramp_val,p);
