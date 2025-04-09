@@ -40,7 +40,7 @@ class Euler1D {
   void ComputeOutflowBoundaryConditions(vector<array<double,3>>* &field,bool& cond); //only computes their values
 
   // RESIDUAL FCNS.
-  void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme);
+  void ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme,double epsilon);
 
   // SPATIAL FLUXES FCNS. (INCLUDING SOURCE TERM)
   // Central Difference using Central quadrature fcn.
@@ -48,7 +48,7 @@ class Euler1D {
   array<double,3> ComputeSpatialFlux_BASE(vector<array<double,3>>* &field,int loc,int nbor); //at cell interface
   // Upwind Schemes
   array<double,3> ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor); //1st order upwind schemes
-  array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc, int nbor); //2nd order upwind schemes
+  array<double,3> ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc, int nbor,double epsilon); //2nd order upwind schemes
   //VanLeer Fcns.
   array<double,3> VanLeerCompute(array<double,3> &field_state,bool sign); //returns convective+pressure flux of specified state (either right or left)
   double GetC(double M,bool sign); //c value
@@ -65,10 +65,11 @@ class Euler1D {
   array<double,3> ComputeRoeAvgVars(array<double,3> &field_ltstate,array<double,3> &field_rtstate,double &abar); //rho-avg. vars
   double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords);
 
-  // MUSCL extrapolation
-  array<array<double,3>,3> MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor); //outputs the left and right state primitive variables
+  // MUSCL extrapolation + Flux Limiters
+  array<array<double,3>,2> MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor,double epsilon); //outputs the left and right state primitive variables
   array<array<double,3>,2> ComputeFluxLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta); //computes the flux limiter(Psi)
   array<array<double,3>,2> ComputeRVariation(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor); //consecutive variation
+
 
   // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>>* &field,int loc); // viscous term for shocks (c(2))

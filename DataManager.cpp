@@ -40,6 +40,32 @@ array<double,3> SpaceVariables1D::ComputeSolutionNorms(vector<array<double,3>>* 
 }
 
 //---------------------------------------------------------
+double SpaceVariables1D::ComputeNormAvg(array<double,3> &Norms){
+
+  double norms_avg = (Norms[0]+Norms[1]+Norms[2]) / 3.0;
+  return norms_avg;
+
+}
+
+//---------------------------------------------------------
+double SpaceVariables1D::ComputeRampValue(array<double,3> CurrentNorms,array<double,3> InitNorms,double FinalVal){
+  
+  //Note: using a log10 function as the ramping function
+  
+  double InitVal = ComputeNormAvg(InitNorms);
+  double CurrentVal = ComputeNormAvg(CurrentNorms);
+  double p =  2.0; //used to accelerate or deaccelerate the ramping fcn.
+
+  double ramp_val = (log10(InitVal) - log10(CurrentVal)) / (log10(CurrentVal) - log10(FinalVal));
+  ramp_val = pow(ramp_val,p);
+
+  ramp_val = std::max(0.0,std::min(1.0,ramp_val));
+
+  return ramp_val;
+
+}
+
+//---------------------------------------------------------
 void SpaceVariables1D::OutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,const char *filename){
 
 

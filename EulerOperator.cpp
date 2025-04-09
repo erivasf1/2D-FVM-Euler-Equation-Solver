@@ -268,11 +268,11 @@ array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3
   return flux;
 }
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor){
+array<double,3> Euler1D::ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor,double epsilon){
 
   //NOTE: using MUSCL extrapolation to compute left and right states
   //TODO: employ muscl here
-  array<array<double,3>,3> field_states = MUSCLApprox(field,loc,nbor);
+  array<array<double,3>,2> field_states = MUSCLApprox(field,loc,nbor,epsilon);
   array<double,3> left_state = field_states[0];
   array<double,3> right_state = field_states[1];
   array<double,3> flux; //total flux
@@ -494,20 +494,19 @@ array<double,3> Euler1D::ComputeRoeAvgVars(array<double,3> &field_ltstate,array<
 
 }
 //-----------------------------------------------------------
-array<array<double,3>,3> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor){
+array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor,double epsilon){
 
   array<double,3> left_state,right_state;
-  array<array<double,3>,3> total_state;
+  array<array<double,3>,2> total_state;
 
   //kappa scheme: -1 = fully upwinded; 0 = upwind biased
   // 1/3 = 3rd order upwind scheme;1/2 = QUICK scheme;1 = central scheme
   double kappa = -1.0;
-  double epsilon = 1.0; //setting the order of accuracy
 
   //computing flux limiters(beta limiters)
   //NOTE: Refer to Lecture Notes: Section 7 Page 24
   //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
-  double beta = 1.5;
+  double beta = 0.0;
   array<array<double,3>,2> psi_central = ComputeFluxLimiter(field,loc,nbor,nbor+1,loc-1,beta);
   array<array<double,3>,2> psi_upwind_ltstate = ComputeFluxLimiter(field,loc-1,nbor-1,nbor+1-1,loc-1-1,beta);
   array<array<double,3>,2> psi_upwind_rtstate = ComputeFluxLimiter(field,loc+1,nbor+1,nbor+1+1,loc-1+1,beta);
@@ -737,7 +736,7 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>>* &field,
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme){ 
+void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme,double epsilon){ 
 
   //following nomenclature from class notes
   [[maybe_unused]] array<double,3> F_right,F_left; //left and right face spatial fluxes 
@@ -783,8 +782,8 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
 
       }
       else if (flux_accuracy == false){ //2nd order accurate case
-        TotalF_right = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n,n+1);
-        TotalF_left = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n-1,n);
+        TotalF_right = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n,n+1,epsilon);
+        TotalF_left = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n-1,n,epsilon);
       }
     }
 

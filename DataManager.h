@@ -15,6 +15,10 @@ class SpaceVariables1D {
 
   array<double,3> ComputeSolutionNorms(vector<array<double,3>>* &resid);
 
+  double ComputeNormAvg(array<double,3> &Norms);
+
+  double ComputeRampValue(array<double,3> CurrentNorms,array<double,3> InitNorms,double FinalVal); //outputs a ramping function val.
+
   void OutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,const char *filename);
 
   void AllOutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,string filename,bool cond,int iter,vector<double> &xcoords);

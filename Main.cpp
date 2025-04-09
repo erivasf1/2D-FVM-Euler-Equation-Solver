@@ -54,6 +54,9 @@ int main() {
   const bool flux_scheme{false}; //true for JST Damping & false for Upwind
   const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
+  [[maybe_unused]] const double ramp_stop = 1.0e-4; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
+  [[maybe_unused]] double avg_currentresid,avg_initresid; //variables that hold the avg norm value that is used for ramping
+  double epsilon = 0.0; //ramping value used to transition from 1st to 2nd order
 
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
@@ -150,7 +153,7 @@ int main() {
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
-  //euler->SetInitialConditions(field,xcoords);
+  euler->SetInitialConditions(field,xcoords);
 
   //! COMPUTING EXACT SOLUTION -- (should be outputted to a file)
   if (cond_bc == false){ //Compute Exact Solution if isentropic case is selected
@@ -171,7 +174,7 @@ int main() {
   sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
 
   //Debug: Temporarily set initial conditions to exact solutions
-  Field = ExactField;
+  //Field = ExactField;
   //Debug: printing initial conditions w/ no BCs
   const char* filename = "InitialSolutions.txt";
   sols->OutputPrimitiveVariables(field,euler,filename);
@@ -189,7 +192,7 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme); //computing residuals per cell
+  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,true,upwind_scheme,epsilon); //computing upwind flux 1st order initially
   InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
@@ -243,7 +246,7 @@ int main() {
     time->SolutionLimiter(field_star); //temporarily reapplying the limiter
 
 
-    euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme);
+    euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon);
     ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
     time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
@@ -256,8 +259,10 @@ int main() {
 
         (*field_star) = (*field); //resetting primitive variables to previous time step values
         time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
-        euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme); //compute under-relaxed residual
+        euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
+        //if (flux_accuracy == false) //2nd order ramping
+          //avg_residnorm = sols->ComputeNormAvg(ResidualStarNorms);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
         if (check[0]==false && check[1] == false && check[2] == false){ //checking if new residuals now do not need under-relaxation
@@ -275,6 +280,9 @@ int main() {
     (*field) = (*field_star);
     (*resid) = (*resid_star); ResidualNorms = ResidualStarNorms;
 
+    //Computing Ramping Value
+    epsilon = sols->ComputeRampValue(ResidualNorms,InitNorms,ramp_stop);
+
 
     //! OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
     if (iter % iterout == 0) {
@@ -291,6 +299,8 @@ int main() {
       //Printing Residual Norms to Screen
       Tools::print("------Iteration #: %d----------\n",iter);
       Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
+      //debug:
+      Tools::print("Epsilon: %f\n",epsilon);
 
       // Writing Residuals history to "SolResids.txt" file
       myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
