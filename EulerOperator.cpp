@@ -506,15 +506,23 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
   //computing flux limiters(beta limiters)
   //NOTE: Refer to Lecture Notes: Section 7 Page 24
   //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
-  double beta = 1.0;
-  array<array<double,3>,2> psi_central = ComputeFluxLimiter(field,loc,nbor,nbor+1,loc-1,beta); //i+1/2
-  array<array<double,3>,2> psi_upwind_ltstate = ComputeFluxLimiter(field,loc-1,nbor-1,nbor+1-1,loc-1-1,beta); //i-1/2
-  array<array<double,3>,2> psi_upwind_rtstate = ComputeFluxLimiter(field,loc+1,nbor+1,nbor+1+1,loc-1+1,beta); //i+3/2
+  double beta = 1.5;
+  array<array<double,3>,2> psi_central = ComputeVanLeerLimiter(field,loc,nbor,nbor+1,loc-1); //i+1/2
+  array<array<double,3>,2> psi_upwind_ltstate = ComputeVanLeerLimiter(field,loc-1,nbor-1,nbor+1-1,loc-1-1); //i-1/2
+  array<array<double,3>,2> psi_upwind_rtstate = ComputeVanLeerLimiter(field,loc+1,nbor+1,nbor+1+1,loc-1+1); //i+3/2
 
   array<double,3> psi_central_plus = psi_central[0];
   array<double,3> psi_central_minus = psi_central[1];
   array<double,3> psi_leftupwind_plus = psi_upwind_ltstate[0];
   array<double,3> psi_rightupwind_minus = psi_upwind_rtstate[1];
+
+  //debug:
+  /*
+  psi_central_plus[0]=1.0;psi_central_plus[1]=1.0;psi_central_plus[2]=1.0;
+  psi_central_minus[0]=1.0;psi_central_minus[1]=1.0;psi_central_minus[2]=1.0;
+  psi_leftupwind_plus[0]=1.0;psi_leftupwind_plus[1]=1.0;psi_leftupwind_plus[2]=1.0;
+  psi_rightupwind_minus[0]=1.0;psi_rightupwind_minus[1]=1.0;psi_rightupwind_minus[2]=1.0;
+  */
 
   //computing left state
   for (int n=0;n<3;n++){
@@ -536,10 +544,11 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
 }
 
 //-----------------------------------------------------------
-array<array<double,3>,2> Euler1D::ComputeFluxLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta){
+array<array<double,3>,2> Euler1D::ComputeBetaLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta){
 
   //Note: This is really a state limiter!
-  //Using Beta Limiter
+  //Using Beta Limiter and VanLeer Limiter
+
   array<array<double,3>,2> r_vec = ComputeRVariation(field,loc,nbor,r_nbor,l_nbor); //consecutive variation ratios
 
   //psi+ limiter
@@ -551,6 +560,32 @@ array<array<double,3>,2> Euler1D::ComputeFluxLimiter(vector<array<double,3>>* &f
   array<double,3> psi_minus;
   for (int n=0;n<3;n++){
     psi_minus[n] = std::max(0.0,std::max(std::min(beta*r_vec[1][n],1.0),std::min(r_vec[1][n],beta))); //need 2 max fcns. b/c std::max only takes 2 arguments by default
+ 
+  }
+
+  //combining + and - psi limiter
+  array<array<double,3>,2> psi_total{psi_plus,psi_minus};
+
+  return psi_total;
+
+}
+
+//-----------------------------------------------------------
+array<array<double,3>,2> Euler1D::ComputeVanLeerLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor){
+
+  //Note: Refer to Class Notes Section 7, Page 20
+  
+  array<array<double,3>,2> r_vec = ComputeRVariation(field,loc,nbor,r_nbor,l_nbor); //consecutive variation ratios
+
+  //psi+ limiter
+  array<double,3> psi_plus;
+  for (int n=0;n<3;n++)
+    psi_plus[n] = std::max(0.0,(r_vec[0][n] + abs(r_vec[0][n])) / (1.0+r_vec[0][n]));;
+
+  //psi- limiter
+  array<double,3> psi_minus;
+  for (int n=0;n<3;n++){
+    psi_minus[n] = std::max(0.0,(r_vec[1][n] + abs(r_vec[1][n])) / (1.0+r_vec[1][n]));
  
   }
 
@@ -576,7 +611,7 @@ array<array<double,3>,2> Euler1D::ComputeRVariation(vector<array<double,3>>* &fi
     for (int n=0;n<3;n++){ 
       num = (*field)[r_nbor][n] - (*field)[nbor][n];
       denom = (*field)[nbor][n] - (*field)[loc][n];
-      denom = std::copysign(denom,std::max(abs(denom),delta)); 
+      denom = std::copysign(std::max(abs(denom),delta),denom); 
       r_plus[n] = num / denom;
     }
   }
@@ -591,7 +626,7 @@ array<array<double,3>,2> Euler1D::ComputeRVariation(vector<array<double,3>>* &fi
     for (int n=0;n<3;n++) {
       num = (*field)[loc][n] - (*field)[l_nbor][n];
       denom = (*field)[nbor][n] - (*field)[loc][n];
-      denom = std::copysign(denom,std::max(abs(denom),delta)); 
+      denom = std::copysign(std::max(abs(denom),delta),denom); 
       r_minus[n] = num / denom;
 
     }

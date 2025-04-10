@@ -37,16 +37,16 @@ int main() {
 
   // Case Specification
   bool cond_loc{false}; //true for subsonic & false for supersonic (FOR EXACT SOL.)
-  bool cond_bc{false}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
+  bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 50; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 200; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
-  const int iter_max = 1e5;
-  const int iterout = 100; //number of iterations per solution output
-  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
+  const int iter_max = 1e6;
+  const int iterout = 500; //number of iterations per solution output
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
@@ -55,7 +55,7 @@ int main() {
   const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
   [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
-  double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
+  double epsilon = 0.0; //ramping value used to transition from 1st to 2nd order
 
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
@@ -131,8 +131,8 @@ int main() {
   (cond_bc == true) ? Tools::print("Shock Wave Case\n") : Tools::print("Isentropic Case\n");
   // Spatial Stats
   Tools::print("-Spatial Statistics:\n");
-  Tools::print("--Cell Number:%d\n",cellnum);
-  Tools::print("--Delta x:%f\n",dx);
+  Tools::print("--Cell Number: %d\n",cellnum);
+  Tools::print("--Delta x: %f\n",dx);
   // Temporal Stats
   Tools::print("-Temporal Statistics:\n");
   Tools::print("--CFL: %f\n",CFL);
@@ -191,7 +191,7 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,true,upwind_scheme,epsilon); //computing upwind flux 1st order initially
+  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon); //computing upwind flux 1st order initially
   InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
@@ -280,7 +280,7 @@ int main() {
     (*resid) = (*resid_star); ResidualNorms = ResidualStarNorms;
 
     //Computing Ramping Value
-    //epsilon = sols->ComputeRampValue(ResidualNorms,InitNorms,ramp_stop);
+    epsilon = sols->ComputeRampValue(ResidualNorms,InitNorms,ramp_stop);
 
 
     //! OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
