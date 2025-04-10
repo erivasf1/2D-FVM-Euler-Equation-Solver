@@ -46,16 +46,16 @@ int main() {
   // Temporal Specifications
   const int iter_max = 1e6;
   const int iterout = 500; //number of iterations per solution output
-  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
   // Flux Specifications
   const bool flux_scheme{false}; //true for JST Damping & false for Upwind
-  const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
+  const bool upwind_scheme{false}; //true for Van Leer & false for Roe
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
-  [[maybe_unused]] const double ramp_stop = 1.0e-4; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
-  double epsilon = 0.0; //ramping value used to transition from 1st to 2nd order
+  [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
+  double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
 
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
@@ -280,7 +280,7 @@ int main() {
     (*resid) = (*resid_star); ResidualNorms = ResidualStarNorms;
 
     //Computing Ramping Value
-    epsilon = sols->ComputeRampValue(ResidualNorms,InitNorms,ramp_stop);
+    //epsilon = sols->ComputeRampValue(ResidualNorms,InitNorms,ramp_stop);
 
 
     //! OUTPUT SOL. IN TEXT FILE EVERY "ITEROUT" STEPS
