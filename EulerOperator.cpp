@@ -507,14 +507,17 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
   //NOTE: Refer to Lecture Notes: Section 7 Page 24
   //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
   double beta = 1.5;
-  array<array<double,3>,2> psi_central = ComputeVanLeerLimiter(field,loc,nbor,nbor+1,loc-1); //i+1/2
-  array<array<double,3>,2> psi_upwind_ltstate = ComputeVanLeerLimiter(field,loc-1,nbor-1,nbor+1-1,loc-1-1); //i-1/2
-  array<array<double,3>,2> psi_upwind_rtstate = ComputeVanLeerLimiter(field,loc+1,nbor+1,nbor+1+1,loc-1+1); //i+3/2
+  //evaluating consecutive variations(r)
+  int r_nbor = nbor+1; int l_nbor = loc - 1;
+  array<double,3> r_centralplus = ComputeRPlusVariation(field,loc,r_nbor,nbor); //i+1/2
+  array<double,3> r_centralminus = ComputeRMinusVariation(field,loc,l_nbor,nbor); //i+1/2
+  array<double,3> r_upwindminus = ComputeRMinusVariation(field,loc+1,l_nbor+1,nbor+1); //i+3/2
+  array<double,3> r_upwindplus = ComputeRPlusVariation(field,loc-1,r_nbor-1,nbor-1); //i-1/2
 
-  array<double,3> psi_central_plus = psi_central[0];
-  array<double,3> psi_central_minus = psi_central[1];
-  array<double,3> psi_leftupwind_plus = psi_upwind_ltstate[0];
-  array<double,3> psi_rightupwind_minus = psi_upwind_rtstate[1];
+  array<double,3> psi_centralplus = ComputeVanLeerLimiter(field,r_centralplus); //i+1/2
+  array<double,3> psi_centralminus = ComputeVanLeerLimiter(field,r_centralminus); //i+1/2
+  array<double,3> psi_upwind_ltstate = ComputeVanLeerLimiter(field,r_upwindplus); //i-1/2
+  array<double,3> psi_upwind_rtstate = ComputeVanLeerLimiter(field,r_upwindminus); //i+3/2
 
   //debug:
   /*
@@ -526,12 +529,12 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
 
   //computing left state
   for (int n=0;n<3;n++){
-    left_state[n] = (1.0-kappa)*psi_leftupwind_plus[n]*((*field)[loc][n]-(*field)[loc-1][n]) + (1.0+kappa)*psi_central_minus[n]*((*field)[nbor][n] - (*field)[loc][n]);
+    left_state[n] = (1.0-kappa)*psi_upwind_ltstate[n]*((*field)[loc][n]-(*field)[loc-1][n]) + (1.0+kappa)*psi_centralminus[n]*((*field)[nbor][n] - (*field)[loc][n]);
     left_state[n] = (*field)[loc][n] + ((epsilon/4.0)*left_state[n]);
   }
   //computing right state
   for (int n=0;n<3;n++){
-    right_state[n] = (1.0-kappa)*psi_rightupwind_minus[n]*((*field)[nbor+1][n]-(*field)[nbor][n]) + (1.0+kappa)*psi_central_plus[n]*((*field)[nbor][n] - (*field)[loc][n]);
+    right_state[n] = (1.0-kappa)*psi_upwind_rtstate[n]*((*field)[nbor+1][n]-(*field)[nbor][n]) + (1.0+kappa)*psi_centralplus[n]*((*field)[nbor][n] - (*field)[loc][n]);
     right_state[n] = (*field)[nbor][n] - ((epsilon/4.0)*right_state[n]);
   }
 
@@ -571,28 +574,21 @@ array<array<double,3>,2> Euler1D::ComputeBetaLimiter(vector<array<double,3>>* &f
 }
 
 //-----------------------------------------------------------
-array<array<double,3>,2> Euler1D::ComputeVanLeerLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor){
+array<double,3> Euler1D::ComputeVanLeerLimiter(vector<array<double,3>>* &field,array<double,3> &r_vec){
 
   //Note: Refer to Class Notes Section 7, Page 20
   
-  array<array<double,3>,2> r_vec = ComputeRVariation(field,loc,nbor,r_nbor,l_nbor); //consecutive variation ratios
+  //array<array<double,3>,2> r_vec = ComputeRVariation(field,loc,nbor,r_nbor,l_nbor); //consecutive variation ratios
+  //array<double,3> r_plus = ComputeRPlusVariation(field,loc,r_nbor,nbor);
+  //array<double,3> r_minus = ComputeRMinusVariation(field,loc,l_nbor,nbor);
 
-  //psi+ limiter
-  array<double,3> psi_plus;
+  //psi limiter
+  array<double,3> psi;
   for (int n=0;n<3;n++)
-    psi_plus[n] = std::max(0.0,(r_vec[0][n] + abs(r_vec[0][n])) / (1.0+r_vec[0][n]));;
+    psi[n] = std::max(0.0,(r_vec[n] + abs(r_vec[n])) / (1.0+r_vec[n]));
 
-  //psi- limiter
-  array<double,3> psi_minus;
-  for (int n=0;n<3;n++){
-    psi_minus[n] = std::max(0.0,(r_vec[1][n] + abs(r_vec[1][n])) / (1.0+r_vec[1][n]));
- 
-  }
 
-  //combining + and - psi limiter
-  array<array<double,3>,2> psi_total{psi_plus,psi_minus};
-
-  return psi_total;
+  return psi;
 
 }
 
@@ -636,6 +632,42 @@ array<array<double,3>,2> Euler1D::ComputeRVariation(vector<array<double,3>>* &fi
   array<array<double,3>,2> total_r{r_plus,r_minus};
 
   return total_r;
+
+}
+
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRPlusVariation(vector<array<double,3>>* &field,int loc,int r_nbor,int nbor){
+
+  array<double,3> r_plus;
+  double num,denom;
+  double delta = 1.0e-6; //to prevent 0/0
+
+  for (int n=0;n<3;n++){ 
+    num = (*field)[r_nbor][n] - (*field)[nbor][n];
+    denom = (*field)[nbor][n] - (*field)[loc][n];
+    denom = std::copysign(std::max(abs(denom),delta),denom); 
+    r_plus[n] = num / denom;
+  }
+
+  return r_plus;
+
+}
+
+//-----------------------------------------------------------
+array<double,3> Euler1D::ComputeRMinusVariation(vector<array<double,3>>* &field,int loc,int l_nbor,int nbor){
+
+  array<double,3> r_minus;
+  double num,denom;
+  double delta = 1.0e-6; //to prevent 0/0
+
+  for (int n=0;n<3;n++) {
+    num = (*field)[loc][n] - (*field)[l_nbor][n];
+    denom = (*field)[nbor][n] - (*field)[loc][n];
+    denom = std::copysign(std::max(abs(denom),delta),denom); 
+    r_minus[n] = num / denom;
+  }
+
+  return r_minus;
 
 }
 

@@ -40,13 +40,13 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 200; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
   const int iter_max = 1e6;
   const int iterout = 500; //number of iterations per solution output
-  const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.2; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
@@ -54,7 +54,7 @@ int main() {
   const bool flux_scheme{false}; //true for JST Damping & false for Upwind
   const bool upwind_scheme{false}; //true for Van Leer & false for Rhoe
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
-  [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
+  [[maybe_unused]] const double ramp_stop = 1.0e-4; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
   double epsilon = 0.0; //ramping value used to transition from 1st to 2nd order
 
   // Under-Relaxation Parameters

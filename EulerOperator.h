@@ -68,8 +68,11 @@ class Euler1D {
   // MUSCL extrapolation + Flux Limiters
   array<array<double,3>,2> MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor,double epsilon); //outputs the left and right state primitive variables
   array<array<double,3>,2> ComputeBetaLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor,double beta); //computes limiter using the beta limiter method
-  array<array<double,3>,2> ComputeVanLeerLimiter(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor); //computes limiter using the Van Leer method
+  array<double,3> ComputeVanLeerLimiter(vector<array<double,3>>* &field,array<double,3> &r_vec); //computes limiter using the Van Leer method
   array<array<double,3>,2> ComputeRVariation(vector<array<double,3>>* &field,int loc,int nbor,int r_nbor,int l_nbor); //consecutive variation
+
+  array<double,3> ComputeRPlusVariation(vector<array<double,3>>* &field,int loc,int r_nbor,int nbor); //plus part of consecutive variation
+  array<double,3> ComputeRMinusVariation(vector<array<double,3>>* &field,int loc,int l_nbor,int nbor); //minus part of consecutive variation
 
 
   // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
