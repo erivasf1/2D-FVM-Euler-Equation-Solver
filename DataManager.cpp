@@ -54,7 +54,7 @@ double SpaceVariables1D::ComputeRampValue(array<double,3> CurrentNorms,array<dou
   
   double InitVal = ComputeNormAvg(InitNorms);
   double CurrentVal = ComputeNormAvg(CurrentNorms);
-  double p =  20.0; //used to accelerate or deaccelerate the ramping fcn.
+  double p = 30.0; //used to accelerate or deaccelerate the ramping fcn.
 
   double ramp_val = (log10(InitVal) - log10(CurrentVal)) / (log10(CurrentVal) - log10(FinalVal));
   ramp_val = pow(ramp_val,p);
@@ -99,7 +99,7 @@ return;
 //---------------------------------------------------------
 void SpaceVariables1D::AllOutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,string filename,bool cond,int iter,vector<double> &xcoords){
 
-  cell_number = field->size()-4; //number of interior cells
+  cell_number = (int)field->size()-4; //number of interior cells
   std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
   //myfile.open(filename);
 

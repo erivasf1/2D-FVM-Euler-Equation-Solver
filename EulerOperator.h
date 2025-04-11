@@ -74,6 +74,7 @@ class Euler1D {
   array<double,3> ComputeRPlusVariation(vector<array<double,3>>* &field,int loc,int r_nbor,int nbor); //plus part of consecutive variation
   array<double,3> ComputeRMinusVariation(vector<array<double,3>>* &field,int loc,int l_nbor,int nbor); //minus part of consecutive variation
 
+  void FreezeLimiter(bool freeze,double resid_current,double resid_prev,int freeze_count);
 
   // ARTIFICIAL DISSIPATON FCNS. (USING JST DAMPENING)
   array<double,3> Compute2ndOrderDamping(vector<array<double,3>>* &field,int loc); // viscous term for shocks (c(2))

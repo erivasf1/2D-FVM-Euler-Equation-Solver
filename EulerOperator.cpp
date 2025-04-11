@@ -271,7 +271,6 @@ array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3
 array<double,3> Euler1D::ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor,double epsilon){
 
   //NOTE: using MUSCL extrapolation to compute left and right states
-  //TODO: employ muscl here
   array<array<double,3>,2> field_states = MUSCLApprox(field,loc,nbor,epsilon);
   array<double,3> left_state = field_states[0];
   array<double,3> right_state = field_states[1];
@@ -379,7 +378,7 @@ double Euler1D::GetP2Bar(double M,bool sign){
 
   return p2bar;
 }
-//-----------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------
 array<double,3> Euler1D::ComputeRoeFlux(array<double,3> &field_ltstate,array<double,3> &field_rtstate){ 
 
   //Note: Refer to Lecture Notes Section 6,Page 46
@@ -410,7 +409,7 @@ array<double,3> Euler1D::ComputeRoeFlux(array<double,3> &field_ltstate,array<dou
   return flux;
 }
 
-//-----------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------
 array<double,3> Euler1D::ComputeRoeWaveAmps(array<double,3> &roe_vars,array<double,3> &field_ltstate,array<double,3> &field_rtstate,double abar){
 
   array<double,3> wave_amps;
@@ -451,11 +450,11 @@ array<double,3> Euler1D::ComputeRoeEigenVals(array<double,3> &roe_vars,double ab
 
   array<double,3> roe_eigenvals{roe_vars[1],roe_vars[1]+abar,roe_vars[1]-abar};
 
+  //Modification to eigenvalues by Harten,1983 to handle rarefaction fans by smoothing them
+  double epsilon = 1.0e-1;
 
-  //TODO: Add modification to eigenvalues by Harten,1983 to handle rarefaction fans
-  double epsilon = 1.0e-3;
   for (int i=0;i<3;i++)
-    roe_eigenvals[i] = (abs(roe_eigenvals[i]) < 2.0*epsilon*abar) ? (pow(roe_eigenvals[i],2.0)/(4.0*epsilon*abar)) + (epsilon*abar) : roe_eigenvals[i];
+    roe_eigenvals[i] = (abs(roe_eigenvals[i]) < 2.0*epsilon*abar) ? (pow(roe_eigenvals[i],2.0)/(4.0*epsilon*abar)) + (epsilon*abar) : abs(roe_eigenvals[i]);
 
   return roe_eigenvals;
 
@@ -498,6 +497,8 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
 
   array<double,3> left_state,right_state;
   array<array<double,3>,2> total_state;
+  //if (loc == interior_cellnum - 1)
+    //Tools::print("I am here\n");  
 
   //kappa scheme: -1 = fully upwinded; 0 = upwind biased
   // 1/3 = 3rd order upwind scheme;1/2 = QUICK scheme;1 = central scheme
@@ -672,6 +673,19 @@ array<double,3> Euler1D::ComputeRMinusVariation(vector<array<double,3>>* &field,
 }
 
 //-----------------------------------------------------------
+void Euler1D::FreezeLimiter(bool freeze,double resid_current,double resid_prev,int freeze_count){
+
+  //freezes limiter if residuals are stalled for more than freeze count
+  double diff_tol = 1.0e-5;
+  int count_tol = 1e2;
+  freeze_count = (abs(resid_current)<=diff_tol) ? freeze_count++ : freeze_count;
+  freeze = (freeze_count>=count_tol) ? true : false;
+
+  return;
+
+}
+
+//-----------------------------------------------------------
 double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords) {
 
   //Note: loc is index of cell in Field -> xcoords index is i-2 of left face
@@ -831,6 +845,8 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
     if ((n==0) | (n==1) | (n==total_cellnum-2) | (n==total_cellnum-1)) //skipping the ghost cell nodes
       continue;
 
+  //if (n == interior_cellnum - 1) //debug
+    //Tools::print("I am here\n");  
 
     //Fluxes Evaluation
     //note: \arrow{F}_(i-1/2) is same as \arrow{F}_(i+1/2) of cell to the left!
