@@ -2,7 +2,7 @@
 #ifndef _DATAMANAGER_H_
 #define _DATAMANAGER_H_
 #include "MeshGen.h"
-#include "TimeIntegrator.h"
+#include "EulerOperator.h"
 
 
 //SpaceVariable Class stores the values of ALL flow quantities at all points

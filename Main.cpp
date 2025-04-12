@@ -56,6 +56,8 @@ int main() {
   const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
   [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
   double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
+  bool resid_stall{false};
+  int stall_count = 0;
   //bool limiter_freeze{false}; //used to freeze limiter when residuals are stalled
  // int freeze_count = 0; //counts the number of "stalled" residuals
 
@@ -84,6 +86,7 @@ int main() {
 
   vector<double> TimeSteps; //for storing the time step (delta_t) for each cell
   array<double,3> ResidualNorms; //for storing the global residual norms
+  array<double,3> Prev_ResidualNorms; //for storing the previous global residual norms
 
   //Pointers to Field variables
   vector<array<double,3>>* field = &Field; //pointer to Field solutions
@@ -276,6 +279,12 @@ int main() {
           Tools::print("Under-relaxation Failed!\n");
       }
     }
+
+    //Checking if Residuals are stalled
+    Prev_ResidualNorms = ResidualNorms;
+    resid_stall = time->CheckStallResids(stall_count,ResidualNorms,Prev_ResidualNorms,sols);
+    if (resid_stall == true) 
+      Tools::print("Residuals are detected to be stalled!\n");
 
     //Assinging New Time Step Values to Intermediate Values
     (*field) = (*field_star);

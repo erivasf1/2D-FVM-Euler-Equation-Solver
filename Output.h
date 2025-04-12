@@ -7,6 +7,7 @@
 #include "ExactNozzle.h"
 #include "MeshGen.h"
 #include "DataManager.h"
+#include "TimeIntegrator.h"
 
 using namespace std;
 

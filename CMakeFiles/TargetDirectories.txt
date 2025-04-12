@@ -1,4 +1,3 @@
 /home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles/nozzle.dir
-/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles/output.dir
 /home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles/edit_cache.dir
 /home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles/rebuild_cache.dir
