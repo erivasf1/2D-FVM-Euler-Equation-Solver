@@ -268,10 +268,10 @@ array<double,3> Euler1D::ComputeSpatialFlux_UPWIND1stOrder(vector<array<double,3
   return flux;
 }
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,bool method,int loc,int nbor,double epsilon){
+array<double,3> Euler1D::ComputeSpatialFlux_UPWIND2ndOrder(vector<array<double,3>>* &field,vector<array<double,3>>* &field_stall,bool method,int loc,int nbor,double epsilon,bool &resid_stall){
 
   //NOTE: using MUSCL extrapolation to compute left and right states
-  array<array<double,3>,2> field_states = MUSCLApprox(field,loc,nbor,epsilon);
+  array<array<double,3>,2> field_states = MUSCLApprox(field,field_stall,loc,nbor,epsilon,resid_stall);
   array<double,3> left_state = field_states[0];
   array<double,3> right_state = field_states[1];
   array<double,3> flux; //total flux
@@ -493,7 +493,7 @@ array<double,3> Euler1D::ComputeRoeAvgVars(array<double,3> &field_ltstate,array<
 
 }
 //-----------------------------------------------------------
-array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,int loc,int nbor,double epsilon){
+array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,vector<array<double,3>>* &field_stall,int loc,int nbor,double epsilon,bool &resid_stall){
 
   array<double,3> left_state,right_state;
   array<array<double,3>,2> total_state;
@@ -504,30 +504,27 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,in
   // 1/3 = 3rd order upwind scheme;1/2 = QUICK scheme;1 = central scheme
   double kappa = -1.0;
 
-  //computing flux limiters(beta limiters)
+  //computing flux limiters if not frozen
+  // Options: Beta & Van Leer
   //NOTE: Refer to Lecture Notes: Section 7 Page 24
   //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
   double beta = 1.5;
-  //evaluating consecutive variations(r)
   int r_nbor = nbor+1; int l_nbor = loc - 1;
-  array<double,3> r_centralplus = ComputeRPlusVariation(field,loc,r_nbor,nbor); //i+1/2
-  array<double,3> r_centralminus = ComputeRMinusVariation(field,loc,l_nbor,nbor); //i+1/2
-  array<double,3> r_upwindminus = ComputeRMinusVariation(field,loc+1,l_nbor+1,nbor+1); //i+3/2
-  array<double,3> r_upwindplus = ComputeRPlusVariation(field,loc-1,r_nbor-1,nbor-1); //i-1/2
 
-  array<double,3> psi_centralplus = ComputeVanLeerLimiter(field,r_centralplus); //i+1/2
-  array<double,3> psi_centralminus = ComputeVanLeerLimiter(field,r_centralminus); //i+1/2
-  array<double,3> psi_upwind_ltstate = ComputeVanLeerLimiter(field,r_upwindplus); //i-1/2
-  array<double,3> psi_upwind_rtstate = ComputeVanLeerLimiter(field,r_upwindminus); //i+3/2
+  //evaluating limiters based on if resid. are stalled or not
+  vector<array<double,3>> *field_selected = (resid_stall == false) ? field:field_stall;
 
-  //debug:
-  /*
-  psi_central_plus[0]=1.0;psi_central_plus[1]=1.0;psi_central_plus[2]=1.0;
-  psi_central_minus[0]=1.0;psi_central_minus[1]=1.0;psi_central_minus[2]=1.0;
-  psi_leftupwind_plus[0]=1.0;psi_leftupwind_plus[1]=1.0;psi_leftupwind_plus[2]=1.0;
-  psi_rightupwind_minus[0]=1.0;psi_rightupwind_minus[1]=1.0;psi_rightupwind_minus[2]=1.0;
-  */
+  array<double,3> r_centralplus = ComputeRPlusVariation(field_selected,loc,r_nbor,nbor); //i+1/2
+  array<double,3> r_centralminus = ComputeRMinusVariation(field_selected,loc,l_nbor,nbor); //i+1/2
+  array<double,3> r_upwindminus = ComputeRMinusVariation(field_selected,loc+1,l_nbor+1,nbor+1); //i+3/2
+  array<double,3> r_upwindplus = ComputeRPlusVariation(field_selected,loc-1,r_nbor-1,nbor-1); //i-1/2
 
+  //evaluating limiters (psi vectors)
+  array<double,3> psi_centralplus = ComputeVanLeerLimiter(r_centralplus); //i+1/2
+  array<double,3> psi_centralminus = ComputeVanLeerLimiter(r_centralminus); //i+1/2
+  array<double,3> psi_upwind_ltstate = ComputeVanLeerLimiter(r_upwindplus); //i-1/2
+  array<double,3> psi_upwind_rtstate = ComputeVanLeerLimiter(r_upwindminus); //i+3/2
+  
   //computing left state
   for (int n=0;n<3;n++){
     left_state[n] = (1.0-kappa)*psi_upwind_ltstate[n]*((*field)[loc][n]-(*field)[loc-1][n]) + (1.0+kappa)*psi_centralminus[n]*((*field)[nbor][n] - (*field)[loc][n]);
@@ -575,7 +572,7 @@ array<array<double,3>,2> Euler1D::ComputeBetaLimiter(vector<array<double,3>>* &f
 }
 
 //-----------------------------------------------------------
-array<double,3> Euler1D::ComputeVanLeerLimiter(vector<array<double,3>>* &field,array<double,3> &r_vec){
+array<double,3> Euler1D::ComputeVanLeerLimiter(array<double,3> &r_vec){
 
   //Note: Refer to Class Notes Section 7, Page 20
   
@@ -669,19 +666,6 @@ array<double,3> Euler1D::ComputeRMinusVariation(vector<array<double,3>>* &field,
   }
 
   return r_minus;
-
-}
-
-//-----------------------------------------------------------
-void Euler1D::FreezeLimiter(bool freeze,double resid_current,double resid_prev,int freeze_count){
-
-  //freezes limiter if residuals are stalled for more than freeze count
-  double diff_tol = 1.0e-5;
-  int count_tol = 1e2;
-  freeze_count = (abs(resid_current)<=diff_tol) ? freeze_count++ : freeze_count;
-  freeze = (freeze_count>=count_tol) ? true : false;
-
-  return;
 
 }
 
@@ -831,7 +815,7 @@ array<double,3> Euler1D::Compute4thOrderDamping(vector<array<double,3>>* &field,
 
 
 //-----------------------------------------------------------
-void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme,double epsilon){ 
+void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<double,3>>* &field,vector<array<double,3>>* &field_stall,vector<double> &xcoords,double &dx,bool flux_scheme,bool flux_accuracy,bool upwind_scheme,double epsilon,bool &resid_stall){ 
 
   //following nomenclature from class notes
   [[maybe_unused]] array<double,3> F_right,F_left; //left and right face spatial fluxes 
@@ -879,8 +863,8 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
 
       }
       else if (flux_accuracy == false){ //2nd order accurate case
-        TotalF_right = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n,n+1,epsilon);
-        TotalF_left = ComputeSpatialFlux_UPWIND2ndOrder(field,upwind_scheme,n-1,n,epsilon);
+        TotalF_right = ComputeSpatialFlux_UPWIND2ndOrder(field,field_stall,upwind_scheme,n,n+1,epsilon,resid_stall);
+        TotalF_left = ComputeSpatialFlux_UPWIND2ndOrder(field,field_stall,upwind_scheme,n-1,n,epsilon,resid_stall);
       }
     }
 

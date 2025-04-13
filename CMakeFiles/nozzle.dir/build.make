@@ -73,99 +73,99 @@ CMakeFiles/nozzle.dir/DataManager.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/DataManager.cpp.o: DataManager.cpp
 CMakeFiles/nozzle.dir/DataManager.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/nozzle.dir/DataManager.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/DataManager.cpp.o -MF CMakeFiles/nozzle.dir/DataManager.cpp.o.d -o CMakeFiles/nozzle.dir/DataManager.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/DataManager.cpp.o -MF CMakeFiles/nozzle.dir/DataManager.cpp.o.d -o CMakeFiles/nozzle.dir/DataManager.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp
 
 CMakeFiles/nozzle.dir/DataManager.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/DataManager.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp > CMakeFiles/nozzle.dir/DataManager.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp > CMakeFiles/nozzle.dir/DataManager.cpp.i
 
 CMakeFiles/nozzle.dir/DataManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/DataManager.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp -o CMakeFiles/nozzle.dir/DataManager.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/DataManager.cpp -o CMakeFiles/nozzle.dir/DataManager.cpp.s
 
 CMakeFiles/nozzle.dir/EulerOperator.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/EulerOperator.cpp.o: EulerOperator.cpp
 CMakeFiles/nozzle.dir/EulerOperator.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/nozzle.dir/EulerOperator.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/EulerOperator.cpp.o -MF CMakeFiles/nozzle.dir/EulerOperator.cpp.o.d -o CMakeFiles/nozzle.dir/EulerOperator.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/EulerOperator.cpp.o -MF CMakeFiles/nozzle.dir/EulerOperator.cpp.o.d -o CMakeFiles/nozzle.dir/EulerOperator.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp
 
 CMakeFiles/nozzle.dir/EulerOperator.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/EulerOperator.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp > CMakeFiles/nozzle.dir/EulerOperator.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp > CMakeFiles/nozzle.dir/EulerOperator.cpp.i
 
 CMakeFiles/nozzle.dir/EulerOperator.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/EulerOperator.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp -o CMakeFiles/nozzle.dir/EulerOperator.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/EulerOperator.cpp -o CMakeFiles/nozzle.dir/EulerOperator.cpp.s
 
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: ExactNozzle.cpp
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/nozzle.dir/ExactNozzle.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -MF CMakeFiles/nozzle.dir/ExactNozzle.cpp.o.d -o CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -MF CMakeFiles/nozzle.dir/ExactNozzle.cpp.o.d -o CMakeFiles/nozzle.dir/ExactNozzle.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp
 
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/ExactNozzle.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp > CMakeFiles/nozzle.dir/ExactNozzle.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp > CMakeFiles/nozzle.dir/ExactNozzle.cpp.i
 
 CMakeFiles/nozzle.dir/ExactNozzle.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/ExactNozzle.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp -o CMakeFiles/nozzle.dir/ExactNozzle.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/ExactNozzle.cpp -o CMakeFiles/nozzle.dir/ExactNozzle.cpp.s
 
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: MeshGen.cpp
 CMakeFiles/nozzle.dir/MeshGen.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/nozzle.dir/MeshGen.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/MeshGen.cpp.o -MF CMakeFiles/nozzle.dir/MeshGen.cpp.o.d -o CMakeFiles/nozzle.dir/MeshGen.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/MeshGen.cpp.o -MF CMakeFiles/nozzle.dir/MeshGen.cpp.o.d -o CMakeFiles/nozzle.dir/MeshGen.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp
 
 CMakeFiles/nozzle.dir/MeshGen.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/MeshGen.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp > CMakeFiles/nozzle.dir/MeshGen.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp > CMakeFiles/nozzle.dir/MeshGen.cpp.i
 
 CMakeFiles/nozzle.dir/MeshGen.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/MeshGen.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp -o CMakeFiles/nozzle.dir/MeshGen.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/MeshGen.cpp -o CMakeFiles/nozzle.dir/MeshGen.cpp.s
 
 CMakeFiles/nozzle.dir/Main.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/Main.cpp.o: Main.cpp
 CMakeFiles/nozzle.dir/Main.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/nozzle.dir/Main.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/Main.cpp.o -MF CMakeFiles/nozzle.dir/Main.cpp.o.d -o CMakeFiles/nozzle.dir/Main.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/Main.cpp.o -MF CMakeFiles/nozzle.dir/Main.cpp.o.d -o CMakeFiles/nozzle.dir/Main.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp
 
 CMakeFiles/nozzle.dir/Main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/Main.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp > CMakeFiles/nozzle.dir/Main.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp > CMakeFiles/nozzle.dir/Main.cpp.i
 
 CMakeFiles/nozzle.dir/Main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/Main.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp -o CMakeFiles/nozzle.dir/Main.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/Main.cpp -o CMakeFiles/nozzle.dir/Main.cpp.s
 
 CMakeFiles/nozzle.dir/Output.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/Output.cpp.o: Output.cpp
 CMakeFiles/nozzle.dir/Output.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/nozzle.dir/Output.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/Output.cpp.o -MF CMakeFiles/nozzle.dir/Output.cpp.o.d -o CMakeFiles/nozzle.dir/Output.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/Output.cpp.o -MF CMakeFiles/nozzle.dir/Output.cpp.o.d -o CMakeFiles/nozzle.dir/Output.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp
 
 CMakeFiles/nozzle.dir/Output.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/Output.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp > CMakeFiles/nozzle.dir/Output.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp > CMakeFiles/nozzle.dir/Output.cpp.i
 
 CMakeFiles/nozzle.dir/Output.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/Output.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp -o CMakeFiles/nozzle.dir/Output.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/Output.cpp -o CMakeFiles/nozzle.dir/Output.cpp.s
 
 CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o: CMakeFiles/nozzle.dir/flags.make
 CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o: TimeIntegrator.cpp
 CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o: CMakeFiles/nozzle.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/erivas/Adv_CFD/FVMEulerEqSolver/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o -MF CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o.d -o CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o -MF CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o.d -o CMakeFiles/nozzle.dir/TimeIntegrator.cpp.o -c /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp
 
 CMakeFiles/nozzle.dir/TimeIntegrator.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nozzle.dir/TimeIntegrator.cpp.i"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp > CMakeFiles/nozzle.dir/TimeIntegrator.cpp.i
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp > CMakeFiles/nozzle.dir/TimeIntegrator.cpp.i
 
 CMakeFiles/nozzle.dir/TimeIntegrator.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nozzle.dir/TimeIntegrator.cpp.s"
-	/apps/easybuild/software/owl-genoa/GCCcore/13.3.0/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp -o CMakeFiles/nozzle.dir/TimeIntegrator.cpp.s
+	mpicxx $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/erivas/Adv_CFD/FVMEulerEqSolver/TimeIntegrator.cpp -o CMakeFiles/nozzle.dir/TimeIntegrator.cpp.s
 
 # Object files for target nozzle
 nozzle_OBJECTS = \

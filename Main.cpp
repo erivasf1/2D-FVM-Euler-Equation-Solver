@@ -45,21 +45,19 @@ int main() {
 
   // Temporal Specifications
   const int iter_max = 1e6;
-  const int iterout = 500; //number of iterations per solution output
+  int iterout = 500; //number of iterations per solution output
   const double CFL = 0.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 2.9e-4; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
 
   // Flux Specifications
-  const bool flux_scheme{false}; //true for JST Damping & false for Upwind
-  const bool upwind_scheme{true}; //true for Van Leer & false for Roe
-  const bool flux_accuracy{false}; //true for 1st order & false for 2nd order
+  bool flux_scheme{false}; //true for JST Damping & false for Upwind
+  bool upwind_scheme{false}; //true for Van Leer & false for Roe
+  bool flux_accuracy{false}; //true for 1st order & false for 2nd order
   [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
   double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
   bool resid_stall{false};
   int stall_count = 0;
-  //bool limiter_freeze{false}; //used to freeze limiter when residuals are stalled
- // int freeze_count = 0; //counts the number of "stalled" residuals
 
   // Under-Relaxation Parameters
   double C = 1.2; //residual norm check
@@ -76,6 +74,7 @@ int main() {
   //Field variables
   vector<array<double,3>> Field(cellnum); //stores primitive variable sols.
   vector<array<double,3>> FieldStar(cellnum); //stores intermediate primitive variable sols.
+  vector<array<double,3>> FieldStall(cellnum); //stores primitive variable sols. before stall (if detected)
 
   vector<array<double,3>> ExactField(cellnum); //stores exact cell-averaged primitve variable sols.
   vector<array<double,3>> ExactFaces(cellnum+1); //stores exact primitve variable sols. at cell faces
@@ -91,6 +90,7 @@ int main() {
   //Pointers to Field variables
   vector<array<double,3>>* field = &Field; //pointer to Field solutions
   vector<array<double,3>>* field_star = &FieldStar; //pointer to intermediate Field solutions
+  vector<array<double,3>>* field_stall = &FieldStall; //pointer to intermediate Field solutions
   vector<array<double,3>>* exact_sols = &ExactField; //pointer to exact solution field values
   vector<array<double,3>>* exact_faces = &ExactFaces; //pointer to exact solution field values
   vector<array<double,3>>* resid = &Residual; //pointer to residual field values per cell
@@ -196,7 +196,10 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  euler->ComputeResidual(init_resid,field,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon); //computing upwind flux 1st order initially
+  if (upwind_scheme == false && flux_accuracy == false) //temporarily setting to Van Leer if 2nd order Roe is selected
+    upwind_scheme = true;
+
+  euler->ComputeResidual(init_resid,field,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //computing upwind flux 1st order initially
   InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
@@ -234,6 +237,12 @@ int main() {
 
     //debugging only
     //Tools::print("Iteration #: %d\n",iter);
+
+    if ((flux_accuracy == false) && (iter == 2e5)){ //resetting back to 2nd Order Roe - if Roe 2nd order selected
+      upwind_scheme = false;
+      iterout = 10;
+      subiter_max = 5;
+    }
   
     //! COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
@@ -250,7 +259,7 @@ int main() {
     time->SolutionLimiter(field_star); //temporarily reapplying the limiter
 
 
-    euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon);
+    euler->ComputeResidual(resid_star,field_star,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall);
     ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
     time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
@@ -263,7 +272,7 @@ int main() {
 
         (*field_star) = (*field); //resetting primitive variables to previous time step values
         time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
-        euler->ComputeResidual(resid_star,field_star,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon); //compute under-relaxed residual
+        euler->ComputeResidual(resid_star,field_star,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
         //if (flux_accuracy == false) //2nd order ramping
           //avg_residnorm = sols->ComputeNormAvg(ResidualStarNorms);
@@ -281,10 +290,14 @@ int main() {
     }
 
     //Checking if Residuals are stalled
-    Prev_ResidualNorms = ResidualNorms;
-    resid_stall = time->CheckStallResids(stall_count,ResidualNorms,Prev_ResidualNorms,sols);
-    if (resid_stall == true) 
-      Tools::print("Residuals are detected to be stalled!\n");
+    if (resid_stall == false){ //only checking if haven't already been marked as stalled
+      Prev_ResidualNorms = ResidualNorms;
+      resid_stall = time->CheckStallResids(stall_count,ResidualNorms,Prev_ResidualNorms,sols);
+      if (resid_stall == true)
+        FieldStall = Field; //setting previous field sols. before stall
+    }
+
+    
 
     //Assinging New Time Step Values to Intermediate Values
     (*field) = (*field_star);
@@ -311,6 +324,8 @@ int main() {
       Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
       //debug:
       Tools::print("Epsilon: %f\n",epsilon);
+      if (resid_stall == true)
+        Tools::print("Residuals are detected to be stalled!\n"); //printing message is temp. for now
 
       // Writing Residuals history to "SolResids.txt" file
       myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;

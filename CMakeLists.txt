@@ -14,12 +14,18 @@ find_package(Catch2 REQUIRED)
 
 # Set the default build type to Debug if not specified
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Enable debug symbols
+# use mpicc and mpicxx to compile
+SET(CMAKE_C_COMPILER mpicc)
+SET(CMAKE_CXX_COMPILER mpicxx)
+
+# Compiler flags
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-reorder")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi")
 set(CMAKE_C_FLAGS_DEBUG "-g3 -fsanitize=address")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 
