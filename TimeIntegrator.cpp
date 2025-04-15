@@ -120,7 +120,7 @@ void EulerExplicit::UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<dou
 //-----------------------------------------------------------
 bool EulerExplicit::CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariables1D* &sol){
 
-  int count_tol = 5e4; double diff_tol = 1.0e-2; 
+  int count_tol = 1e5; double diff_tol = 1.0e-2; 
   double resid_avg = sol->ComputeNormAvg(ResidNorms); 
   double prev_resid_avg = sol->ComputeNormAvg(Prev_ResidualNorms); 
 

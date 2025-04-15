@@ -40,7 +40,7 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 400; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 220; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
@@ -54,7 +54,7 @@ int main() {
   bool flux_scheme{false}; //true for JST Damping & false for Upwind
   bool upwind_scheme{false}; //true for Van Leer & false for Roe
   bool flux_accuracy{false}; //true for 1st order & false for 2nd order
-  [[maybe_unused]] const double ramp_stop = 1.0e-6; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
+  [[maybe_unused]] const double ramp_stop = 1.0e-7; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
   double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
   bool resid_stall{false};
   int stall_count = 0;
@@ -196,8 +196,9 @@ int main() {
   // COMPUTING INITIAL RESIDUAL NORMS
   // using ResidSols spacevariable
   array<double,3> InitNorms;
-  if (upwind_scheme == false && flux_accuracy == false) //temporarily setting to Van Leer if 2nd order Roe is selected
-    upwind_scheme = true;
+
+  //if (upwind_scheme == false && flux_accuracy == false) //reverting to 1st order if 2nd order Roe is selected
+    //flux_accuracy = true;
 
   euler->ComputeResidual(init_resid,field,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //computing upwind flux 1st order initially
   InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
@@ -235,20 +236,16 @@ int main() {
   //! BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
 
-    //debugging only
-    //Tools::print("Iteration #: %d\n",iter);
-
-    if ((flux_accuracy == false) && (iter == 2e5)){ //resetting back to 2nd Order Roe - if Roe 2nd order selected
-      upwind_scheme = false;
+/*    if ((upwind_scheme == false) && (flux_accuracy == true) && (iter == 2e5)){ //resetting back to 2nd Order Roe - if Roe 2nd order selected
+      flux_accuracy = false;
       iterout = 10;
       subiter_max = 5;
     }
+ */   
   
     //! COMPUTE TIME STEP
     // if global time step, chosen then create a vector<double> of the smallest time step
-    //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);//TESTING
     (*time_steps) = (timestep == true) ? time->ComputeLocalTimeStep(field,euler,CFL,dx) : time->ComputeGlobalTimeStep(field,euler,CFL,dx);
-    //time_steps = Time.ComputeLocalTimeStep(field,Euler,CFL,dx);
 
     //! COMPUTE NEW SOL. VALUES 
     time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega);//TESTING
@@ -274,8 +271,6 @@ int main() {
         time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
         euler->ComputeResidual(resid_star,field_star,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
-        //if (flux_accuracy == false) //2nd order ramping
-          //avg_residnorm = sols->ComputeNormAvg(ResidualStarNorms);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
         if (check[0]==false && check[1] == false && check[2] == false){ //checking if new residuals now do not need under-relaxation
@@ -296,6 +291,7 @@ int main() {
       if (resid_stall == true)
         FieldStall = Field; //setting previous field sols. before stall
     }
+
 
     
 
@@ -323,7 +319,7 @@ int main() {
       Tools::print("------Iteration #: %d----------\n",iter);
       Tools::print("Continuity:%e\nX-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2]);
       //debug:
-      Tools::print("Epsilon: %f\n",epsilon);
+      Tools::print("Epsilon: %e\n",epsilon);
       if (resid_stall == true)
         Tools::print("Residuals are detected to be stalled!\n"); //printing message is temp. for now
 

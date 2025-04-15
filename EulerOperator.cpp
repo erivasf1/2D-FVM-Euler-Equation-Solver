@@ -451,7 +451,7 @@ array<double,3> Euler1D::ComputeRoeEigenVals(array<double,3> &roe_vars,double ab
   array<double,3> roe_eigenvals{roe_vars[1],roe_vars[1]+abar,roe_vars[1]-abar};
 
   //Modification to eigenvalues by Harten,1983 to handle rarefaction fans by smoothing them
-  double epsilon = 1.0e-1;
+  double epsilon = 0.5;
 
   for (int i=0;i<3;i++)
     roe_eigenvals[i] = (abs(roe_eigenvals[i]) < 2.0*epsilon*abar) ? (pow(roe_eigenvals[i],2.0)/(4.0*epsilon*abar)) + (epsilon*abar) : abs(roe_eigenvals[i]);
@@ -502,7 +502,7 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,ve
 
   //kappa scheme: -1 = fully upwinded; 0 = upwind biased
   // 1/3 = 3rd order upwind scheme;1/2 = QUICK scheme;1 = central scheme
-  double kappa = -1.0;
+  double kappa = 0.0;
 
   //computing flux limiters if not frozen
   // Options: Beta & Van Leer
