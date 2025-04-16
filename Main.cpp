@@ -40,7 +40,7 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 220; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 400; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
@@ -236,6 +236,7 @@ int main() {
   //! BEGIN OF MAIN LOOP
   for (iter=1;iter<iter_max;iter++){
 
+    // For Switching from 1st to 2nd order accurate
 /*    if ((upwind_scheme == false) && (flux_accuracy == true) && (iter == 2e5)){ //resetting back to 2nd Order Roe - if Roe 2nd order selected
       flux_accuracy = false;
       iterout = 10;
@@ -284,7 +285,7 @@ int main() {
       }
     }
 
-    //Checking if Residuals are stalled
+    // Checking if Residuals are stalled
     if (resid_stall == false){ //only checking if haven't already been marked as stalled
       Prev_ResidualNorms = ResidualNorms;
       resid_stall = time->CheckStallResids(stall_count,ResidualNorms,Prev_ResidualNorms,sols);

@@ -502,7 +502,7 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,ve
 
   //kappa scheme: -1 = fully upwinded; 0 = upwind biased
   // 1/3 = 3rd order upwind scheme;1/2 = QUICK scheme;1 = central scheme
-  double kappa = 0.0;
+  double kappa = 1.0;
 
   //computing flux limiters if not frozen
   // Options: Beta & Van Leer
