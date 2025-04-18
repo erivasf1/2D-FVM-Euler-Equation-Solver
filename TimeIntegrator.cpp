@@ -16,7 +16,7 @@ vector<double> EulerExplicit::ComputeLocalTimeStep(vector<array<double,3>>* &fie
 
   //array<double,cellnumber> time_steps; //stores the computed time steps per interior cell
   for (int i=0;i<euler->total_cellnum;i++){ //looping through all interior no|int nbor)
-    if (i==0 | i==1 | i==euler->total_cellnum-2 | i==euler->total_cellnum-1) //skiping the ghost cells
+    if ( (i==0) | (i==1) | (i==euler->total_cellnum-2) | (i==euler->total_cellnum-1) ) //skiping the ghost cells
       continue;
 
     lambda_max = euler->GetLambdaMax(field,i); //obtaining largest eigenvalue per cell

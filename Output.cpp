@@ -174,11 +174,12 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
 }
 
 //-----------------------------------------------------------
-void Output::ConvertToDatFile(const char*filename_read,const char *filename_write){
+/*void Output::ConvertToDatFile(const char*filename_read,const char *filename_write){
 
 
   return;
 }
+*/
 
 //-----------------------------------------------------------
 

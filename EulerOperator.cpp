@@ -508,7 +508,7 @@ array<array<double,3>,2> Euler1D::MUSCLApprox(vector<array<double,3>>* &field,ve
   // Options: Beta & Van Leer
   //NOTE: Refer to Lecture Notes: Section 7 Page 24
   //psi+- of i-1/2, psi-of i+3/2, psi+ of i-1/2
-  double beta = 1.5;
+  [[maybe_unused]] double beta = 1.5;
   int r_nbor = nbor+1; int l_nbor = loc - 1;
 
   //evaluating limiters based on if resid. are stalled or not
@@ -670,11 +670,11 @@ array<double,3> Euler1D::ComputeRMinusVariation(vector<array<double,3>>* &field,
 }
 
 //-----------------------------------------------------------
-double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords) {
+double Euler1D::ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords,double dx) {
 
   //Note: loc is index of cell in Field -> xcoords index is i-2 of left face
   //Get area for i+1/2 and i-1/2 locations (refer to read me for data indexing)
-  dx = abs(xcoords[0]-xcoords[1]); //assigning dx val. here
+  //dx = abs(xcoords[0]-xcoords[1]); //assigning dx val. here
   double A_rface = Tools::AreaVal(xcoords[loc-1]);
   double A_lface = Tools::AreaVal(xcoords[loc-2]);
   // pressure at i = loc
@@ -870,7 +870,7 @@ void Euler1D::ComputeResidual(vector<array<double,3>>* &resid,vector<array<doubl
 
     //Source Term (external pressure) ONLY for x-mom. eq.
     // also, area already evaluated, but may need to be multiplied dx?
-    S = ComputeSourceTerm(field,n,xcoords);
+    S = ComputeSourceTerm(field,n,xcoords,dx);
     Source[1] = S; //adding scalar to vector
 
 

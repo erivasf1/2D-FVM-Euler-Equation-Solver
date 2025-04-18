@@ -18,7 +18,7 @@ class Euler1D {
   double Pressure_max = 1.0e9;
 
   public:
-  double dx; //cell thickness
+  //double dx; //cell thickness
   int interior_cellnum; //holds the cell num (interior only)
   int total_cellnum; //holds the total cell num (including boundary conditions)
   double R = Ru / MolMass; //specific gas constant
@@ -63,7 +63,7 @@ class Euler1D {
   array<double,3> ComputeRoeEigenVals(array<double,3> &rho_vars,double abar); //rho-avg eigenvalues
   array<array<double,3>,3> ComputeRoeEigenVecs(array<double,3> &roe_vars,double abar); //rho-avg eigenvectors
   array<double,3> ComputeRoeAvgVars(array<double,3> &field_ltstate,array<double,3> &field_rtstate,double &abar); //rho-avg. vars
-  double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords);
+  double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords,double dx);
 
   // MUSCL extrapolation + Flux Limiters
   array<array<double,3>,2> MUSCLApprox(vector<array<double,3>>* &field,vector<array<double,3>>* &field_stall,int loc,int nbor,double epsilon,bool &resid_stall); //outputs the left and right state primitive variables

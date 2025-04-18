@@ -199,7 +199,7 @@ void SpaceVariables1D::OutputResidualTerms(array<double,3> F_right,array<double,
 }
 
 //---------------------------------------------------------
-void SpaceVariables1D::ComputeCellAveragedSol(vector<array<double,3>>* &cell_faces,vector<array<double,3>>* &cell_sols,vector<double> &xcoords,double dx){
+void SpaceVariables1D::ComputeCellAveragedSol(vector<array<double,3>>* &cell_faces,vector<array<double,3>>* &cell_sols,vector<double> &xcoords){
 
   //SolFace has one more element than SolCell, due to more faces than cells
   // using trapezoidal to approximate integral

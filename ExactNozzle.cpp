@@ -241,7 +241,7 @@ void SuperSonicNozzle::ComputeExactSol(array<double,3> &sol){
   //Density
   // Rho = P / (RT)
    Rho = P / (R*T);
-   double Rho_t = stag_pressure / (R*stag_temp);
+  // double Rho_t = stag_pressure / (R*stag_temp);
    //print("Density ratio: %f\n",Rho/Rho_t);
   
   //Velocity

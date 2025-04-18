@@ -40,7 +40,7 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 400; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
 
   // Temporal Specifications
@@ -53,7 +53,7 @@ int main() {
   // Flux Specifications
   bool flux_scheme{false}; //true for JST Damping & false for Upwind
   bool upwind_scheme{false}; //true for Van Leer & false for Roe
-  bool flux_accuracy{false}; //true for 1st order & false for 2nd order
+  bool flux_accuracy{true}; //true for 1st order & false for 2nd order
   [[maybe_unused]] const double ramp_stop = 1.0e-7; //stopping criteria for ramping fcn. of transitioning from 1st to 2nd
   double epsilon = 1.0; //ramping value used to transition from 1st to 2nd order
   bool resid_stall{false};
@@ -175,7 +175,7 @@ int main() {
   }
 
   // Computing cell-average sol. for all cells
-  sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords,dx);
+  sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords);
 
   //Debug: Temporarily set initial conditions to exact solutions
   //Field = ExactField;
