@@ -24,7 +24,7 @@ double MeshGen1D::GetCellVolume(int &loc,double &dx,vector<double> &xcoords){
 //-----------------------------------------------------------
 void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
 
-  double facenum = cellnumber + 1; //number of faces
+  int facenum = cellnumber + 1; //number of faces
   xcoords = Tools::RetrievePoints(xmin,xmax,facenum);  
 
   return;

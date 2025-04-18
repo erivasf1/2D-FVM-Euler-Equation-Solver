@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -Wall -Wextra -Wno-reorder -O3 -std=gnu++17
+CXX_FLAGS = -Wall -Wextra -Wno-reorder -g3 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi -std=gnu++17
 
