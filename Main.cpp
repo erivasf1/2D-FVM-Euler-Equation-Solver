@@ -1,3 +1,4 @@
+// 2D FVM Euler Eq. Solver - Erick Rivas
 //Quasi-1D Nozzle, Euler Eqs. of Converging-to-Diverging Nozzle - Erick Rivas
 #include <mpi.h>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <stdarg.h>
 
 #include "ExactNozzle.h"
+#include "MeshAccess.hpp"
 #include "MeshGen.h"
 #include "EulerOperator.h"
 #include "DataManager.h"
@@ -26,6 +28,7 @@ int main() {
   start_time = MPI_Wtime();
 
   //! INITIALIZATION
+
   // Constants
   double xmin = -1.0;
   double xmax = 1.0;
@@ -42,6 +45,10 @@ int main() {
   // Mesh Specifications
   int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+  vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+  vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+  double dx;
+  const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   // Temporal Specifications
   const int iter_max = 1e6;
@@ -87,7 +94,7 @@ int main() {
   array<double,3> ResidualNorms; //for storing the global residual norms
   array<double,3> Prev_ResidualNorms; //for storing the previous global residual norms
 
-  //Pointers to Field variables
+  //Pointers to Sol. Field variables
   vector<array<double,3>>* field = &Field; //pointer to Field solutions
   vector<array<double,3>>* field_star = &FieldStar; //pointer to intermediate Field solutions
   vector<array<double,3>>* field_stall = &FieldStall; //pointer to intermediate Field solutions
@@ -99,7 +106,11 @@ int main() {
   vector<double>* time_steps = &TimeSteps;
 
   //Object Initializations
-  MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
+  MeshGen2D Mesh2D(meshfile);
+  MeshGen1D Mesh(xmin,xmax,cellnum); 
+
+  //MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
+  //MeshGen2D Mesh(meshfile); //2D mesh
 
   SpaceVariables1D Sols; //for operating on Field variables
 
@@ -112,7 +123,13 @@ int main() {
   Output Error; //for discretization error operations
 
   //Pointers to Objects
-  MeshGen1D* mesh = &Mesh;
+  [[maybe_unused]] MeshGen2D* mesh_2d = NULL;
+    if (meshfile) //2D Mesh Case
+      mesh_2d = &Mesh2D;
+
+  MeshGen1D* mesh = &Mesh; //1D Mesh
+
+  //MeshGen1D* mesh = &Mesh;
   SpaceVariables1D* sols = &Sols;
   Euler1D* euler = &Euler;
   EulerExplicit* time = &Time;
@@ -123,17 +140,35 @@ int main() {
   array<bool,3> check{false,false,false}; //false by default to check if under-relaxation is needed
 
 
-  //! GENERATING UNIFORM MESH
-  mesh->GenerateMesh(xcoords); //stores all coords in xcoords list
-  double dx = abs(xcoords[0]-xcoords[1]); //delta x distance
+  //! GENERATING MESH
+  if (meshfile){ //2D Mesh Case -- read from file
+    xcoords = mesh_2d->xcoords;
+    ycoords = mesh_2d->ycoords;
+  }
+  else{ //1D Mesh Case -- Uniform
+    mesh->GenerateMesh(xcoords); //stores all coords in xcoords list
+    dx = abs(xcoords[0]-xcoords[1]); //delta x distance
+  }
+  Tools::print("Size of xcoords: %d\n",xcoords.size());
+  Tools::print("Size of ycoords: %d\n",ycoords.size());
+  Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
 
 
   //! PRINTING OUT SIMULATION INFO
   // Title
-  Tools::print("1D EULER EQ. SOLVER\n");
+  if (meshfile)
+    Tools::print("2D EULER EQ. SOLVER\n");
+  else
+    Tools::print("1D EULER EQ. SOLVER\n");
   // Case Spec
-  Tools::print("-Case Selected: ");
-  (cond_bc == true) ? Tools::print("Shock Wave Case\n") : Tools::print("Isentropic Case\n");
+  if (meshfile){
+    Tools::print("-Mesh Selected: ");
+    Tools::print("%s\n",meshfile);
+  }
+  else{
+    Tools::print("-Case Selected: ");
+    (cond_bc == true) ? Tools::print("Shock Wave Case\n") : Tools::print("Isentropic Case\n");
+  }
   // Spatial Stats
   Tools::print("-Spatial Statistics:\n");
   Tools::print("--Cell Number: %d\n",cellnum);
@@ -154,6 +189,7 @@ int main() {
   else
     Tools::print(" JST Damping\n");
 
+  return 0;
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");

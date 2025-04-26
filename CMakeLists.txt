@@ -23,7 +23,7 @@ SET(CMAKE_CXX_COMPILER mpicxx)
 
 # Compiler flags
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-reorder")
-set(CMAKE_CXX_FLAGS_DEBUG "-g3 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -fsanitize=address -lmpi")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
@@ -33,6 +33,7 @@ set(SOURCES
     DataManager.cpp
     EulerOperator.cpp
     ExactNozzle.cpp
+    MeshAccess.hpp
     MeshGen.cpp
     Main.cpp
     Output.cpp
@@ -43,6 +44,7 @@ set(TESTSOURCES
     DataManager.cpp
     EulerOperator.cpp
     ExactNozzle.cpp
+    MeshAccess.hpp
     MeshGen.cpp
     Output.cpp
     TimeIntegrator.cpp
@@ -90,7 +92,7 @@ set(OUTPUTHEADERS
 # Create the executable
 add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
-#add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
+add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
 #add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
 
 # Include directories (if needed)

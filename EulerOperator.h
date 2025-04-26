@@ -63,6 +63,7 @@ class Euler1D {
   array<double,3> ComputeRoeEigenVals(array<double,3> &rho_vars,double abar); //rho-avg eigenvalues
   array<array<double,3>,3> ComputeRoeEigenVecs(array<double,3> &roe_vars,double abar); //rho-avg eigenvectors
   array<double,3> ComputeRoeAvgVars(array<double,3> &field_ltstate,array<double,3> &field_rtstate,double &abar); //rho-avg. vars
+
   double ComputeSourceTerm(vector<array<double,3>>* &field,int loc,vector<double> &xcoords,double dx);
 
   // MUSCL extrapolation + Flux Limiters
@@ -96,6 +97,13 @@ class Euler1D {
 };
 
 
+class Euler2D : public Euler1D {
 
+
+
+
+  ~Euler2D();
+
+};
 
 #endif

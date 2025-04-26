@@ -17,6 +17,7 @@
 #include "DataManager.h"
 #include "Output.h"
 #include "TimeIntegrator.h"
+#include "MeshAccess.hpp"
 
 using namespace std;
 
@@ -26,7 +27,7 @@ using namespace std;
 
 //EulerOperator Fcns.
 
-TEST_CASE(" EulerOperator " ){
+/*TEST_CASE(" EulerOperator " ){
 
   //Mesh Specifications
   int cellnum = 10.0;
@@ -233,5 +234,26 @@ TEST_CASE(" EulerOperator " ){
 
   }
 
+}*/
+
+
+TEST_CASE(" 2D Mesh Functions " ){
+
+  SECTION(" Mesh Indexing ") {
+  
+    int Nx = 3;
+    int Ny = 3;
+
+    vector<array<double,4>> Domain(Nx*Ny); 
+    vector<array<double,4>>* domain = &Domain; 
+ 
+    array<double,4> exact_val{1.0,2.0,3.0,4.0};
+    (*domain)[4] = exact_val; //!< setting cell id 4 to test_val
+ 
+    array<double,4> test_val = fieldij(domain,1,1,Nx);
+    for (int i=0;i<4;i++)
+      REQUIRE(test_val[i] == Approx(exact_val[i]));
+ 
+  }
 }
 

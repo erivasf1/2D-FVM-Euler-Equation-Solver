@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 
-class MeshGen1D {
+class MeshGen1D { //creates a uniform mesh
   double xmin,xmax;
   int cellnumber;
 
@@ -23,7 +23,23 @@ class MeshGen1D {
 
 };
 
+class MeshGen2D { //reads in a non-uniform 2D mesh
+  double xmin,xmax;
+  double ymin,ymax;
+  int cellnumber;
+  const char* filename;
+
+  public:
+  MeshGen2D(const char* name);
+
+  vector<double> xcoords,ycoords,zcoords;
+  int imax,jmax,kmax;
+
+  void ReadMeshFile();
+
+  double GetCellVolume(int &i,double &dx,int &j,double &dy,vector<double> &xcoords,vector<double> &ycoords);
 
 
+};
 
 #endif

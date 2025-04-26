@@ -69,3 +69,53 @@ void MeshGen1D::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
 //-----------------------------------------------------------
 
 MeshGen1D::~MeshGen1D(){}
+
+//-----------------------------------------------------------
+MeshGen2D::MeshGen2D(const char* name) 
+  : filename(name) {
+
+  ReadMeshFile(); //extract nodal coords. of mesh
+}
+  
+//-----------------------------------------------------------
+void MeshGen2D::ReadMeshFile(){
+
+  ifstream myfileread(filename);
+  
+  if (!myfileread) { //Error Handling
+    cerr<<"Error Opening Mesh File "<<filename<<" !"<<endl; 
+    return;
+  }
+
+  std::string line;
+  std::getline(myfileread,line); //!< skips 1st line
+
+  if (std::getline(myfileread,line)){ //!< calling 2nd line
+    std::istringstream iss(line); //converts string into stream
+    iss >> imax >> jmax >> kmax; //setting values of 2nd line to imax,jmax,kmax, respectively
+  }
+  else{
+    cerr<<"Mesh File does not contain a second line!"<<endl; 
+    return;
+  }
+
+  double val; //value of i,j,&k indices
+  int total_pts = imax*jmax;
+  //int pt_ct = 1;
+  
+  for (int j=0;j<3;j++){
+    for (int i=0;i<total_pts;i++){
+      myfileread >> val;
+      if (j==0)
+        xcoords.push_back(val);  
+      else if (j==1)
+        ycoords.push_back(val);
+      else
+        zcoords.push_back(val);
+    }
+  }
+  //skipping first line for now
+  //2nd line: 1st int refers to imax and 2nd int refers to jmax
+
+}
+//-----------------------------------------------------------
