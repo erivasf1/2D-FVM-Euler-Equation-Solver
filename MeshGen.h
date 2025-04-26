@@ -37,6 +37,8 @@ class MeshGen2D { //reads in a non-uniform 2D mesh
 
   void ReadMeshFile();
 
+  void OutputMesh();
+
   double GetCellVolume(int &i,double &dx,int &j,double &dy,vector<double> &xcoords,vector<double> &ycoords);
 
 

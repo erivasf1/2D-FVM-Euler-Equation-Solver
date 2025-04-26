@@ -48,7 +48,7 @@ int main() {
   vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.fine.385x105.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   // Temporal Specifications
   const int iter_max = 1e6;
@@ -144,6 +144,7 @@ int main() {
   if (meshfile){ //2D Mesh Case -- read from file
     xcoords = mesh_2d->xcoords;
     ycoords = mesh_2d->ycoords;
+    mesh_2d -> OutputMesh(); //outputs mesh for tecplot visualization
   }
   else{ //1D Mesh Case -- Uniform
     mesh->GenerateMesh(xcoords); //stores all coords in xcoords list

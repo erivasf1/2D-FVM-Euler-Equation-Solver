@@ -67,7 +67,6 @@ void MeshGen1D::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
 }
 
 //-----------------------------------------------------------
-
 MeshGen1D::~MeshGen1D(){}
 
 //-----------------------------------------------------------
@@ -118,4 +117,41 @@ void MeshGen2D::ReadMeshFile(){
   //2nd line: 1st int refers to imax and 2nd int refers to jmax
 
 }
+//-----------------------------------------------------------
+void MeshGen2D::OutputMesh(){
+
+  ifstream myfileread(filename); 
+  ofstream myfilewrite("Mesh.dat",ios::out);
+
+  if (!myfilewrite){
+    cerr<<"Error: Could not Open \"Mesh.dat File\"!"<<endl;
+    return;
+  }
+
+  //Writing header to Mesh Output File
+  myfilewrite<<"TITLE = \" 2D Structured Mesh \""<<endl;
+  myfilewrite<<"VARIABLES = \"X\",\"Y\",\"Z\""<<endl;
+  myfilewrite<<"ZONE I="<<imax<<", J="<<jmax<<", K="<<kmax<<" DATAPACKING=BLOCK"<<endl;
+  
+  
+  //Reading vals. of input mesh file & writing to output mesh file
+  double val;
+  string line;
+  std::getline(myfileread,line);//!< skipping 1st and 2nd line
+  std::getline(myfileread,line);
+
+  //std::istringstream iss(line);
+  int count = 0;
+  while(myfileread>>val){
+    count++;
+    myfilewrite<<std::setw(15)<<val;
+    if (count % 4 == 0)
+      myfilewrite<<endl;
+ 
+  }
+    
+  //myfilewrite.close(); 
+
+}
+
 //-----------------------------------------------------------
