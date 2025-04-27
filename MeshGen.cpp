@@ -82,7 +82,8 @@ void MeshGen2D::ReadMeshFile(){
   ifstream myfileread(filename);
   
   if (!myfileread) { //Error Handling
-    cerr<<"Error Opening Mesh File "<<filename<<" !"<<endl; 
+    cerr<<"No Mesh File Provided!"<<endl;
+    //cerr<<"Error Opening Mesh File "<<filename<<" !"<<endl; 
     return;
   }
 
@@ -100,6 +101,8 @@ void MeshGen2D::ReadMeshFile(){
 
   double val; //value of i,j,&k indices
   int total_pts = imax*jmax;
+  
+  cellnumber = (imax-1) * (jmax-1); //1 more faces than each dir.
   //int pt_ct = 1;
   
   for (int j=0;j<3;j++){
@@ -154,4 +157,6 @@ void MeshGen2D::OutputMesh(){
 
 }
 
+//-----------------------------------------------------------
+MeshGen2D::~MeshGen2D(){}
 //-----------------------------------------------------------

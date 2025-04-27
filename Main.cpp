@@ -28,7 +28,6 @@ int main() {
   start_time = MPI_Wtime();
 
   //! INITIALIZATION
-
   // Constants
   double xmin = -1.0;
   double xmax = 1.0;
@@ -43,12 +42,13 @@ int main() {
   bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle
+  int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.fine.385x105.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //const char* meshfile = NULL;
 
   // Temporal Specifications
   const int iter_max = 1e6;
@@ -76,6 +76,31 @@ int main() {
   double cont_tol = 1.0e-10;
   double xmom_tol = 1.0e-10;
   double energy_tol = 1.0e-10;
+
+  //! GENERATING MESH
+  MeshGen2D Mesh2D(meshfile);
+  MeshGen1D Mesh(xmin,xmax,cellnum); 
+
+  [[maybe_unused]] MeshGen2D* mesh_2d = NULL;
+    if (meshfile) //2D Mesh Case
+      mesh_2d = &Mesh2D;
+
+  MeshGen1D* mesh = &Mesh; //1D Mesh
+
+  if (meshfile){ //2D Mesh Case -- read from file
+    xcoords = mesh_2d->xcoords;
+    ycoords = mesh_2d->ycoords;
+    cellnum = mesh_2d->cellnumber;
+    mesh_2d -> OutputMesh(); //outputs mesh for tecplot visualization
+  }
+  else{ //1D Mesh Case -- Uniform
+    mesh->GenerateMesh(xcoords); //stores all coords in xcoords list
+    dx = abs(xcoords[0]-xcoords[1]); //delta x distance
+  }
+  //debug:
+  Tools::print("Size of xcoords: %d\n",xcoords.size());
+  Tools::print("Size of ycoords: %d\n",ycoords.size());
+  Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
 
   //! DATA ALLOCATION
   //Field variables
@@ -106,11 +131,6 @@ int main() {
   vector<double>* time_steps = &TimeSteps;
 
   //Object Initializations
-  MeshGen2D Mesh2D(meshfile);
-  MeshGen1D Mesh(xmin,xmax,cellnum); 
-
-  //MeshGen1D Mesh(xmin,xmax,cellnum); //mesh
-  //MeshGen2D Mesh(meshfile); //2D mesh
 
   SpaceVariables1D Sols; //for operating on Field variables
 
@@ -123,13 +143,7 @@ int main() {
   Output Error; //for discretization error operations
 
   //Pointers to Objects
-  [[maybe_unused]] MeshGen2D* mesh_2d = NULL;
-    if (meshfile) //2D Mesh Case
-      mesh_2d = &Mesh2D;
 
-  MeshGen1D* mesh = &Mesh; //1D Mesh
-
-  //MeshGen1D* mesh = &Mesh;
   SpaceVariables1D* sols = &Sols;
   Euler1D* euler = &Euler;
   EulerExplicit* time = &Time;
@@ -138,21 +152,6 @@ int main() {
   //Intermediate variables for under-relaxation
   array<double,3> ResidualStarNorms; //stores the intermediate global residual norms
   array<bool,3> check{false,false,false}; //false by default to check if under-relaxation is needed
-
-
-  //! GENERATING MESH
-  if (meshfile){ //2D Mesh Case -- read from file
-    xcoords = mesh_2d->xcoords;
-    ycoords = mesh_2d->ycoords;
-    mesh_2d -> OutputMesh(); //outputs mesh for tecplot visualization
-  }
-  else{ //1D Mesh Case -- Uniform
-    mesh->GenerateMesh(xcoords); //stores all coords in xcoords list
-    dx = abs(xcoords[0]-xcoords[1]); //delta x distance
-  }
-  Tools::print("Size of xcoords: %d\n",xcoords.size());
-  Tools::print("Size of ycoords: %d\n",ycoords.size());
-  Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
 
 
   //! PRINTING OUT SIMULATION INFO
@@ -190,6 +189,7 @@ int main() {
   else
     Tools::print(" JST Damping\n");
 
+  //debug:
   return 0;
 
   //! SETTING INITIAL CONDITIONS

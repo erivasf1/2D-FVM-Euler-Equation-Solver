@@ -26,7 +26,6 @@ class MeshGen1D { //creates a uniform mesh
 class MeshGen2D { //reads in a non-uniform 2D mesh
   double xmin,xmax;
   double ymin,ymax;
-  int cellnumber;
   const char* filename;
 
   public:
@@ -34,6 +33,7 @@ class MeshGen2D { //reads in a non-uniform 2D mesh
 
   vector<double> xcoords,ycoords,zcoords;
   int imax,jmax,kmax;
+  int cellnumber;
 
   void ReadMeshFile();
 
@@ -41,6 +41,7 @@ class MeshGen2D { //reads in a non-uniform 2D mesh
 
   double GetCellVolume(int &i,double &dx,int &j,double &dy,vector<double> &xcoords,vector<double> &ycoords);
 
+  ~MeshGen2D();
 
 };
 
