@@ -118,7 +118,7 @@ void MeshGen2D::ReadMeshFile(){
     }
   }
 
-  //Case if k>1 -- to extract the x & y coords in 2D plane
+  //Case if 3D structured mesh is provided -- to extract the x & y coords in 2D plane
   if (kmax>0){
     for(int n=0;n<(int)imax*jmax;n++){
       xcoords.push_back(xcoords_orig[n]);

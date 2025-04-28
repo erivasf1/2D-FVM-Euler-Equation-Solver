@@ -47,7 +47,7 @@ int main() {
   vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   //vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.coarse.53x27.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //const char* meshfile = NULL;
 
   // Temporal Specifications
@@ -195,7 +195,7 @@ int main() {
   vector<array<double,4>>* field_test = &FieldTest;
   Euler2D Erick; SpaceVariables2D Emma;
   string file = "2DSols.dat";
-  Erick.InitSolutions(field_test,cellnum);
+  Erick.ManufacturedPrimitiveSols(field_test,mesh_2d->imax,mesh_2d->jmax,xcoords,ycoords);
   Emma.AllOutputPrimitiveVariables(field_test,file,false,0,xcoords,ycoords,cellnum,mesh_2d->imax,mesh_2d->jmax);
   return 0;
 

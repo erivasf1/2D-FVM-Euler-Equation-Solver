@@ -41,6 +41,8 @@ class SpaceVariables2D {
   
   void AllOutputPrimitiveVariables(vector<array<double,4>>* &field,string filename,bool cond,int iter,vector<double> &xcoords,vector<double> &ycoords,int cell_number,int imax,int jmax); //outputs cell center vals. to mesh
 
+  //void ComputeCellCenteredCoordinate(); //computes coord. cell center
+
   ~SpaceVariables2D();
 
 };

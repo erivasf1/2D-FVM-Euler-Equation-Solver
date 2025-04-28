@@ -1,5 +1,6 @@
 //User-defined functions
 #include "EulerOperator.h" 
+#include "MeshAccess.hpp"
 
 // EULER1D DEFINITIONS
 
@@ -942,6 +943,50 @@ void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
     (*field)[i][3] = 4.0 + sin(i);
   }
 
+  return;
+}
+//-----------------------------------------------------------
+void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords){
+
+  //Note: Manufactured Sol. from Mathematica!
+  // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
+  double L = 1.0;
+  double rho0 = 1.0;
+  double press0 = 1.0e5;
+  double uvel0 = 800;
+  double vvel0 = 800;
+
+  double Pi = M_PI;
+  double x,y; //x and y coords
+  double rhox = 0.15;double rhoy = -0.1;
+  double uvelx = 50.0;double uvely = -30.0;
+  double vvelx = -75.0;double vvely = 40.0;
+  double pressx = 0.2e5;double pressy = 0.5e5;
+
+  int cellid;
+
+  for (int j=0;j<jmax-1;j++){
+    for (int i=0;i<imax-1;i++){
+
+      cellid = i + j*(imax-1); //accesses index in 1D flat vectors to retrieve x&y coords of pt
+      x = xcoords[cellid]; y = ycoords[cellid];
+
+      //Rho
+      fieldij(field,i,j,imax-1)[0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);
+
+      //U
+      fieldij(field,i,j,imax-1)[1] = uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L));
+
+      //V
+      fieldij(field,i,j,imax-1)[2] = vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L));
+
+      //P
+      fieldij(field,i,j,imax-1)[3] = press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L);
+
+    }
+  }
+  
+  return;
 }
 //-----------------------------------------------------------
 Euler2D::~Euler2D(){}

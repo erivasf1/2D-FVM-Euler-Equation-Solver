@@ -104,6 +104,8 @@ class Euler2D : public Euler1D {
 
   void InitSolutions(vector<array<double,4>>* &field,int cellnum);
 
+  void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords);
+
 
   ~Euler2D();
 
