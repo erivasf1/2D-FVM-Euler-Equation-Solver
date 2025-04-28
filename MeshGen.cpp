@@ -100,24 +100,36 @@ void MeshGen2D::ReadMeshFile(){
   }
 
   double val; //value of i,j,&k indices
-  int total_pts = imax*jmax;
+  int total_pts = imax*jmax*kmax;
+
+  vector<double> xcoords_orig,ycoords_orig; //needed for duplicated xcoords and ycoords when k>1 (i.e. 3D structured grid)
   
-  cellnumber = (imax-1) * (jmax-1); //1 more faces than each dir.
   //int pt_ct = 1;
   
-  for (int j=0;j<3;j++){
+  for (int j=0;j<2;j++){
     for (int i=0;i<total_pts;i++){
       myfileread >> val;
       if (j==0)
-        xcoords.push_back(val);  
-      else if (j==1)
-        ycoords.push_back(val);
+        xcoords_orig.push_back(val);  
+      //else if (j==1)
+        //ycoords_orig.push_back(val);
       else
-        zcoords.push_back(val);
+        ycoords_orig.push_back(val);
     }
   }
+
+  //Case if k>1 -- to extract the x & y coords in 2D plane
+  if (kmax>1){
+    for(int n=0;n<(int)imax*jmax;n++){
+      xcoords.push_back(xcoords_orig[n]);
+      ycoords.push_back(ycoords_orig[n]);
+    }
+  }
+    
   //skipping first line for now
   //2nd line: 1st int refers to imax and 2nd int refers to jmax
+
+  cellnumber = (imax-1) * (jmax-1) * (kmax-1); //1 more faces than each dir.
 
 }
 //-----------------------------------------------------------

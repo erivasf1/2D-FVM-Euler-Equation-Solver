@@ -925,6 +925,21 @@ double Euler1D::ComputeMachNumber(array<double,3> &sols){
 }
 
 //-----------------------------------------------------------
-
-
 Euler1D::~Euler1D(){}
+//-----------------------------------------------------------
+
+// EULER2D DEFINITIONS
+//-----------------------------------------------------------
+Euler2D::Euler2D(){}
+//-----------------------------------------------------------
+void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
+  
+  //Setting w/ arb. sin function
+  for (int i=0;i<cellnum;i++) {
+    for (int j=0;j<4;j++)
+      (*field)[i][j] = 1.0 + sin(i);
+  }
+
+}
+//-----------------------------------------------------------
+Euler2D::~Euler2D(){}

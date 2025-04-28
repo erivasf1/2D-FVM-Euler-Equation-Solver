@@ -99,7 +99,10 @@ class Euler1D {
 
 class Euler2D : public Euler1D {
 
+  public:
+  Euler2D(); //empty constructor for unit testing
 
+  void InitSolutions(vector<array<double,4>>* &field,int cellnum);
 
 
   ~Euler2D();

@@ -45,7 +45,7 @@ int main() {
   int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
   vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
-  vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+  //vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
   const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //const char* meshfile = NULL;
@@ -90,6 +90,7 @@ int main() {
   if (meshfile){ //2D Mesh Case -- read from file
     xcoords = mesh_2d->xcoords;
     ycoords = mesh_2d->ycoords;
+    //zcoords = mesh_2d->zcoords;
     cellnum = mesh_2d->cellnumber;
     mesh_2d -> OutputMesh(); //outputs mesh for tecplot visualization
   }
@@ -190,6 +191,12 @@ int main() {
     Tools::print(" JST Damping\n");
 
   //debug:
+  vector<array<double,4>> FieldTest(cellnum); 
+  vector<array<double,4>>* field_test = &FieldTest;
+  Euler2D Erick; SpaceVariables2D Emma;
+  string file = "2DSols.dat";
+  Erick.InitSolutions(field_test,cellnum);
+  Emma.AllOutputPrimitiveVariables(field_test,file,false,0,xcoords,ycoords,cellnum,mesh_2d->imax,mesh_2d->jmax);
   return 0;
 
   //! SETTING INITIAL CONDITIONS

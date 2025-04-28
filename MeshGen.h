@@ -31,7 +31,7 @@ class MeshGen2D { //reads in a non-uniform 2D mesh
   public:
   MeshGen2D(const char* name);
 
-  vector<double> xcoords,ycoords,zcoords;
+  vector<double> xcoords,ycoords;
   int imax,jmax,kmax;
   int cellnumber;
 
