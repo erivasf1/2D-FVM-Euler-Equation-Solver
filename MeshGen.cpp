@@ -119,7 +119,7 @@ void MeshGen2D::ReadMeshFile(){
   }
 
   //Case if k>1 -- to extract the x & y coords in 2D plane
-  if (kmax>1){
+  if (kmax>0){
     for(int n=0;n<(int)imax*jmax;n++){
       xcoords.push_back(xcoords_orig[n]);
       ycoords.push_back(ycoords_orig[n]);
@@ -129,7 +129,7 @@ void MeshGen2D::ReadMeshFile(){
   //skipping first line for now
   //2nd line: 1st int refers to imax and 2nd int refers to jmax
 
-  cellnumber = (imax-1) * (jmax-1) * (kmax-1); //1 more faces than each dir.
+  cellnumber = (imax-1) * (jmax-1); //1 more faces than each dir.
 
 }
 //-----------------------------------------------------------

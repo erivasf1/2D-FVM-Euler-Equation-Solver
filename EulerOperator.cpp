@@ -936,8 +936,10 @@ void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
   
   //Setting w/ arb. sin function
   for (int i=0;i<cellnum;i++) {
-    for (int j=0;j<4;j++)
-      (*field)[i][j] = 1.0 + sin(i);
+    (*field)[i][0] = 1.0 + sin(i);
+    (*field)[i][1] = 2.0 + sin(i);
+    (*field)[i][2] = 3.0 + sin(i);
+    (*field)[i][3] = 4.0 + sin(i);
   }
 
 }

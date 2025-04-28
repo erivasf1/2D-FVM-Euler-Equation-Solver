@@ -47,7 +47,7 @@ int main() {
   vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   //vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.coarse.53x27.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //const char* meshfile = NULL;
 
   // Temporal Specifications
