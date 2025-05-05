@@ -31,3 +31,12 @@ THINGS LEARNED:
 
 TODO:
 1) Figure out a way to best store Field vectors 
+
+//2D FVM Solver Extension Idea:
+1) Mesh class will be only class to be split into a 1D version and 2D version 
+  1.1) 1D version - generates a uniform 1D cartesian grid, really is for the quasi-steady nozzle
+  1.2) 2D version - reads in a structured Plot3D file and extracts all coords and cell number
+2) Everything else will be re-written to extend into 2D.
+  2.1) Ramification - for 1D scenarios, there will be a "dummy" variable that won't be solved for, however this is justified by a cleaner written source code
+  2.2) There should still be a tag/variable that indicates if the flow is 1D or 2D.
+3) There should be an input file to clean up code as well. Consider using something like IoData.cpp/.h

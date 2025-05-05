@@ -60,7 +60,7 @@ void Output::PrintResidualNorm(int &cellnum,int &n){
 }
 */
 //-----------------------------------------------------------
-void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* sols){
+void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariablesBASE* &sols){
 
   for (int n=0;n<(int)field->size();n++){ //calculating errors
     for (int i=0;i<3;i++)

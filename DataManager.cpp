@@ -1,6 +1,31 @@
 //User-defined functions
 #include "DataManager.h" 
 
+// SPACEVARIABLEBASE DEFINITIONS
+
+array<double,3> SpaceVariablesBASE::ComputeSolutionNorms(vector<array<double,3>>* &resid){}
+//---------------------------------------------------------
+double SpaceVariablesBASE::ComputeNormAvg(array<double,3> &Norms){}
+
+//---------------------------------------------------------
+double SpaceVariablesBASE::ComputeRampValue(array<double,3> CurrentNorms,array<double,3> InitNorms,double FinalVal){} 
+
+//---------------------------------------------------------
+void SpaceVariablesBASE::OutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,const char *filename){}
+
+//---------------------------------------------------------
+void SpaceVariablesBASE::AllOutputPrimitiveVariables(vector<array<double,3>>* &field,Euler1D* &euler,string filename,bool cond,int iter,vector<double> &xcoords){}
+
+//---------------------------------------------------------
+void SpaceVariablesBASE::OutputLocalResiduals(vector<array<double,3>> &Resid,const char *filename){}
+
+//---------------------------------------------------------
+void SpaceVariablesBASE::OutputResidualTerms(array<double,3> F_right,array<double,3> F_left,double S,array<double,3> D2_right,array<double,3> D2_left,array<double,3> D4_right,array<double,3> D4_left,const char* filename){}
+
+//---------------------------------------------------------
+void SpaceVariablesBASE::ComputeCellAveragedSol(vector<array<double,3>>* &cell_faces,vector<array<double,3>>* &cell_sols,vector<double> &xcoords){}
+
+//---------------------------------------------------------
 // SPACEVARIABLE1D DEFINITIONS
 
 SpaceVariables1D::SpaceVariables1D()
@@ -359,6 +384,57 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   //myfile.flush();
 
   return;
+}
+//---------------------------------------------------------
+void SpaceVariables2D::ComputeCellCenteredCoordinate(vector<double> &xcoords,vector<double> &ycoords,vector<double> &cell_center_xcoords,vector<double> &cell_center_ycoords,int imax){ //computes coord. cell center
+
+  //Cell-Center is just an avg. of the 4 corner nodes of the cell
+  double x_avg = 0.0;
+  double y_avg = 0.0;
+  int id; 
+  int nx = imax + 1;
+  int node_id = 0;
+  
+  //Summing up x
+  for (int cell_id=0;cell_id<(int)cell_center_xcoords.size();cell_id++){
+
+    if ((cell_id % imax == 0) && (cell_id>0)) //goes to next "j" row of cells if cell_imax is reached
+      node_id++;
+    //btm left node is n index
+    id = node_id;
+    x_avg += xcoords[id];
+    y_avg += ycoords[id];
+    //btm right node is n+1 index
+    id = node_id+1;
+    x_avg += xcoords[id];
+    y_avg += ycoords[id];
+    //top left node is (n + nx)
+    id = node_id + nx;
+    x_avg += xcoords[id];
+    y_avg += ycoords[id];
+    //top right node is (n + nx + 1)
+    id = node_id + nx + 1;
+    x_avg += xcoords[id];
+    y_avg += ycoords[id];
+
+    //avg. nodes
+    x_avg /= 4.0;
+    y_avg /= 4.0;
+
+    //save to cell_center_coords list
+    cell_center_xcoords[cell_id] = x_avg;
+    cell_center_ycoords[cell_id] = y_avg;
+    
+    //reset avg values
+    x_avg = 0.0;
+    y_avg = 0.0;
+
+    node_id++;
+    
+ }
+
+
+  return; 
 }
 //---------------------------------------------------------
 SpaceVariables2D::~SpaceVariables2D(){}

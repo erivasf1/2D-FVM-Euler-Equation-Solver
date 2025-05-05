@@ -946,15 +946,15 @@ void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
   return;
 }
 //-----------------------------------------------------------
-void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords){
+void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum){
 
   //Note: Manufactured Sol. from Mathematica!
   // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
   double L = 1.0;
   double rho0 = 1.0;
   double press0 = 1.0e5;
-  double uvel0 = 800;
-  double vvel0 = 800;
+  double uvel0 = 800.0;
+  double vvel0 = 800.0;
 
   double Pi = M_PI;
   double x,y; //x and y coords
@@ -965,11 +965,27 @@ void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax
 
   int cellid;
 
-  for (int j=0;j<jmax-1;j++){
-    for (int i=0;i<imax-1;i++){
 
-      cellid = i + j*(imax-1); //accesses index in 1D flat vectors to retrieve x&y coords of pt
-      x = xcoords[cellid]; y = ycoords[cellid];
+  //Evaluating Cell-Center Coords 
+  //SpaceVariable Something; Something.ComputeCellCenteredCoordinate();
+  vector<double> cell_center_xcoords(cellnum);
+  vector<double> cell_center_ycoords(cellnum);
+ 
+  Sols.ComputeCellCenteredCoordinate(xcoords,ycoords,cell_center_xcoords,cell_center_ycoords,imax-1);
+
+  int cell_imax = imax - 2;
+  int cell_jmax = jmax - 2;
+  int Nx = cell_imax + 1;
+ 
+
+
+  // Solving Manufactured Solution
+  for (int j=0;j<cell_jmax;j++){
+    for (int i=0;i<cell_imax;i++){
+
+      //bottom left coord.
+      cellid = i + j*(Nx); //accesses index in 1D flat vectors to retrieve x&y coords of pt
+      x = cell_center_xcoords[cellid]; y = cell_center_ycoords[cellid];
 
       //Rho
       fieldij(field,i,j,imax-1)[0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);

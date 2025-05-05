@@ -9,6 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdarg.h>
+#include <variant>
 
 #include "ExactNozzle.h"
 #include "MeshAccess.hpp"
@@ -43,11 +44,10 @@ int main() {
 
   // Mesh Specifications
   int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
-  vector<double> xcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
-  vector<double> ycoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
-  //vector<double> zcoords; //stores the coords of the cell FACES!!! (i.e. size of xcoords is cellnum+1)!
+  vector<double> xcoords; //stores the coords of the cell NODES!!! (i.e. size of xcoords is cellnum+1)!
+  vector<double> ycoords; //stores the coords of the cell NODES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //const char* meshfile = NULL;
 
   // Temporal Specifications
@@ -99,9 +99,9 @@ int main() {
     dx = abs(xcoords[0]-xcoords[1]); //delta x distance
   }
   //debug:
-  Tools::print("Size of xcoords: %d\n",xcoords.size());
-  Tools::print("Size of ycoords: %d\n",ycoords.size());
-  Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
+  //Tools::print("Size of xcoords: %d\n",xcoords.size());
+  //Tools::print("Size of ycoords: %d\n",ycoords.size());
+  //Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
 
   //! DATA ALLOCATION
   //Field variables
@@ -133,7 +133,9 @@ int main() {
 
   //Object Initializations
 
-  SpaceVariables1D Sols; //for operating on Field variables
+  SpaceVariablesBASE Sols; //for operating on Field variables
+
+  //SpaceVariables2D Sols; //for operating on Field variables
 
   Tools tool; //utilities object
 
@@ -145,8 +147,19 @@ int main() {
 
   //Pointers to Objects
 
-  SpaceVariables1D* sols = &Sols;
+  SpaceVariablesBASE* sols = NULL;
   Euler1D* euler = &Euler;
+  //if (mesh_2d) //reassigns pointer to newly created 2D SpaceVariable
+    //sols = new SpaceVariables2D();
+
+  /*if (mesh_2d){ //reassigns pointer to newly created 2D Objects
+    euler = new Euler2D();
+    sols = new SpaceVariables2D();
+  }
+  else
+    sols = new SpaceVariables1D();
+  */
+
   EulerExplicit* time = &Time;
   Output* error = &Error;
 
@@ -190,21 +203,23 @@ int main() {
   else
     Tools::print(" JST Damping\n");
 
-  //debug:
+  //debug: for visualizing manufactured sol.
+  
   vector<array<double,4>> FieldTest(cellnum); 
   vector<array<double,4>>* field_test = &FieldTest;
   Euler2D Erick; SpaceVariables2D Emma;
   string file = "2DSols.dat";
-  Erick.ManufacturedPrimitiveSols(field_test,mesh_2d->imax,mesh_2d->jmax,xcoords,ycoords);
+  Erick.ManufacturedPrimitiveSols(field_test,mesh_2d->imax,mesh_2d->jmax,xcoords,ycoords,Emma,cellnum);
   Emma.AllOutputPrimitiveVariables(field_test,file,false,0,xcoords,ycoords,cellnum,mesh_2d->imax,mesh_2d->jmax);
   return 0;
+  
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
   euler->SetInitialConditions(field,xcoords);
 
-  //! COMPUTING EXACT SOLUTION -- (should be outputted to a file)
-  if (cond_bc == false){ //Compute Exact Solution if isentropic case is selected
+  //! COMPUTING EXACT SOLUTION -- ONLY FOR 1D QUASI-STEADY NOZZLE
+  if ((cond_bc == false) && (!meshfile)){ //Compute Exact Solution if isentropic case is selected
     array<double,3> sol;
     double area;
     for (int i=0;i<(int)exact_faces->size();i++) {
@@ -216,10 +231,10 @@ int main() {
       (*exact_faces)[i] = sol; //assigning to exact faces vector
     
     }
+    // Computing cell-average sol. for all cells
+    sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords);
   }
 
-  // Computing cell-average sol. for all cells
-  sols->ComputeCellAveragedSol(exact_faces,exact_sols,xcoords);
 
   //Debug: Temporarily set initial conditions to exact solutions
   //Field = ExactField;
@@ -411,6 +426,11 @@ int main() {
 
   stop_time = MPI_Wtime();
   Tools::print("Elapsed time: %fs\n",stop_time-start_time);
+
+  //! CLEANUP
+  if (meshfile){
+    delete euler;
+  }
 
   return 0;
 }

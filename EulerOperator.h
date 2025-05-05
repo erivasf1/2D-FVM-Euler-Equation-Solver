@@ -3,6 +3,11 @@
 #define _EULEROPERATOR_H_
 #include "ExactNozzle.h"
 #include "MeshGen.h"
+#include "DataManager.h"
+
+//Forward Declarations
+class SpaceVariables2D;
+
 
 class Euler1D {
   //vector<double> &xcoords;
@@ -97,6 +102,7 @@ class Euler1D {
 };
 
 
+// EulerOperator Class for 2D Problems
 class Euler2D : public Euler1D {
 
   public:
@@ -104,7 +110,7 @@ class Euler2D : public Euler1D {
 
   void InitSolutions(vector<array<double,4>>* &field,int cellnum);
 
-  void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords);
+  void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum);
 
 
   ~Euler2D();

@@ -28,7 +28,7 @@ class EulerExplicit {
 
   void UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check); //looks for residual norm increase to mark needed under-relaxation for each equation 
 
-  bool CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariables1D* &sol); //checks if residuals are stalled
+  bool CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariablesBASE* &sol); //checks if residuals are stalled
 
   ~EulerExplicit();
 
