@@ -8,11 +8,17 @@
 //Forward Declarations
 class SpaceVariables2D;
 
+//TODO: Make BASE Class
+//class EulerBASE {
+// virtual void blah blah blah
+//
+//
+//};
 
 class Euler1D {
   //vector<double> &xcoords;
   double stag_pressure; //stagnation pressure
-  double back_pressure; //stagnation pressure
+  double back_pressure; //back pressure
   double stag_temperature; //stagnation temperature
   double gamma;
   const double Ru = 8314.0; // J/(kmol*K) -- universal gas constant   

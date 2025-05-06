@@ -9,7 +9,6 @@
 #include <cmath>
 #include <algorithm>
 #include <stdarg.h>
-#include <variant>
 
 #include "ExactNozzle.h"
 #include "MeshAccess.hpp"
@@ -29,6 +28,8 @@ int main() {
   start_time = MPI_Wtime();
 
   //! INITIALIZATION
+  // Scenario
+  // int scenario = 1; where 1 = 1D, 2 = 2D, 3 = 2D MMS
   // Constants
   double xmin = -1.0;
   double xmax = 1.0;
@@ -104,6 +105,7 @@ int main() {
   //Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
 
   //! DATA ALLOCATION
+  //TODO: Change Field variable array size to 4
   //Field variables
   vector<array<double,3>> Field(cellnum); //stores primitive variable sols.
   vector<array<double,3>> FieldStar(cellnum); //stores intermediate primitive variable sols.
@@ -131,7 +133,28 @@ int main() {
   vector<array<double,3>>* init_resid = &InitResidual; //pointer to residual field values per cell
   vector<double>* time_steps = &TimeSteps;
 
+  //TODO: Allocate specific data depending on user inputs (e.g. Euler2DMMS should be created only if mesh file is provided and MMS is selected)
   //Object Initializations
+
+  //Ex: EulerOperators Class Allocations
+  //  std::unique_ptr<EulerBASE> euler;
+  //if (!meshfile)
+  //  euler = std::make_unique<Euler1DNozzle>();
+  //else if (meshfile && MMS==true)
+  //  euler = std::make_unique<Euler2DMMS>();
+  //else 
+  //  euler = std::make_unique<Euler2D>();
+
+  //Ex: TimeIntegrator Class Allocations
+  //  std::unique_ptr<ExplictBASE> time;
+  //if (time_int == 0)
+  //  time = std::make_unique<EulerExplicit>();
+  //else if (time_int == 1)
+  //  time = std::make_unique<RungeKutta2>();
+  //else if (time_int == 2) 
+  //  time = std::make_unique<RungeKutta4>();
+  //else
+  //  cerr<<"Unknown parameter!"<<endl;
 
   SpaceVariablesBASE Sols; //for operating on Field variables
 

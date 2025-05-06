@@ -967,7 +967,6 @@ void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax
 
 
   //Evaluating Cell-Center Coords 
-  //SpaceVariable Something; Something.ComputeCellCenteredCoordinate();
   vector<double> cell_center_xcoords(cellnum);
   vector<double> cell_center_ycoords(cellnum);
  

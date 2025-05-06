@@ -40,3 +40,16 @@ TODO:
   2.1) Ramification - for 1D scenarios, there will be a "dummy" variable that won't be solved for, however this is justified by a cleaner written source code
   2.2) There should still be a tag/variable that indicates if the flow is 1D or 2D.
 3) There should be an input file to clean up code as well. Consider using something like IoData.cpp/.h
+
+TODO!!!:
+1) Modify all pertaining fcns. to handle Field Variables of vector,array size of 4
+2) Create BASE classes for EulerOperator Class, to handle all requirements (1D quasi-steady nozzle,2D generic flow, 2D MMS flow)
+  2.1) EulerBASE
+  2.2) Euler1D
+  2.3) Euler2D
+  2.4) Euler2DMMS
+3) Create BASE classes for TimeIntegrator Class, to handle all requirements (1D quasi-steady nozzle,2D generic flow, 2D MMS flow)
+  3.1) ExplicitBASE
+  3.2) EulerExplicit 
+  3.3) RungeKutta2
+  3.4) RungeKutta4
