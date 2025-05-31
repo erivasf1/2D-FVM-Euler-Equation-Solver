@@ -284,7 +284,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   myfile<<"ZONE T="<<"\""<<iter<<"\""<<endl; //Now adding zone specific info.
   myfile<<"I="<<imax<<", "<<"J="<<jmax<<endl;
   myfile<<"DATAPACKING=BLOCK"<<endl;
-  //myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+  //myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
   myfile<<"VARLOCATION=([3-6]=CELLCENTERED)"<<endl; //-> tells Tecplot this is cell-centered val (must be size (imax-1)*(jmax-1) size
 
 
@@ -315,10 +315,8 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
 */
   //vector<double> data;
   // Saving all primitive variables in their own corresponding vector
-  vector<double> all_rho;
-  vector<double> all_u;
-  vector<double> all_v;
-  vector<double> all_p;
+  vector<double> all_rho,all_u,all_v,all_p;
+
   for (int i=0;i<cell_number;i++){
     all_rho.push_back((*field)[i][0]);
     all_u.push_back((*field)[i][1]);
@@ -349,7 +347,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
 
 
   // Writing Rho
-  for (int n=0;n<cell_number;n++){
+  for (int n=0;n<(int)all_rho.size();n++){
     count++;
     myfile<<std::setw(15)<<all_rho[n];
     if (count % 4 == 0)
@@ -357,7 +355,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   }
   
   // Writing U 
-  for (int n=0;n<cell_number;n++){
+  for (int n=0;n<(int)all_u.size();n++){
     count++;
     myfile<<std::setw(15)<<all_u[n];
     if (count % 4 == 0)
@@ -365,7 +363,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   }
 
   // Writing V 
-  for (int n=0;n<cell_number;n++){
+  for (int n=0;n<(int)all_v.size();n++){
     count++;
     myfile<<std::setw(15)<<all_v[n];
     if (count % 4 == 0)
@@ -373,7 +371,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   }
 
   // Writing P
-  for (int n=0;n<cell_number;n++){
+  for (int n=0;n<(int)all_p.size();n++){
     count++;
     myfile<<std::setw(15)<<all_p[n];
     if (count % 4 == 0)
@@ -386,19 +384,19 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
   return;
 }
 //---------------------------------------------------------
-void SpaceVariables2D::ComputeCellCenteredCoordinate(vector<double> &xcoords,vector<double> &ycoords,vector<double> &cell_center_xcoords,vector<double> &cell_center_ycoords,int imax){ //computes coord. cell center
+void SpaceVariables2D::ComputeCellCenteredCoordinate(vector<double> &xcoords,vector<double> &ycoords,vector<double> &cell_center_xcoords,vector<double> &cell_center_ycoords,int cell_imax){ //computes coord. cell center
 
   //Cell-Center is just an avg. of the 4 corner nodes of the cell
   double x_avg = 0.0;
   double y_avg = 0.0;
-  int id; 
-  int nx = imax + 1;
+  int id; //cell ID
+  int nx_pts = cell_imax + 1; //# of points in i-row
   int node_id = 0;
   
-  //Summing up x
+  //Summing up x & y
   for (int cell_id=0;cell_id<(int)cell_center_xcoords.size();cell_id++){
 
-    if ((cell_id % imax == 0) && (cell_id>0)) //goes to next "j" row of cells if cell_imax is reached
+    if ((cell_id % cell_imax == 0) && (cell_id>0)) //goes to next "j" row of cells if cell_imax is reached
       node_id++;
     //btm left node is n index
     id = node_id;
@@ -409,11 +407,11 @@ void SpaceVariables2D::ComputeCellCenteredCoordinate(vector<double> &xcoords,vec
     x_avg += xcoords[id];
     y_avg += ycoords[id];
     //top left node is (n + nx)
-    id = node_id + nx;
+    id = node_id + nx_pts;
     x_avg += xcoords[id];
     y_avg += ycoords[id];
-    //top right node is (n + nx + 1)
-    id = node_id + nx + 1;
+    //top right node is (n + nx_pts + 1)
+    id = node_id + nx_pts + 1;
     x_avg += xcoords[id];
     y_avg += ycoords[id];
 

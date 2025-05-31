@@ -44,10 +44,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /apps/easybuild/software/owl-genoa/CMake/3.29.3-GCCcore-13.3.0/bin/cmake
+CMAKE_COMMAND = /apps/arch/software/CMake/3.29.3-GCCcore-13.3.0/bin/cmake
 
 # The command to remove a file.
-RM = /apps/easybuild/software/owl-genoa/CMake/3.29.3-GCCcore-13.3.0/bin/cmake -E rm -f
+RM = /apps/arch/software/CMake/3.29.3-GCCcore-13.3.0/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =

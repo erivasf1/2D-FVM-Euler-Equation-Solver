@@ -969,38 +969,61 @@ void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax
   //Evaluating Cell-Center Coords 
   vector<double> cell_center_xcoords(cellnum);
   vector<double> cell_center_ycoords(cellnum);
- 
-  Sols.ComputeCellCenteredCoordinate(xcoords,ycoords,cell_center_xcoords,cell_center_ycoords,imax-1);
 
-  int cell_imax = imax - 2;
-  int cell_jmax = jmax - 2;
-  int Nx = cell_imax + 1;
+  int cell_imax = imax - 1;
+  int cell_jmax = jmax - 1;
+ 
+  Sols.ComputeCellCenteredCoordinate(xcoords,ycoords,cell_center_xcoords,cell_center_ycoords,cell_imax);
+
+  //int cell_imax = imax - 1; //last cell index in i-row
+  //int cell_jmax = jmax - 1; //last cell index in j-row
+  //int Nx = cell_imax + 1;
  
 
 
   // Solving Manufactured Solution
+  
   for (int j=0;j<cell_jmax;j++){
     for (int i=0;i<cell_imax;i++){
 
-      //bottom left coord.
-      cellid = i + j*(Nx); //accesses index in 1D flat vectors to retrieve x&y coords of pt
+      cellid = i + j*cell_imax; //accesses index in 1D flat vectors to retrieve x&y coords of pt
       x = cell_center_xcoords[cellid]; y = cell_center_ycoords[cellid];
 
       //Rho
-      fieldij(field,i,j,imax-1)[0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);
+      fieldij(field,i,j,cell_imax)[0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);
 
       //U
-      fieldij(field,i,j,imax-1)[1] = uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L));
+      fieldij(field,i,j,cell_imax)[1] = uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L));
 
       //V
-      fieldij(field,i,j,imax-1)[2] = vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L));
+      fieldij(field,i,j,cell_imax)[2] = vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L));
 
       //P
-      fieldij(field,i,j,imax-1)[3] = press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L);
+      fieldij(field,i,j,cell_imax)[3] = press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L);
 
     }
   }
   
+  
+  //TODO:Testing initial assigning vals. to cells --> THIS WORKS!!!
+  /* 
+  for (int i=0;i<cellnum;i++){
+      x = cell_center_xcoords[i]; y = cell_center_ycoords[i];
+      //Rho
+      (*field)[i][0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);
+
+      //U
+      (*field)[i][1] = uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L));
+
+      //V
+      (*field)[i][2] = vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L));
+
+      //P
+      (*field)[i][3] = press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L);
+  }
+  */
+   
+    
   return;
 }
 //-----------------------------------------------------------

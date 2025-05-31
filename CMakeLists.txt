@@ -7,7 +7,7 @@ project(1DQuasiSteadyNozzle)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-#set(CMAKE_PREFIX_PATH "/apps/easybuild/software/owl-genoa/Catch2/2.13.10-GCCcore-13.3.0/lib")
+# set(CMAKE_PREFIX_PATH "/apps/easybuild/software/owl-genoa/Catch2/2.13.10-GCCcore-13.3.0/lib")
 # Fetch Catch2 in the system
 find_package(Catch2 REQUIRED)
 
