@@ -2,6 +2,44 @@
 #include "EulerOperator.h" 
 #include "MeshAccess.hpp"
 
+// EULERBASE DEFINITIONS
+
+//-----------------------------------------------------------
+EulerBASE::EulerBASE(int &cell_inum,int &cell_jnum)
+  : cell_imax(cell_inum), cell_jmax(cell_jnum) {}
+
+
+//-----------------------------------------------------------
+array<double,4> EulerBASE::ComputeConserved(vector<array<double,4>>* &field,int &i,int &j){
+
+  array<double,4> res; //to store conserved variables
+
+  //compute cell id
+  int cell_id = i + (j*cell_imax);
+
+  //density
+  res[0] = (*field)[cell_id][0]; 
+
+  //x-mom.
+  res[1] = (*field)[cell_id][0] * (*field)[cell_id][1]; 
+
+  //y-mom.
+  res[2] = (*field)[cell_id][0] * (*field)[cell_id][2]; 
+
+  //energy
+  res[3] = (*field)[cell_id][2]/(gamma-1.0) + (0.5)* (*field)[cell_id][0]*pow((*field)[cell_id][1],2.0); //TODO: Fix this!
+
+  return res;
+  
+}
+//-----------------------------------------------------------
+void EulerBASE::SetInitialConditions([[maybe_unused]] vector<array<double,4>>* &field){
+  return;
+}
+
+//-----------------------------------------------------------
+EulerBASE::~EulerBASE(){}
+//-----------------------------------------------------------
 // EULER1D DEFINITIONS
 
 Euler1D::Euler1D(int& cellnum,double &P0,double &BP,double &T0,double &g)
@@ -931,7 +969,33 @@ Euler1D::~Euler1D(){}
 
 // EULER2D DEFINITIONS
 //-----------------------------------------------------------
-Euler2D::Euler2D(){}
+Euler2D::Euler2D(int case_2d) : EulerBASE(cell_imax,cell_jmax){
+  if (case_2d == 0){ //30 deg inlet case
+    Mach_bc = 4.0;
+    P_stag = 12270.0;
+    T_stag = 217.0;
+    alpha = 0.0;
+
+  }
+  else if (case_2d == 1){ // 0 deg AOA airfoil
+    Mach_bc = 0.84;
+    P_stag = 65855.8;
+    T_stag = 300.0;
+    alpha = 0.0;
+
+  }
+  else if (case_2d == 2){ // 8 deg AOA airfoil
+    Mach_bc = 0.75;
+    P_stag = 67243.5;
+    T_stag = 300.0;
+    alpha = 8.0;
+
+  }
+  else {
+    cerr<<"Unknown 2D Case!"<<endl;
+  }
+  return;
+}
 //-----------------------------------------------------------
 void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
   
@@ -946,7 +1010,45 @@ void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
   return;
 }
 //-----------------------------------------------------------
-void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum){
+void Euler2D::SetInitialConditions(vector<array<double,4>>* &field){
+
+  int cellnum = cell_imax * cell_jmax;
+  //Setting w/ arb. sin function
+  for (int i=0;i<cellnum;i++) {
+    (*field)[i][0] = 1.0 + sin(i);
+    (*field)[i][1] = 2.0 + sin(i);
+    (*field)[i][2] = 3.0 + sin(i);
+    (*field)[i][3] = 4.0 + sin(i);
+  }
+
+  return;
+
+}
+
+//-----------------------------------------------------------
+Euler2D::~Euler2D(){}
+//-----------------------------------------------------------
+
+// EULER2DMMS DEFINITIONS
+//-----------------------------------------------------------
+Euler2DMMS::Euler2DMMS() : EulerBASE(cell_imax,cell_jmax){}
+//-----------------------------------------------------------
+void Euler2DMMS::SetInitialConditions(vector<array<double,4>>* &field){
+
+  int cellnum = cell_imax * cell_jmax;
+
+  for (int i=0;i<cellnum;i++) {
+    (*field)[i][0] = 0.0;
+    (*field)[i][1] = 0.0;
+    (*field)[i][2] = 0.0;
+    (*field)[i][3] = 0.0;
+  }
+
+  return;
+}
+
+//-----------------------------------------------------------
+void Euler2DMMS::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum){
 
   //Note: Manufactured Sol. from Mathematica!
   // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
@@ -970,9 +1072,6 @@ void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax
   vector<double> cell_center_xcoords(cellnum);
   vector<double> cell_center_ycoords(cellnum);
 
-  int cell_imax = imax - 1;
-  int cell_jmax = jmax - 1;
- 
   Sols.ComputeCellCenteredCoordinate(xcoords,ycoords,cell_center_xcoords,cell_center_ycoords,cell_imax);
 
   //int cell_imax = imax - 1; //last cell index in i-row
@@ -1027,4 +1126,4 @@ void Euler2D::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax
   return;
 }
 //-----------------------------------------------------------
-Euler2D::~Euler2D(){}
+Euler2DMMS::~Euler2DMMS(){}

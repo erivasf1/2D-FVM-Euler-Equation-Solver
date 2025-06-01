@@ -9,14 +9,34 @@
 class SpaceVariables2D;
 
 //TODO: Make BASE Class
-//class EulerBASE {
-// virtual void blah blah blah
-//
-//
-//};
+class EulerBASE {
+  
+  public:
+  double gamma = 1.4;
+  int cell_imax; //NUMBER of cells in the i dir!
+  int cell_jmax; //NUMBER of cells in the j dir!
+  //TODO: Make constructor to assign cell_imax and cell_jmax
+  EulerBASE(int &cell_inum,int &cell_jnum);
+  //Compute Conserved & Primitive Variables
+  array<double,4> ComputeConserved(vector<array<double,4>>* &field,int &i,int &j);
+  //Initial Conditions
+  virtual void SetInitialConditions(vector<array<double,4>>* &field); //Complete (tested)
+  //Boundary Conditions
+  //ComputeLeftBoundaryCondition -- inflow
+  //ComputeRightBoundaryCondition -- outflow
+  //ComputeTopBoundaryCondition -- freestream
+  //ComputeBottomBoundaryCondition -- slip wall
+  //Spatial Fluxes
+  //MUSCL Extrapolation
+  //Artificial Dissipation (JST Damping Only)
+  //Source Term
+  //Residual
+  virtual ~EulerBASE();
+};
 
 class Euler1D {
   //vector<double> &xcoords;
+  // parameters for 1D nozzle
   double stag_pressure; //stagnation pressure
   double back_pressure; //back pressure
   double stag_temperature; //stagnation temperature
@@ -109,17 +129,35 @@ class Euler1D {
 
 
 // EulerOperator Class for 2D Problems
-class Euler2D : public Euler1D {
+class Euler2D : public EulerBASE {
 
   public:
-  Euler2D(); //empty constructor for unit testing
+  double Mach_bc,T_stag,P_stag,alpha; //free-stream and initial conditions, depending on case
+  
+  Euler2D(int case_2d); //constructor determines val. of const. parameters (e.g. freestream Mach #, angle-of-attack)
 
   void InitSolutions(vector<array<double,4>>* &field,int cellnum);
-
-  void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,int imax,int jmax,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum);
-
+  void SetInitialConditions(vector<array<double,4>>* &field) override; //Complete (tested)
 
   ~Euler2D();
+
+};
+
+// EulerOperator Clas for 2D Problems w/ MMS
+class Euler2DMMS : public EulerBASE {
+
+  public:
+  Euler2DMMS();
+
+  void SetInitialConditions(vector<array<double,4>>* &field) override; 
+
+  void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum);
+
+  //void ContinuitySourceTerm;
+  //void XMomentumSourceTerm;
+  //void YMomentumSourceTerm;
+  //void EnergySourceTerm;
+  ~Euler2DMMS();
 
 };
 

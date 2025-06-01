@@ -20,6 +20,10 @@
 
 using namespace std;
 
+enum CASE_2D { //For ease of defining parameters
+  INLET,AIRFOIL1,AIRFOIL2
+};
+
 
 int main() {
 
@@ -29,7 +33,8 @@ int main() {
 
   //! INITIALIZATION
   // Scenario
-  // int scenario = 1; where 1 = 1D, 2 = 2D, 3 = 2D MMS
+  int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS
+  CASE_2D case_2d = AIRFOIL1;
   // Constants
   double xmin = -1.0;
   double xmax = 1.0;
@@ -78,7 +83,7 @@ int main() {
   double xmom_tol = 1.0e-10;
   double energy_tol = 1.0e-10;
 
-  //! GENERATING MESH
+  //! GENERATING MESH -- TODO: Employ polymorphism here too!
   MeshGen2D Mesh2D(meshfile);
   MeshGen1D Mesh(xmin,xmax,cellnum); 
 
@@ -133,28 +138,31 @@ int main() {
   vector<array<double,3>>* init_resid = &InitResidual; //pointer to residual field values per cell
   vector<double>* time_steps = &TimeSteps;
 
-  //TODO: Allocate specific data depending on user inputs (e.g. Euler2DMMS should be created only if mesh file is provided and MMS is selected)
-  //Object Initializations
+  //!OBJECT INITIALIZATIONS
+  //TODO: Create pointer and assign it to correct object depending on user inputs
 
-  //Ex: EulerOperators Class Allocations
-  //  std::unique_ptr<EulerBASE> euler;
-  //if (!meshfile)
-  //  euler = std::make_unique<Euler1DNozzle>();
-  //else if (meshfile && MMS==true)
-  //  euler = std::make_unique<Euler2DMMS>();
-  //else 
-  //  euler = std::make_unique<Euler2D>();
+  EulerBASE* euler_test;
+  //Temp -- will add scenario == 1 once 1D section is fixed
+  if (scenario == 2) 
+    euler_test = new Euler2D(case_2d);
+  else if (scenario == 3)
+    euler_test = new Euler2DMMS;
+  else{
+    cerr<<"Error: scenario # not recognized!"<<endl;
+    return 0;
+  }
+  
+  /*
+  if (!meshfile) //1D Nozzle case
+    euler = new Euler1DNozzle;
 
-  //Ex: TimeIntegrator Class Allocations
-  //  std::unique_ptr<ExplictBASE> time;
-  //if (time_int == 0)
-  //  time = std::make_unique<EulerExplicit>();
-  //else if (time_int == 1)
-  //  time = std::make_unique<RungeKutta2>();
-  //else if (time_int == 2) 
-  //  time = std::make_unique<RungeKutta4>();
-  //else
-  //  cerr<<"Unknown parameter!"<<endl;
+  else { //2D Euler Solver
+    if (MMS == true)
+      euler = new Euler2DMMS;
+    else
+      euler = new Euler2D;
+  }
+  */
 
   SpaceVariablesBASE Sols; //for operating on Field variables
 
@@ -227,7 +235,7 @@ int main() {
     Tools::print(" JST Damping\n");
 
   //debug: for visualizing manufactured sol.
-  
+  /* 
   vector<array<double,4>> FieldTest(cellnum); 
   vector<array<double,4>>* field_test = &FieldTest;
   Euler2D Erick; SpaceVariables2D Emma;
@@ -235,7 +243,7 @@ int main() {
   Erick.ManufacturedPrimitiveSols(field_test,mesh_2d->imax,mesh_2d->jmax,xcoords,ycoords,Emma,cellnum);
   Emma.AllOutputPrimitiveVariables(field_test,file,false,0,xcoords,ycoords,cellnum,mesh_2d->imax,mesh_2d->jmax);
   return 0;
-  
+  */ 
 
   //! SETTING INITIAL CONDITIONS
   //Tools::print("At initial conditions\n");
