@@ -137,7 +137,7 @@ class Euler2D : public EulerBASE {
   Euler2D(int case_2d); //constructor determines val. of const. parameters (e.g. freestream Mach #, angle-of-attack)
 
   void InitSolutions(vector<array<double,4>>* &field,int cellnum);
-  void SetInitialConditions(vector<array<double,4>>* &field) override; //Complete (tested)
+  void SetInitialConditions(vector<array<double,4>>* &field) override;
 
   ~Euler2D();
 

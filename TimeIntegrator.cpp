@@ -51,7 +51,7 @@ vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>>* &fi
 
 }
 //-----------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega,MeshGenBASE* &mesh){
 
   double vol;
   array<double,3> conserve;
@@ -61,7 +61,7 @@ void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array
   //Second, extract primitive variables from newly calculated conservative variables
   for (int n=0;n<cellnumber;n++){ //i+2 to skip inflow ghost cells
 
-    vol = MeshGen1D::GetCellVolume(n,dx,xcoords); //acquiring cell vol
+    vol = mesh->GetCellVolume(n); //acquiring cell vol
     //Tools::print("Volume of cell %d:%f\n",i,vol);
     conserve = euler->ComputeConserved(field,n+2); //!< computing conservative values
 
@@ -118,7 +118,7 @@ void EulerExplicit::UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<dou
 }
 
 //-----------------------------------------------------------
-bool EulerExplicit::CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariablesBASE* &sol){
+bool EulerExplicit::CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariables1D* &sol){
 
   int count_tol = 1e5; double diff_tol = 1.0e-2; 
   double resid_avg = sol->ComputeNormAvg(ResidNorms); 

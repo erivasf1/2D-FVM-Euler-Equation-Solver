@@ -1,17 +1,38 @@
 //User-defined functions
 #include "MeshGen.h" 
 
+// MESHGENBASE DEFINITIONS
+//-----------------------------------------------------------
+MeshGenBASE::MeshGenBASE(){}
+//-----------------------------------------------------------
+double MeshGenBASE::GetCellVolume(int cell_id){
+  return (double)cell_id * 0.0; //return 0.0 by default
+}
+
+//-----------------------------------------------------------
+void MeshGenBASE::GenerateMesh(){}
+
+//-----------------------------------------------------------
+void MeshGenBASE::ReadMeshFile(){}
+
+//-----------------------------------------------------------
+void MeshGenBASE::OutputMesh(){}
+
+//-----------------------------------------------------------
+MeshGenBASE::~MeshGenBASE(){}
+//-----------------------------------------------------------
+
 // MESHGEN1D DEFINITIONS
 
-MeshGen1D::MeshGen1D(double &a,double &b,int &c)
+MeshGenNozzle::MeshGenNozzle(double &a,double &b,int &c)
   : xmin(a), xmax(b), cellnumber(c) {}
 
 //-----------------------------------------------------------
-double MeshGen1D::GetCellVolume(int &loc,double &dx,vector<double> &xcoords){
+double MeshGenNozzle::GetCellVolume(int cell_id){
 
   //using trapezoidal rule since areas are stored at cell faces
-  double area_leftface = Tools::AreaVal(xcoords[loc]); 
-  double area_rightface = Tools::AreaVal(xcoords[loc+1]); 
+  double area_leftface = Tools::AreaVal(xcoords[cell_id]); 
+  double area_rightface = Tools::AreaVal(xcoords[cell_id+1]); 
   double area_characteristic = 0.5*(area_leftface+area_rightface); //avg. of left and right face cell area
   //double DArea = (dx/2.0) * abs(area_rightface - area_leftface);
   //previous:double DArea = (dx/2.0) * abs(area_rightface - area_leftface);
@@ -22,7 +43,7 @@ double MeshGen1D::GetCellVolume(int &loc,double &dx,vector<double> &xcoords){
 }
 
 //-----------------------------------------------------------
-void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
+void MeshGenNozzle::GenerateMesh() {
 
   int facenum = cellnumber + 1; //number of faces
   xcoords = Tools::RetrievePoints(xmin,xmax,facenum);  
@@ -31,7 +52,7 @@ void MeshGen1D::GenerateMesh(vector<double> &xcoords) {
 
 }
 //-----------------------------------------------------------
-void MeshGen1D::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
+void MeshGenNozzle::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
 
   //Computing Areas
   vector<double> Areas((int)xcoords.size());
@@ -67,7 +88,7 @@ void MeshGen1D::OutputNozzleAreas(vector<double> &xcoords,const char *filename){
 }
 
 //-----------------------------------------------------------
-MeshGen1D::~MeshGen1D(){}
+MeshGenNozzle::~MeshGenNozzle(){}
 
 //-----------------------------------------------------------
 MeshGen2D::MeshGen2D(const char* name) 

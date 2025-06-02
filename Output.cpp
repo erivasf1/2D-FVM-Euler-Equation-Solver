@@ -60,7 +60,7 @@ void Output::PrintResidualNorm(int &cellnum,int &n){
 }
 */
 //-----------------------------------------------------------
-void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariablesBASE* &sols){
+void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* &sols){
 
   for (int n=0;n<(int)field->size();n++){ //calculating errors
     for (int i=0;i<3;i++)
@@ -174,12 +174,103 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
 }
 
 //-----------------------------------------------------------
-/*void Output::ConvertToDatFile(const char*filename_read,const char *filename_write){
+void Output::OutputPrimitiveVariables(vector<array<double,4>>* &field,string filename,bool cond,int iter,vector<double> &xcoords,vector<double> &ycoords,int cell_number,int imax,int jmax){
 
+  std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
+  //myfile.open(filename);
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  if (cond==false){ //start of .dat file -- printing initial parameters
+    myfile<<"TITLE = \" 2D Field Solutions \""<<endl;
+    myfile<<"VARIABLES = \"X\",\"Y\",\"Rho\",\"U\",\"V\",\"P\""<<endl;
+    //myfile<<"variables= \"cell index\" \"rho(kg/m^3)\" \"u(m/s)\"  \"Press(N/m^2)\" \"Mach\" \"Xcoords\""<<endl;
+  }
+
+//Repeat the following each time you want to write out the solution
+/*
+write(40,*) 'zone T="',num_iter,'" '
+write(40,*) 'I=',imax
+write(40,*) 'DATAPACKING=POINT'
+write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
+& DOUBLE DOUBLE )'
+  */
+
+  myfile<<"ZONE T="<<"\""<<iter<<"\""<<endl; //Now adding zone specific info.
+  myfile<<"I="<<imax<<", "<<"J="<<jmax<<endl;
+  myfile<<"DATAPACKING=BLOCK"<<endl;
+  //myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+  myfile<<"VARLOCATION=([3-6]=CELLCENTERED)"<<endl; //-> tells Tecplot this is cell-centered val (must be size (imax-1)*(jmax-1) size
+
+
+  // Saving all primitive variables in their own corresponding vector
+  vector<double> all_rho,all_u,all_v,all_p;
+
+  for (int i=0;i<cell_number;i++){
+    all_rho.push_back((*field)[i][0]);
+    all_u.push_back((*field)[i][1]);
+    all_v.push_back((*field)[i][2]);
+    all_p.push_back((*field)[i][3]);
+  }
+
+  int count = 0;
+  // Writing Xcoords
+  for (int n=0;n<(int)xcoords.size();n++){
+    count++;
+    myfile<<std::setw(15)<<xcoords[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing Ycoords
+  for (int n=0;n<(int)ycoords.size();n++){
+    count++;
+    myfile<<std::setw(15)<<ycoords[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+
+  // Writing Rho
+  for (int n=0;n<(int)all_rho.size();n++){
+    count++;
+    myfile<<std::setw(15)<<all_rho[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+  
+  // Writing U 
+  for (int n=0;n<(int)all_u.size();n++){
+    count++;
+    myfile<<std::setw(15)<<all_u[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing V 
+  for (int n=0;n<(int)all_v.size();n++){
+    count++;
+    myfile<<std::setw(15)<<all_v[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing P
+  for (int n=0;n<(int)all_p.size();n++){
+    count++;
+    myfile<<std::setw(15)<<all_p[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
 
   return;
 }
-*/
 
 //-----------------------------------------------------------
 

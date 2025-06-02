@@ -22,19 +22,20 @@ class EulerExplicit {
   vector<double> ComputeLocalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx); // Outputting the local time step for every cell in the domain
   vector<double> ComputeGlobalTimeStep(vector<array<double,3>>* &field,Euler1D* &euler,const double &CFL,double &dx); // Outputting the local time step for every cell in the domain
 
-  void FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega); //Computing the new solution at the next time step
+  void FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega,MeshGenBASE* &mesh); //Computing the new solution at the next time step
 
   void SolutionLimiter(vector<array<double,3>>* &field); //Re-assigning primitive variables to specified max and min limits
 
   void UnderRelaxationCheck(array<double,3> ResidPrevNorm,array<double,3> ResidNorm,double C,array<bool,3> &check); //looks for residual norm increase to mark needed under-relaxation for each equation 
 
-  bool CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariablesBASE* &sol); //checks if residuals are stalled
+  bool CheckStallResids(int &count,array<double,3> &ResidNorms,array<double,3> &Prev_ResidualNorms,SpaceVariables1D* &sol); //checks if residuals are stalled
 
   ~EulerExplicit();
 
 
 };
 
+//TODO: Add RUNGE-KUTTA Classes (2nd and 4th stage)
 
 
 

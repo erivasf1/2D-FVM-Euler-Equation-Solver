@@ -84,16 +84,25 @@ int main() {
   double energy_tol = 1.0e-10;
 
   //! GENERATING MESH -- TODO: Employ polymorphism here too!
-  MeshGen2D Mesh2D(meshfile);
-  MeshGen1D Mesh(xmin,xmax,cellnum); 
+  MeshGenBASE* mesh; 
+  if (scenario == 1){ //1D Nozzle Mesh Case
+    mesh = new MeshGenNozzle(xmin,xmax,cellnum);
+    mesh->GenerateMesh();
+  }
+  else if ((scenario == 2) || (scenario == 3)) {
+    mesh = new MeshGen2D(meshfile);
+    mesh->ReadMeshFile();
+    mesh->OutputMesh(); //!< outputs mesh file for Tecplot visualization
+  }
+  else{
+    cerr<<"Unknown scenario number!"<<endl;
+    return 0;
+  }
+  
 
-  [[maybe_unused]] MeshGen2D* mesh_2d = NULL;
-    if (meshfile) //2D Mesh Case
-      mesh_2d = &Mesh2D;
+  //MeshGen1D* mesh = &Mesh; //1D Mesh
 
-  MeshGen1D* mesh = &Mesh; //1D Mesh
-
-  if (meshfile){ //2D Mesh Case -- read from file
+  /*if (meshfile){ //2D Mesh Case -- read from file
     xcoords = mesh_2d->xcoords;
     ycoords = mesh_2d->ycoords;
     //zcoords = mesh_2d->zcoords;
@@ -108,6 +117,7 @@ int main() {
   //Tools::print("Size of xcoords: %d\n",xcoords.size());
   //Tools::print("Size of ycoords: %d\n",ycoords.size());
   //Tools::print("imax: %d & jmax: %d\n",mesh_2d->imax,mesh_2d->jmax);
+  */
 
   //! DATA ALLOCATION
   //TODO: Change Field variable array size to 4
@@ -164,7 +174,7 @@ int main() {
   }
   */
 
-  SpaceVariablesBASE Sols; //for operating on Field variables
+  SpaceVariables1D Sols; //for operating on Field variables
 
   //SpaceVariables2D Sols; //for operating on Field variables
 
@@ -178,7 +188,7 @@ int main() {
 
   //Pointers to Objects
 
-  SpaceVariablesBASE* sols = NULL;
+  SpaceVariables1D* sols = NULL;
   Euler1D* euler = &Euler;
   //if (mesh_2d) //reassigns pointer to newly created 2D SpaceVariable
     //sols = new SpaceVariables2D();
@@ -246,8 +256,9 @@ int main() {
   */ 
 
   //! SETTING INITIAL CONDITIONS
+  //TODO: Replace xcoords and dx w/ MeshGen object pointer
   //Tools::print("At initial conditions\n");
-  euler->SetInitialConditions(field,xcoords);
+  euler->SetInitialConditions(field,mesh->xcoords);
 
   //! COMPUTING EXACT SOLUTION -- ONLY FOR 1D QUASI-STEADY NOZZLE
   if ((cond_bc == false) && (!meshfile)){ //Compute Exact Solution if isentropic case is selected
@@ -339,7 +350,7 @@ int main() {
     (*time_steps) = (timestep == true) ? time->ComputeLocalTimeStep(field,euler,CFL,dx) : time->ComputeGlobalTimeStep(field,euler,CFL,dx);
 
     //! COMPUTE NEW SOL. VALUES 
-    time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega);//TESTING
+    time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega,mesh);//TESTING
     time->SolutionLimiter(field_star); //applies solution limiter to all cells (including ghost cells)
 
     //! COMPUTE BOUNDARY CONDITIONS
@@ -359,7 +370,7 @@ int main() {
           Omega[i] = (check[i] == true) ?  Omega[i] /= 2.0 : Omega[i] = 1.0;
 
         (*field_star) = (*field); //resetting primitive variables to previous time step values
-        time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega); //advancing intermediate solution w/ under-relaxation factor 
+        time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega,mesh); //advancing intermediate solution w/ under-relaxation factor 
         euler->ComputeResidual(resid_star,field_star,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);

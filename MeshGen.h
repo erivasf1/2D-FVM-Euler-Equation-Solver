@@ -5,25 +5,45 @@
 #include <fstream>
 #include <iostream>
 
-class MeshGen1D { //creates a uniform mesh
-  double xmin,xmax;
-  int cellnumber;
+class MeshGenBASE {
 
   public:
-  MeshGen1D(double &a, double &b, int &c);
+  vector<double> xcoords,ycoords;
 
-  static double GetCellVolume(int &loc,double &dx,vector<double> &xcoords);
+  MeshGenBASE();
+
+  virtual double GetCellVolume(int cell_id);
+  virtual void GenerateMesh();
+  virtual void ReadMeshFile();
+  virtual void OutputMesh();
+  
+  virtual ~MeshGenBASE();
+
+};
+
+
+class MeshGenNozzle : public MeshGenBASE { //creates a uniform mesh (in x)
+  double xmin,xmax;
+  int cellnumber;
+  double dx;
+  
+
+  public:
+  MeshGenNozzle(double &a, double &b, int &c);
+
+  double GetCellVolume(int cell_id) override;
+  //static double GetCellVolume(int cell_id) override;
  
-  void GenerateMesh(vector<double> &xcoords);
+  void GenerateMesh() override;
 
   void OutputNozzleAreas(vector<double> &xcoords,const char *filename);
 
-  ~MeshGen1D();
+  ~MeshGenNozzle();
 
 
 };
 
-class MeshGen2D { //reads in a non-uniform 2D mesh
+class MeshGen2D : public MeshGenBASE { //reads in a non-uniform 2D mesh
   double xmin,xmax;
   double ymin,ymax;
   const char* filename;
@@ -31,15 +51,14 @@ class MeshGen2D { //reads in a non-uniform 2D mesh
   public:
   MeshGen2D(const char* name);
 
-  vector<double> xcoords,ycoords;
   int imax,jmax,kmax;
   int cellnumber;
 
-  void ReadMeshFile();
+  void ReadMeshFile() override;
 
   void OutputMesh();
 
-  double GetCellVolume(int &i,double &dx,int &j,double &dy,vector<double> &xcoords,vector<double> &ycoords);
+  //double GetCellVolume(int cell_id) override;
 
   ~MeshGen2D();
 
