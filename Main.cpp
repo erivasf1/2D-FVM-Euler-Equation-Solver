@@ -33,7 +33,7 @@ int main() {
 
   //! INITIALIZATION
   // Scenario
-  int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS
+  int scenario = 3; //1 = 1D, 2 = 2D, 3 = 2D MMS
   CASE_2D case_2d = AIRFOIL1;
   // Constants
   double xmin = -1.0;
@@ -53,7 +53,7 @@ int main() {
   vector<double> xcoords; //stores the coords of the cell NODES!!! (i.e. size of xcoords is cellnum+1)!
   vector<double> ycoords; //stores the coords of the cell NODES!!! (i.e. size of xcoords is cellnum+1)!
   double dx;
-  const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //const char* meshfile = NULL;
 
   // Temporal Specifications
@@ -91,7 +91,7 @@ int main() {
   }
   else if ((scenario == 2) || (scenario == 3)) {
     mesh = new MeshGen2D(meshfile);
-    mesh->ReadMeshFile();
+    //mesh->ReadMeshFile();
     mesh->OutputMesh(); //!< outputs mesh file for Tecplot visualization
   }
   else{
@@ -125,6 +125,8 @@ int main() {
   vector<array<double,3>> Field(cellnum); //stores primitive variable sols.
   vector<array<double,3>> FieldStar(cellnum); //stores intermediate primitive variable sols.
   vector<array<double,3>> FieldStall(cellnum); //stores primitive variable sols. before stall (if detected)
+  vector<array<double,4>> FieldMS(mesh->cellnumber); //stores primitive variable sols. before stall (if detected)
+  vector<array<double,4>> FieldMS_Source(mesh->cellnumber); //stores primitive variable sols. before stall (if detected)
 
   vector<array<double,3>> ExactField(cellnum); //stores exact cell-averaged primitve variable sols.
   vector<array<double,3>> ExactFaces(cellnum+1); //stores exact primitve variable sols. at cell faces
@@ -141,6 +143,8 @@ int main() {
   vector<array<double,3>>* field = &Field; //pointer to Field solutions
   vector<array<double,3>>* field_star = &FieldStar; //pointer to intermediate Field solutions
   vector<array<double,3>>* field_stall = &FieldStall; //pointer to intermediate Field solutions
+  vector<array<double,4>>* field_ms = &FieldMS; //pointer to intermediate Field solutions
+  vector<array<double,4>>* field_ms_source = &FieldMS_Source; //pointer to intermediate Field solutions
   vector<array<double,3>>* exact_sols = &ExactField; //pointer to exact solution field values
   vector<array<double,3>>* exact_faces = &ExactFaces; //pointer to exact solution field values
   vector<array<double,3>>* resid = &Residual; //pointer to residual field values per cell
@@ -176,7 +180,7 @@ int main() {
 
   SpaceVariables1D Sols; //for operating on Field variables
 
-  //SpaceVariables2D Sols; //for operating on Field variables
+  SpaceVariables2D Sols_TEST; //for operating on Field variables
 
   Tools tool; //utilities object
 
@@ -189,6 +193,7 @@ int main() {
   //Pointers to Objects
 
   SpaceVariables1D* sols = NULL;
+  SpaceVariables2D* sols_test = &Sols_TEST;
   Euler1D* euler = &Euler;
   //if (mesh_2d) //reassigns pointer to newly created 2D SpaceVariable
     //sols = new SpaceVariables2D();
@@ -254,6 +259,15 @@ int main() {
   Emma.AllOutputPrimitiveVariables(field_test,file,false,0,xcoords,ycoords,cellnum,mesh_2d->imax,mesh_2d->jmax);
   return 0;
   */ 
+  //! COMPUTING MANUFACTURED SOLUTION AND SOURCE TERMS
+  if (scenario == 3){
+    string mms_file = "SourceTerms.dat";
+    euler_test->EvalSourceTerms(field_ms_source,sols_test,mesh);
+    error->OutputManufacturedSourceTerms(field_ms_source,mms_file,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->imax,mesh->jmax);
+    delete euler_test;
+    delete mesh;
+  }
+  return 0;
 
   //! SETTING INITIAL CONDITIONS
   //TODO: Replace xcoords and dx w/ MeshGen object pointer
@@ -350,7 +364,7 @@ int main() {
     (*time_steps) = (timestep == true) ? time->ComputeLocalTimeStep(field,euler,CFL,dx) : time->ComputeGlobalTimeStep(field,euler,CFL,dx);
 
     //! COMPUTE NEW SOL. VALUES 
-    time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega,mesh);//TESTING
+    time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,Omega,mesh);//TESTING
     time->SolutionLimiter(field_star); //applies solution limiter to all cells (including ghost cells)
 
     //! COMPUTE BOUNDARY CONDITIONS
@@ -370,7 +384,7 @@ int main() {
           Omega[i] = (check[i] == true) ?  Omega[i] /= 2.0 : Omega[i] = 1.0;
 
         (*field_star) = (*field); //resetting primitive variables to previous time step values
-        time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,xcoords,dx,Omega,mesh); //advancing intermediate solution w/ under-relaxation factor 
+        time->FWDEulerAdvance(field_star,resid_star,euler,time_steps,Omega,mesh); //advancing intermediate solution w/ under-relaxation factor 
         euler->ComputeResidual(resid_star,field_star,field_stall,xcoords,dx,flux_scheme,flux_accuracy,upwind_scheme,epsilon,resid_stall); //compute under-relaxed residual
         ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);

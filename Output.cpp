@@ -273,5 +273,93 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
 }
 
 //-----------------------------------------------------------
+void Output::OutputManufacturedSourceTerms(vector<array<double,4>>* &field,string filename,bool cond,int iter,vector<double> &xcoords,vector<double> &ycoords,int cell_number,int imax,int jmax){
+
+  std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
+  //myfile.open(filename);
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  if (cond==false){ //start of .dat file -- printing initial parameters
+    myfile<<"TITLE = \" 2D Field Solutions \""<<endl;
+    myfile<<"VARIABLES = \"X\",\"Y\",\"Continuity\",\"X-Momentum\",\"Y-Momentum\",\"Energy\""<<endl;
+  }
+
+  myfile<<"ZONE T="<<"\""<<iter<<"\""<<endl; //Now adding zone specific info.
+  myfile<<"I="<<imax<<", "<<"J="<<jmax<<endl;
+  myfile<<"DATAPACKING=BLOCK"<<endl;
+  //myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
+  myfile<<"VARLOCATION=([3-6]=CELLCENTERED)"<<endl; //-> tells Tecplot this is cell-centered val (must be size (imax-1)*(jmax-1) size
+
+
+  // Saving all primitive variables in their own corresponding vector
+  vector<double> cont,xmom,ymom,energy;
+
+  for (int i=0;i<cell_number;i++){
+    cont.push_back((*field)[i][0]);
+    xmom.push_back((*field)[i][1]);
+    ymom.push_back((*field)[i][2]);
+    energy.push_back((*field)[i][3]);
+  }
+
+  int count = 0;
+  // Writing Xcoords
+  for (int n=0;n<(int)xcoords.size();n++){
+    count++;
+    myfile<<std::setw(15)<<xcoords[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing Ycoords
+  for (int n=0;n<(int)ycoords.size();n++){
+    count++;
+    myfile<<std::setw(15)<<ycoords[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+
+  // Writing Rho
+  for (int n=0;n<(int)cont.size();n++){
+    count++;
+    myfile<<std::setw(15)<<cont[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+  
+  // Writing U 
+  for (int n=0;n<(int)xmom.size();n++){
+    count++;
+    myfile<<std::setw(15)<<xmom[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing V 
+  for (int n=0;n<(int)ymom.size();n++){
+    count++;
+    myfile<<std::setw(15)<<ymom[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  // Writing P
+  for (int n=0;n<(int)energy.size();n++){
+    count++;
+    myfile<<std::setw(15)<<energy[n];
+    if (count % 4 == 0)
+      myfile<<endl;
+  }
+
+  myfile.close(); //closing file writing to it
+  //myfile.flush();
+
+  return;
+}
+//-----------------------------------------------------------
 
 Output::~Output(){}

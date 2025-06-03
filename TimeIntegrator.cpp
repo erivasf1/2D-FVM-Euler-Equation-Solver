@@ -51,7 +51,7 @@ vector<double> EulerExplicit::ComputeGlobalTimeStep(vector<array<double,3>>* &fi
 
 }
 //-----------------------------------------------------------
-void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,vector<double> &xcoords,double &dx,array<double,3> &Omega,MeshGenBASE* &mesh){
+void EulerExplicit::FWDEulerAdvance(vector<array<double,3>>* &field,vector<array<double,3>>* &resid,Euler1D* &euler,vector<double>* &time_steps,array<double,3> &Omega,MeshGenBASE* &mesh){
 
   double vol;
   array<double,3> conserve;

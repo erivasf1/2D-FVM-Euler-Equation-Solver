@@ -38,6 +38,11 @@ void EulerBASE::SetInitialConditions([[maybe_unused]] vector<array<double,4>>* &
 }
 
 //-----------------------------------------------------------
+void EulerBASE::EvalSourceTerms(vector<array<double,4>>* &MMS_Source,SpaceVariables2D* &sols,MeshGenBASE* &mesh){
+  return;
+}
+
+//-----------------------------------------------------------
 EulerBASE::~EulerBASE(){}
 //-----------------------------------------------------------
 // EULER1D DEFINITIONS
@@ -1050,22 +1055,8 @@ void Euler2DMMS::SetInitialConditions(vector<array<double,4>>* &field){
 //-----------------------------------------------------------
 void Euler2DMMS::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum){
 
-  //Note: Manufactured Sol. from Mathematica!
-  // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
-  double L = 1.0;
-  double rho0 = 1.0;
-  double press0 = 1.0e5;
-  double uvel0 = 800.0;
-  double vvel0 = 800.0;
-
-  double Pi = M_PI;
-  double x,y; //x and y coords
-  double rhox = 0.15;double rhoy = -0.1;
-  double uvelx = 50.0;double uvely = -30.0;
-  double vvelx = -75.0;double vvely = 40.0;
-  double pressx = 0.2e5;double pressy = 0.5e5;
-
   int cellid;
+  double x,y; //x and y coords
 
 
   //Evaluating Cell-Center Coords 
@@ -1103,27 +1094,138 @@ void Euler2DMMS::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vecto
     }
   }
   
-  
-  //TODO:Testing initial assigning vals. to cells --> THIS WORKS!!!
-  /* 
-  for (int i=0;i<cellnum;i++){
-      x = cell_center_xcoords[i]; y = cell_center_ycoords[i];
-      //Rho
-      (*field)[i][0] = rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L);
-
-      //U
-      (*field)[i][1] = uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L));
-
-      //V
-      (*field)[i][2] = vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L));
-
-      //P
-      (*field)[i][3] = press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L);
-  }
-  */
-   
-    
   return;
 }
+//-----------------------------------------------------------
+double Euler2DMMS::ContinuitySourceTerm(double x,double y){
+
+  double source_term = (3.0 * Pi * uvelx * cos((3.0 * Pi * x) / (2.0 * L))) *
+    (rho0 + rhoy * cos((Pi * y) / (2.0 * L)) + rhox * sin((Pi * x) / L)) / (2.0 * L)
+  + (2.0 * Pi * vvely * cos((2.0 * Pi * y) / (3.0 * L))) *
+    (rho0 + rhoy * cos((Pi * y) / (2.0 * L)) + rhox * sin((Pi * x) / L)) / (3.0 * L)
+  + (Pi * rhox * cos((Pi * x) / L) *
+     (uvel0 + uvely * cos((3.0 * Pi * y) / (5.0 * L)) + uvelx * sin((3.0 * Pi * x) / (2.0 * L)))) / L
+  - (Pi * rhoy * sin((Pi * y) / (2.0 * L)) *
+     (vvel0 + vvelx * cos((Pi * x) / (2.0 * L)) + vvely * sin((2.0 * Pi * y) / (3.0 * L)))) / (2.0 * L);
+
+
+  return source_term;
+
+}
+
+//-----------------------------------------------------------
+double Euler2DMMS::XMomentumSourceTerm(double x,double y){
+
+  double source_term = (2.0 * Pi * vvely * cos((2.0 * Pi * y) / (3.0 * L))) *
+    (rho0 + rhoy * cos((Pi * y) / (2.0 * L)) + rhox * sin((Pi * x) / L)) *
+    (uvel0 + uvely * cos((3 * Pi * y) / (5.0 * L)) + uvelx * sin((3.0 * Pi * x) / (2.0 * L))) / (3.0 * L)
+    
+  - (Pi * rhoy * (uvel0 + uvely * cos((3.0 * Pi * y) / (5.0 * L)) + uvelx * sin((3.0 * Pi * x) / (2.0 * L))) *
+     sin((Pi * y) / (2.0 * L)) * (vvel0 + vvelx * cos((Pi * x) / (2.0 * L)) + vvely * sin((2.0 * Pi * y) / (3.0 * L)))) / (2.0 * L)
+    
+  - (3.0 * Pi * uvely * (rho0 + rhoy * cos((Pi * y) / (2.0 * L)) + rhox * sin((Pi * x) / L)) *
+     sin((3.0 * Pi * y) / (5.0 * L)) * (vvel0 + vvelx * cos((Pi * x) / (2.0 * L)) + vvely * sin((2.0 * Pi * y) / (3.0 * L)))) / (5.0 * L);
+
+  return source_term;
+
+}
+
+//-----------------------------------------------------------
+double Euler2DMMS::YMomentumSourceTerm(double x,double y){
+
+  double source_term = (Pi * pressy * cos((Pi * y) / L)) / L
+  + (4.0 * Pi * vvely * cos((2.0 * Pi * y) / (3.0 * L))) *
+    (rho0 + rhoy * cos((Pi * y) / (2.0 * L)) + rhox * sin((Pi * x) / L)) *
+    (vvel0 + vvelx * cos((Pi * x) / (2.0 * L)) + vvely * sin((2.0 * Pi * y) / (3.0 * L))) / (3.0 * L)
+  - (Pi * rhoy * sin((Pi * y) / (2.0 * L)) *
+     pow(vvel0 + vvelx * cos((Pi * x) / (2.0 * L)) + vvely * sin((2.0 * Pi * y) / (3.0 * L)), 2.0)) / (2.0 * L);
+
+  return source_term;
+
+}
+
+//-----------------------------------------------------------
+double Euler2DMMS::EnergySourceTerm(double x,double y){
+
+  double source_term = 
+(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)))*
+    ((-2.0*Pi*pressx*sin((2.0*Pi*x)/L))/L + (rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))*
+       ((-2.0*Pi*pressx*sin((2.0*Pi*x)/L))/((-1.0 + gamma)*L*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))) + 
+         ((3.0*Pi*uvelx*cos((3.0*Pi*x)/(2.0*L))*(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L))))/L - 
+            (Pi*vvelx*sin((Pi*x)/(2.0*L))*(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L))))/L)/2.0 - 
+         (Pi*rhox*cos((Pi*x)/L)*(press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L)))/
+          ((-1.0 + gamma)*L*pow(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L),2.0))) + 
+      (Pi*rhox*cos((Pi*x)/L)*((pow(wvel0,2.0) + pow(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)),2.0) + 
+              pow(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L)),2.0))/2.0 + 
+           (press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L))/
+            ((-1.0 + gamma)*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L)))))/L) + 
+   (3.0*Pi*uvelx*cos((3.0*Pi*x)/(2.0*L))*(press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L) + 
+        (rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))*
+         ((pow(wvel0,2.0) + pow(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)),2.0) + 
+              pow(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L)),2.0))/2.0 + 
+           (press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L))/
+            ((-1.0 + gamma)*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))))))/(2.0*L) + 
+   (2.0*Pi*vvely*cos((2.0*Pi*y)/(3.0*L))*(press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L) + 
+        (rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))*
+         ((pow(wvel0,2.0) + pow(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)),2.0) + 
+              pow(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L)),2.0))/2.0 + 
+           (press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L))/
+            ((-1.0 + gamma)*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))))))/(3.0*L) + 
+   (vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L)))*
+    ((Pi*pressy*cos((Pi*y)/L))/L - (Pi*rhoy*sin((Pi*y)/(2.0*L))*
+         ((pow(wvel0,2.0) + pow(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)),2.0) + 
+              pow(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L)),2.0))/2.0 + 
+           (press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L))/
+            ((-1.0 + gamma)*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L)))))/(2.0*L) + 
+      (rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))*
+       ((Pi*pressy*cos((Pi*y)/L))/((-1.0 + gamma)*L*(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L))) + 
+         ((-6.0*Pi*uvely*(uvel0 + uvely*cos((3.0*Pi*y)/(5.0*L)) + uvelx*sin((3.0*Pi*x)/(2.0*L)))*sin((3.0*Pi*y)/(5.0*L)))/(5.0*L) + 
+            (4*Pi*vvely*cos((2.0*Pi*y)/(3.0*L))*(vvel0 + vvelx*cos((Pi*x)/(2.0*L)) + vvely*sin((2.0*Pi*y)/(3.0*L))))/(3.0*L))/2.0 + 
+         (Pi*rhoy*sin((Pi*y)/(2.0*L))*(press0 + pressx*cos((2.0*Pi*x)/L) + pressy*sin((Pi*y)/L)))/
+          (2.0*(-1.0 + gamma)*L*pow(rho0 + rhoy*cos((Pi*y)/(2.0*L)) + rhox*sin((Pi*x)/L),2.0))));
+
+
+  return source_term;
+
+}
+
+//-----------------------------------------------------------
+void Euler2DMMS::EvalSourceTerms(vector<array<double,4>>* &mms_source,SpaceVariables2D* &sols,MeshGenBASE* &mesh){
+
+  double x,y;
+  int cellid;
+  int cell_imax = mesh->imax-1;
+  int cell_jmax = mesh->jmax-1;
+  //Evaluating Cell-Center Coords 
+  vector<double> cell_center_xcoords(mesh->cellnumber);
+  vector<double> cell_center_ycoords(mesh->cellnumber);
+
+  sols->ComputeCellCenteredCoordinate(mesh->xcoords,mesh->ycoords,cell_center_xcoords,cell_center_ycoords,cell_imax);
+
+  //Evaluating Source Terms
+  
+  for (int j=0;j<cell_jmax;j++){
+    for (int i=0;i<cell_imax;i++){
+
+      cellid = i + j*cell_imax; //accesses index in 1D flat vectors to retrieve x&y coords of pt
+      x = cell_center_xcoords[cellid]; y = cell_center_ycoords[cellid];
+
+      //Mass Conservation
+      fieldij(mms_source,i,j,cell_imax)[0] = ContinuitySourceTerm(x,y);
+
+      //X-Momentum
+      fieldij(mms_source,i,j,cell_imax)[1] = XMomentumSourceTerm(x,y);
+
+      //Y-Momentum
+      fieldij(mms_source,i,j,cell_imax)[2] = YMomentumSourceTerm(x,y);
+
+      //Energy
+      fieldij(mms_source,i,j,cell_imax)[3] = EnergySourceTerm(x,y);
+
+    }
+  }
+
+}
+
 //-----------------------------------------------------------
 Euler2DMMS::~Euler2DMMS(){}

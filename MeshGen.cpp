@@ -25,7 +25,10 @@ MeshGenBASE::~MeshGenBASE(){}
 // MESHGEN1D DEFINITIONS
 
 MeshGenNozzle::MeshGenNozzle(double &a,double &b,int &c)
-  : xmin(a), xmax(b), cellnumber(c) {}
+  : xmin(a), xmax(b) {
+
+  cellnumber = c;
+}
 
 //-----------------------------------------------------------
 double MeshGenNozzle::GetCellVolume(int cell_id){

@@ -9,6 +9,8 @@ class MeshGenBASE {
 
   public:
   vector<double> xcoords,ycoords;
+  int cellnumber;
+  int imax,jmax,kmax;
 
   MeshGenBASE();
 
@@ -24,11 +26,11 @@ class MeshGenBASE {
 
 class MeshGenNozzle : public MeshGenBASE { //creates a uniform mesh (in x)
   double xmin,xmax;
-  int cellnumber;
   double dx;
   
 
   public:
+
   MeshGenNozzle(double &a, double &b, int &c);
 
   double GetCellVolume(int cell_id) override;
@@ -44,15 +46,13 @@ class MeshGenNozzle : public MeshGenBASE { //creates a uniform mesh (in x)
 };
 
 class MeshGen2D : public MeshGenBASE { //reads in a non-uniform 2D mesh
-  double xmin,xmax;
-  double ymin,ymax;
+  //double xmin,xmax;
+  //double ymin,ymax;
   const char* filename;
 
   public:
   MeshGen2D(const char* name);
 
-  int imax,jmax,kmax;
-  int cellnumber;
 
   void ReadMeshFile() override;
 

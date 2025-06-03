@@ -31,6 +31,7 @@ class EulerBASE {
   //Artificial Dissipation (JST Damping Only)
   //Source Term
   //Residual
+  virtual void EvalSourceTerms(vector<array<double,4>>* &MMS_Source,SpaceVariables2D* &sols,MeshGenBASE* &mesh); //source terms for all governing equations
   virtual ~EulerBASE();
 };
 
@@ -146,6 +147,22 @@ class Euler2D : public EulerBASE {
 // EulerOperator Clas for 2D Problems w/ MMS
 class Euler2DMMS : public EulerBASE {
 
+  //Source Terms Constants
+  //Note: Manufactured Sol. from Mathematica!
+  // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
+  double L = 1.0;
+  double rho0 = 1.0;
+  double press0 = 1.0e5;
+  double uvel0 = 800.0;
+  double vvel0 = 800.0;
+
+  double Pi = M_PI;
+  double rhox = 0.15;double rhoy = -0.1;
+  double uvelx = 50.0;double uvely = -30.0;
+  double vvelx = -75.0;double vvely = 40.0;
+  double pressx = 0.2e5;double pressy = 0.5e5;
+  double wvel0 = 0.0;
+
   public:
   Euler2DMMS();
 
@@ -153,10 +170,11 @@ class Euler2DMMS : public EulerBASE {
 
   void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum);
 
-  //void ContinuitySourceTerm;
-  //void XMomentumSourceTerm;
-  //void YMomentumSourceTerm;
-  //void EnergySourceTerm;
+  double ContinuitySourceTerm(double x,double y);
+  double XMomentumSourceTerm(double x,double y);
+  double YMomentumSourceTerm(double x,double y);
+  double EnergySourceTerm(double x,double y);
+  void EvalSourceTerms(vector<array<double,4>>* &MMS_Source,SpaceVariables2D* &sols,MeshGenBASE* &mesh) override; //source terms for all governing equations
   ~Euler2DMMS();
 
 };
