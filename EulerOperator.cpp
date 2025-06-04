@@ -43,6 +43,11 @@ void EulerBASE::EvalSourceTerms(vector<array<double,4>>* &MMS_Source,SpaceVariab
 }
 
 //-----------------------------------------------------------
+void EulerBASE::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols,MeshGenBASE* &mesh){
+  return;
+}
+
+//-----------------------------------------------------------
 EulerBASE::~EulerBASE(){}
 //-----------------------------------------------------------
 // EULER1D DEFINITIONS
@@ -1053,17 +1058,19 @@ void Euler2DMMS::SetInitialConditions(vector<array<double,4>>* &field){
 }
 
 //-----------------------------------------------------------
-void Euler2DMMS::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,vector<double> &xcoords,vector<double> &ycoords,SpaceVariables2D &Sols,int cellnum){
+void Euler2DMMS::ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols,MeshGenBASE* &mesh){
 
   int cellid;
   double x,y; //x and y coords
 
+  int cell_imax = mesh->imax - 1;
+  int cell_jmax = mesh->jmax - 1;
 
   //Evaluating Cell-Center Coords 
-  vector<double> cell_center_xcoords(cellnum);
-  vector<double> cell_center_ycoords(cellnum);
+  vector<double> cell_center_xcoords(mesh->cellnumber);
+  vector<double> cell_center_ycoords(mesh->cellnumber);
 
-  Sols.ComputeCellCenteredCoordinate(xcoords,ycoords,cell_center_xcoords,cell_center_ycoords,cell_imax);
+  sols->ComputeCellCenteredCoordinate(mesh->xcoords,mesh->ycoords,cell_center_xcoords,cell_center_ycoords,cell_imax);
 
   //int cell_imax = imax - 1; //last cell index in i-row
   //int cell_jmax = jmax - 1; //last cell index in j-row

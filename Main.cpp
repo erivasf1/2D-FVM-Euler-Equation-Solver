@@ -261,9 +261,12 @@ int main() {
   */ 
   //! COMPUTING MANUFACTURED SOLUTION AND SOURCE TERMS
   if (scenario == 3){
-    string mms_file = "SourceTerms.dat";
-    euler_test->EvalSourceTerms(field_ms_source,sols_test,mesh);
-    error->OutputManufacturedSourceTerms(field_ms_source,mms_file,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->imax,mesh->jmax);
+    string mms_sol_filename = "ManufacturedSols.dat";
+    string mms_source_filename = "SourceTerms.dat";
+    euler_test->ManufacturedPrimitiveSols(field_ms,sols_test,mesh); //!< computing manufactured sol.
+    euler_test->EvalSourceTerms(field_ms_source,sols_test,mesh); //!< computing manufactured source terms
+    error->OutputPrimitiveVariables(field_ms,mms_sol_filename,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->imax,mesh->jmax);
+    error->OutputManufacturedSourceTerms(field_ms_source,mms_source_filename,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->imax,mesh->jmax);
     delete euler_test;
     delete mesh;
   }
