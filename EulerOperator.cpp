@@ -1056,6 +1056,14 @@ void EulerBASE::ComputeResidual(vector<array<double,4>>* &,vector<array<double,4
   return;
 }
 //-----------------------------------------------------------
+double EulerBASE::ComputeTotalPressure(array<double,4> &){
+  return 0.0;
+}
+//-----------------------------------------------------------
+double EulerBASE::ComputePressureLoss(vector<array<double,4>>* &){
+  return 0.0;
+}
+//-----------------------------------------------------------
 EulerBASE::~EulerBASE(){}
 //-----------------------------------------------------------
 // EULER1D DEFINITIONS
@@ -1999,14 +2007,14 @@ Euler2D::Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,
     Mach_bc = 0.84;
     P_bc = 65855.8;
     T_bc = 300.0;
-    alpha = 0.0;
+    alpha = 0.0 * (M_PI / 180.0);
 
   }
   else if (case_2d == 2){ // 8 deg AOA airfoil
     Mach_bc = 0.75;
     P_bc = 67243.5;
     T_bc = 300.0;
-    alpha = 8.0;
+    alpha = 8.0 * (M_PI / 180.0);
 
   }
   else {
@@ -2130,6 +2138,11 @@ void Euler2D::ApplyInflow(int side){
   double a_bc = sqrt(Gamma*R*T_bc); 
   double uvel_bc = Mach_bc * a_bc; //boundary condition x-velocity
   double vvel_bc = DBL_MIN; //boundary condition y-velocity
+
+  if (scenario_2d == 1 || scenario_2d == 2){ //AIRFOIL CASE ONLY
+    uvel_bc = Mach_bc * a_bc * cos(alpha);
+    vvel_bc = Mach_bc * a_bc * sin(alpha);
+  }
 
   if ((scenario_2d == 0) && (side == 0)){ //INLET CASE ONLY
     //NOTE: splitting the top boundary into 2 boundary conditions
@@ -2522,8 +2535,49 @@ void Euler2D::ComputeResidual(vector<array<double,4>>* &resid,vector<array<doubl
       fieldij(resid,i,j,cell_imax) = res;
     }
   }
-return; }
+return;
+}
 
+//-----------------------------------------------------------
+double Euler2D::ComputeTotalPressure(array<double,4> &sols){
+
+  double M = ComputeMachNumber(sols);
+  double P = sols[3];
+  double Gamma = GetGamma();
+
+  double P0 = 1.0 + ((Gamma - 1.0)/2.0) * pow(M,2.0);
+  double exp = Gamma / (Gamma-1.0); 
+  P0 = pow(P0,exp);
+  P0 *= P;
+
+  return P0;
+
+}
+
+//-----------------------------------------------------------
+double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
+
+  int i=mesh->cell_imax-1; //last layer of interior cells before outflow
+  array<double,4> state_face; //extrapolated state at face
+
+  //TOTAL HEIGHT (H)
+  double H;
+
+  //TOTAL PRESSURE OF FREESTREAM
+  array<double,4> state_inf;
+  state_inf[0] = P_bc / (R*T_bc); //density
+  //state_inf[1] = 
+  //P0_inf = ComputeTotalPressure(
+
+  for (int j=0;j<mesh->cell_jmax;j++){
+    
+    state_face = GetFaceState(field,i,j);
+    P0_exit = ComputeTotalPressure(state_face);
+
+
+  }
+
+}
 //-----------------------------------------------------------
 Euler2D::~Euler2D(){}
 //-----------------------------------------------------------

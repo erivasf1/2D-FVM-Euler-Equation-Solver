@@ -95,6 +95,10 @@ class EulerBASE {
   //MMS
   virtual void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols);
   virtual void ComputeMSError(vector<array<double,4>>* &field_ms_error,vector<array<double,4>>* &field,vector<array<double,4>>* &field_ms);
+
+  //INLET
+  virtual double ComputeTotalPressure(array<double,4> &sols);
+  virtual double ComputePressureLoss(vector<array<double,4>>* &field);
   virtual ~EulerBASE();
 };
 
@@ -210,6 +214,9 @@ class Euler2D : public EulerBASE {
   void ApplyPeriodic(vector<array<double,4>>* &field,int side) override;
 
   void ComputeResidual(vector<array<double,4>>* &resid,vector<array<double,4>>* &field,vector<array<double,4>>* &field_stall,bool resid_stall) override;
+
+  double ComputeTotalPressure(array<double,4> &sols) override;
+  double ComputePressureLoss(vector<array<double,4>>* &field) override;
 
   ~Euler2D();
 
