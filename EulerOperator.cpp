@@ -1056,6 +1056,25 @@ void EulerBASE::ComputeResidual(vector<array<double,4>>* &,vector<array<double,4
   return;
 }
 //-----------------------------------------------------------
+array<double,4> EulerBASE::GetFaceState(vector<array<double,4>>* &field,int loci, int locj){
+
+  array<double,4> state;
+
+  //Assigning states
+  array<double,4> loc_state = fieldij(field,loci,locj,cell_imax);
+  array<double,4> nborloc_state = fieldij(field,loci-1,locj,cell_imax);
+  array<double,4> nbor_state = mesh->right_cells[locj];
+  
+  //Using MUSCL extrapolation
+  for (int n=0;n<4;n++)
+    state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
+  
+
+  return state;
+
+}
+
+//-----------------------------------------------------------
 double EulerBASE::ComputeTotalPressure(array<double,4> &){
   return 0.0;
 }
@@ -2559,25 +2578,43 @@ double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
 
   int i=mesh->cell_imax-1; //last layer of interior cells before outflow
   array<double,4> state_face; //extrapolated state at face
+  double P0_inf, P0_exit, P0_loss;
+  double P0_diff = 0.0;
+  double dy;
 
   //TOTAL HEIGHT (H)
-  double H;
+  array<array<double,4>,2> top_cell_coords = mesh->GetCellCoords(mesh->cell_imax-1,mesh->cell_jmax-1); 
+  array<array<double,4>,2> btm_cell_coords = mesh->GetCellCoords(mesh->cell_imax-1,0); 
+  double ymax = mesh->ComputeMaxCoords(top_cell_coords)[1];
+  double ymin = mesh->ComputeMinCoords(btm_cell_coords)[1];
+  double H = ymax - ymin;
 
   //TOTAL PRESSURE OF FREESTREAM
   array<double,4> state_inf;
+  double Gamma = GetGamma();
+  double a_bc = sqrt(Gamma*R*T_bc); //sound speed
+  
   state_inf[0] = P_bc / (R*T_bc); //density
-  //state_inf[1] = 
-  //P0_inf = ComputeTotalPressure(
+  state_inf[1] = Mach_bc * a_bc * cos(alpha); //x-vel
+  state_inf[2] = Mach_bc * a_bc * sin(alpha); //y-vel
+  state_inf[3] = P_bc; //pressure
+  P0_inf = ComputeTotalPressure(state_inf);
 
+  //TOTAL PRESSURE LOSS COMPUTATION
   for (int j=0;j<mesh->cell_jmax;j++){
     
     state_face = GetFaceState(field,i,j);
     P0_exit = ComputeTotalPressure(state_face);
+    dy = mesh->GetInteriorCellArea(i,j,3);
 
+    P0_diff += (P0_inf - P0_exit) * dy;
 
   }
 
+  P0_loss = P0_diff / H;
+  return P0_loss;
 }
+
 //-----------------------------------------------------------
 Euler2D::~Euler2D(){}
 //-----------------------------------------------------------

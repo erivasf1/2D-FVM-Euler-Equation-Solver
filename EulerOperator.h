@@ -96,6 +96,7 @@ class EulerBASE {
   virtual void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols);
   virtual void ComputeMSError(vector<array<double,4>>* &field_ms_error,vector<array<double,4>>* &field,vector<array<double,4>>* &field_ms);
 
+  array<double,4> GetFaceState(vector<array<double,4>>* &field,int loci,int locj);
   //INLET
   virtual double ComputeTotalPressure(array<double,4> &sols);
   virtual double ComputePressureLoss(vector<array<double,4>>* &field);

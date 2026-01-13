@@ -31,6 +31,7 @@ class MeshGenBASE {
   virtual void ReadMeshFile();
   virtual void OutputMesh();
   virtual void GenerateGhostCells(int left_id,int right_id,int btm_id,int top_id); //-- adds the extra ghost cells to the domain virtual double GetInteriorCellArea(int &i,int &j,int side);
+  virtual array<array<double,4>,2> GetCellCoords(int i,int j); //fcn. to retrieve coords; indexing: [btm_left,btm_right,top_left,top_right]!
   virtual double GetInteriorCellArea(int i,int j,int side);
   virtual double GetInteriorCellFaceArea(int i,int j,int dir);
   virtual double GetCellVolume(int i,int j);
@@ -92,7 +93,7 @@ class MeshGen2D : public MeshGenBASE { //reads in a non-uniform 2D mesh
 
   void GenerateMesh(double xmin,double xmax,double ymin,double ymax) override;
 
-  array<array<double,4>,2> GetCellCoords(int &i,int &j); //fcn. to retrieve coords; indexing: [btm_left,btm_right,top_left,top_right]!
+  array<array<double,4>,2> GetCellCoords(int i,int j) override; //fcn. to retrieve coords; indexing: [btm_left,btm_right,top_left,top_right]!
   array<array<double,4>,2> GetGhostCellCoords(int i,int j,int tag) override; 
   array<double,2> ComputeMaxCoords(array<array<double,4>,2> &coords) override; //input: x & y coords
   array<double,2> ComputeMinCoords(array<array<double,4>,2> &coords) override; //input: x & y coords

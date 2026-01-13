@@ -85,15 +85,15 @@ int main() {
 
   // Temporal Specifications
   const int iter_max = 1e5;
-  int iterout = 10; //number of iterations per solution output
-  const double CFL = 0.7; //CFL number (must <= 1 for Euler Explicit integration)
+  int iterout = 50; //number of iterations per solution output
+  const double CFL = 1.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
   int time_scheme = 1; //0 for Euler Explicit, 1 for RungeKutta2, 2 for RungeKutta4
 
   // Flux Specifications
-  int flux_scheme{1}; //0=JST, 1=Van Leer, 2 = Roe 
-  double epsilon = 1.0; //0 for 1st order and 1 for 2nd order
+  int flux_scheme{2}; //0=JST, 1=Van Leer, 2 = Roe 
+  double epsilon = 0.0; //0 for 1st order and 1 for 2nd order
   bool epsilon_ramp = false; //true to enable ramp from 2nd order to 1st
   [[maybe_unused]] int ramp_start = 1.2e4; 
   [[maybe_unused]] int ramp_stop = 1.2e4;
@@ -497,14 +497,19 @@ int main() {
     Tools::print("Continuity: %e\nX-Momentum: %e\nY-Momentum: %e\nEnergy: %e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2],ResidualNorms[3]);
     const char* filename_final = "ConvergedSolution.dat" ;
     error->OutputPrimitiveVariables(field,filename_final,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
+
+    //! INLET ONLY: COMPUTE TOTAL PRESSURE LOSS
+    if (case_2d == 0 && scenario == 2){
+      double P_loss = euler->ComputePressureLoss(field);
+      double P_loss /= 1000.0;
+      Tools::print("Inlet Pressure loss = %f kPa\n",P_loss);
+    }
+
   }
 
   //Closing Residuals file
   myresids.close();
 
-  //Writing PVD file for Paraview to visualize
-  //const char* filename_pvd = "Results/Results.pvd";
-  //error->WritePVDFile(filename_pvd,iter_visuals);
 
   //TODO:! EVALUATE DISCRETIZATION NORMS FOR GRID CONVERGENCE AND PRINT OUT TO FILE
   /*if (cond_bc == false){

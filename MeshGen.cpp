@@ -33,6 +33,11 @@ double MeshGenBASE::GetCellVolume(int , int ){
   return 0.0;
 }
 //-----------------------------------------------------------
+array<array<double,4>,2> MeshGenBASE::GetCellCoords(int ,int ){
+  array<double,4> zeros{0.0,0.0,0.0,0.0};
+  return {zeros,zeros};
+}
+//-----------------------------------------------------------
 array<array<double,4>,2> MeshGenBASE::GetGhostCellCoords(int, int, int ){
   array<double,4> zeros{0.0,0.0,0.0,0.0};
   return {zeros,zeros};
@@ -307,7 +312,7 @@ void MeshGen2D::OutputMesh(){
 }
 
 //-----------------------------------------------------------
-array<array<double,4>,2> MeshGen2D::GetCellCoords(int &i,int &j){
+array<array<double,4>,2> MeshGen2D::GetCellCoords(int i,int j){
 
   //NOTE: pt1 = i,j, pt2 = i+1,j, pt3 = i,j+1, pt4 = i+1,j+1
   //NOTE: cell_coords[0]=all xcoords, cell_coords[1]=all ycoords
