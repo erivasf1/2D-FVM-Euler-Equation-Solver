@@ -100,6 +100,11 @@ class EulerBASE {
   //INLET
   virtual double ComputeTotalPressure(array<double,4> &sols);
   virtual double ComputePressureLoss(vector<array<double,4>>* &field);
+  //AIRFOIL
+  virtual array<double,2> ComputeFreeStreamTangentUnitVector();
+  virtual array<double,2> ComputeFreeStreamNormalUnitVector();
+  virtual array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field);
+
   virtual ~EulerBASE();
 };
 
@@ -216,8 +221,14 @@ class Euler2D : public EulerBASE {
 
   void ComputeResidual(vector<array<double,4>>* &resid,vector<array<double,4>>* &field,vector<array<double,4>>* &field_stall,bool resid_stall) override;
 
-  double ComputeTotalPressure(array<double,4> &sols) override;
-  double ComputePressureLoss(vector<array<double,4>>* &field) override;
+  //INLET 
+  double ComputeTotalPressure(array<double,4> &sols) override; //INLET ONLY
+  double ComputePressureLoss(vector<array<double,4>>* &field) override; 
+
+  //AIRFOIL
+  array<double,2> ComputeFreeStreamTangentUnitVector() override;
+  array<double,2> ComputeFreeStreamNormalUnitVector() override;
+  array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field) override;
 
   ~Euler2D();
 

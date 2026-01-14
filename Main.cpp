@@ -501,7 +501,7 @@ int main() {
     //! INLET ONLY: COMPUTE TOTAL PRESSURE LOSS
     if (case_2d == 0 && scenario == 2){
       double P_loss = euler->ComputePressureLoss(field);
-      double P_loss /= 1000.0;
+      P_loss /= 1000.0;
       Tools::print("Inlet Pressure loss = %f kPa\n",P_loss);
     }
 

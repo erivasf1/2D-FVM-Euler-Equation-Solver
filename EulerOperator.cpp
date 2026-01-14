@@ -1083,6 +1083,21 @@ double EulerBASE::ComputePressureLoss(vector<array<double,4>>* &){
   return 0.0;
 }
 //-----------------------------------------------------------
+array<double,2> EulerBASE::ComputeFreeStreamTangentUnitVector(){
+  array<double,2> zeros{0.0,0.0};
+  return zeros;
+}
+//-----------------------------------------------------------
+array<double,2> EulerBASE::ComputeFreeStreamNormalUnitVector(){
+  array<double,2> zeros{0.0,0.0};
+  return zeros;
+}
+//-----------------------------------------------------------
+array<double,2> EulerBASE::ComputeLiftAndDragForce(vector<array<double,4>>* &){
+  array<double,2> zeros{0.0,0.0};
+  return zeros;
+}
+//-----------------------------------------------------------
 EulerBASE::~EulerBASE(){}
 //-----------------------------------------------------------
 // EULER1D DEFINITIONS
@@ -2613,6 +2628,70 @@ double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
 
   P0_loss = P0_diff / H;
   return P0_loss;
+}
+
+//-----------------------------------------------------------
+array<double,2> Euler2D::ComputeFreeStreamTangentUnitVector(){
+
+  double nx = 1.0 * cos(alpha); 
+  double ny = 1.0 * sin(alpha); 
+
+  array<double,2> unit_tang{nx,ny};
+  return unit_tang;
+}
+
+//-----------------------------------------------------------
+array<double,2> Euler2D::ComputeFreeStreamNormalUnitVector(){
+
+  array<double,2> unit_normal,unit_tang;
+
+  unit_tang = ComputeFreeStreamTangentUnitVector();
+  unit_normal[0] = -unit_tang[1];
+  unit_normal[1] = unit_tang[0];
+
+  return unit_normal;
+}
+
+//-----------------------------------------------------------
+array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field){
+   
+  int j = 0;
+  array<double,4> face_state;
+  array<double,2> cell_unit_normal;
+  array<double,2> P_outwardvec; //pressure in outward vec. form
+  double dx;
+  double P_normal, P_tang;
+  double D_prime = 0.0;
+  double L_prime = 0.0;
+
+  //! COMPUTING UNIT NORMALS AND TANGENTS OF FREESTREAM
+  array<double,2> freestream_unit_tang = ComputeFreeStreamTangentUnitVector();
+  array<double,2> freestream_unit_normal = ComputeFreeStreamNormalUnitVector();
+
+  //! NUMERICALLY INTEGRATING VIA MIDPOINT RULE AT SURFACE (BTM FACE)
+  for (int i=0;i<cell_imax;i++){
+
+    // COMPUTING PRESSURE AT SURFACE
+    face_state = GetFaceState(field,i,j); //TODO
+    cell_unit_normal = mesh->ComputeOutwardUnitVector(i,j,1); //outward unit normal of btm face of cell
+    P_outwardvec[0] = face_state[3]*cell_unit_normal[0];
+    P_outwardvec[1] = face_state[3]*cell_unit_normal[1];
+
+    // COMPUTING PRESSURE FORCE FOR LIFT AND DRAG
+    P_tang = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_tang[0],freestream_unit_tang[1]);
+    P_normal = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_normal[0],freestream_unit_normal[1]);
+
+    // SUMMING LIFT AN DRAG
+    dx = mesh->GetInteriorCellArea(i,j,1); //differential area
+    
+    D_prime += P_tang * dx;
+    L_prime += P_normal * dx;
+
+  }
+
+  array<double,2> LAndD_prime{D_prime,L_prime};
+  return LAndD_prime;
+
 }
 
 //-----------------------------------------------------------
