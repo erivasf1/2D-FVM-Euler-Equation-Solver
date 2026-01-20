@@ -37,7 +37,7 @@ int main() {
   //! INITIALIZATION
   // Scenario
   int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
-  CASE_2D case_2d = INLET;
+  CASE_2D case_2d = AIRFOIL1;
 
   // Constants for 1D case or True Cartesian 2D MMS case
   [[maybe_unused]]double xmin = 0.0; [[maybe_unused]]double xmax = 1.0;
@@ -77,14 +77,14 @@ int main() {
   [[maybe_unused]]bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = NULL;
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 1e5;
+  const int iter_max = 1e2;
   int iterout = 50; //number of iterations per solution output
   const double CFL = 1.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
@@ -504,8 +504,15 @@ int main() {
       P_loss /= 1000.0;
       Tools::print("Inlet Pressure loss = %f kPa\n",P_loss);
     }
+ 
 
   }
+
+    array<double,2> Airfoil_coeffs = euler->ComputeLiftAndDragCoefficient(field);
+    double C_D = Airfoil_coeffs[0];
+    double C_L = Airfoil_coeffs[1];
+    Tools::print("Airfoil Drag Coefficient = %f \n",C_D);
+    Tools::print("Airfoil Lift Coefficient = %f \n",C_L);
 
   //Closing Residuals file
   myresids.close();

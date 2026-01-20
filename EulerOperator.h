@@ -96,14 +96,14 @@ class EulerBASE {
   virtual void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols);
   virtual void ComputeMSError(vector<array<double,4>>* &field_ms_error,vector<array<double,4>>* &field,vector<array<double,4>>* &field_ms);
 
-  array<double,4> GetFaceState(vector<array<double,4>>* &field,int loci,int locj);
+  array<double,4> GetFaceState(vector<array<double,4>>* &field,int loci,int locj,int side);
   //INLET
   virtual double ComputeTotalPressure(array<double,4> &sols);
   virtual double ComputePressureLoss(vector<array<double,4>>* &field);
   //AIRFOIL
   virtual array<double,2> ComputeFreeStreamTangentUnitVector();
   virtual array<double,2> ComputeFreeStreamNormalUnitVector();
-  virtual array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field);
+  virtual array<double,2> ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field);
 
   virtual ~EulerBASE();
 };
@@ -208,7 +208,7 @@ class Euler2D : public EulerBASE {
   int scenario_2d; //Inlet,Airfoil1, Airfoil2
 
   public:
-  double Mach_bc,T_bc,P_bc,alpha; //free-stream and initial conditions, assigned in constructor
+  double Mach_bc,T_bc,P_bc,alpha,rho_bc; //free-stream and initial conditions, assigned in constructor
   
   Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm,int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source); //constructor determines val. of const. parameters (e.g. freestream Mach #, angle-of-attack)
 
@@ -226,9 +226,11 @@ class Euler2D : public EulerBASE {
   double ComputePressureLoss(vector<array<double,4>>* &field) override; 
 
   //AIRFOIL
+  double GetChordLength(); //TODO: rn this is hard-coded!
   array<double,2> ComputeFreeStreamTangentUnitVector() override;
   array<double,2> ComputeFreeStreamNormalUnitVector() override;
-  array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field) override;
+  array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field);
+  array<double,2> ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field) override;
 
   ~Euler2D();
 

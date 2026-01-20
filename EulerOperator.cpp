@@ -1056,20 +1056,67 @@ void EulerBASE::ComputeResidual(vector<array<double,4>>* &,vector<array<double,4
   return;
 }
 //-----------------------------------------------------------
-array<double,4> EulerBASE::GetFaceState(vector<array<double,4>>* &field,int loci, int locj){
+array<double,4> EulerBASE::GetFaceState(vector<array<double,4>>* &field,int loci, int locj,int side){
 
+  //NOTE: side: 0=top, 1=btm, 2=left, 3=right
   array<double,4> state;
 
-  //Assigning states
-  array<double,4> loc_state = fieldij(field,loci,locj,cell_imax);
-  array<double,4> nborloc_state = fieldij(field,loci-1,locj,cell_imax);
-  array<double,4> nbor_state = mesh->right_cells[locj];
-  
-  //Using MUSCL extrapolation
-  for (int n=0;n<4;n++)
-    state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
-  
+  array<double,4> loc_state,nborloc_state,nbor_state;
 
+  if (side == 0){ //TOP
+    //Assigning states
+    loc_state = fieldij(field,loci,locj,cell_imax);
+    nborloc_state = fieldij(field,loci,locj-1,cell_imax);
+    nbor_state = mesh->top_cells[loci];
+  
+    //Using MUSCL extrapolation
+    for (int n=0;n<4;n++)
+      state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
+
+  }
+
+  else if (side == 1) { //BTM
+    //Assigning states
+    loc_state = fieldij(field,loci,locj,cell_imax);
+    nborloc_state = fieldij(field,loci,locj+1,cell_imax);
+    nbor_state = mesh->btm_cells[loci];
+  
+    //Using MUSCL extrapolation
+    for (int n=0;n<4;n++)
+      state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
+
+
+  }
+
+  else if (side == 2) { //LEFT
+    //Assigning states
+    loc_state = fieldij(field,loci,locj,cell_imax);
+    nborloc_state = fieldij(field,loci,loci+1,cell_imax);
+    nbor_state = mesh->left_cells[locj];
+  
+    //Using MUSCL extrapolation
+    for (int n=0;n<4;n++)
+      state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
+
+  }
+  
+  else if (side == 3) { //RIGHT
+
+    //Assigning states
+    loc_state = fieldij(field,loci,locj,cell_imax);
+    nborloc_state = fieldij(field,loci-1,locj,cell_imax);
+    nbor_state = mesh->right_cells[locj];
+  
+    //Using MUSCL extrapolation
+    for (int n=0;n<4;n++)
+      state[n] = loc_state[n] + (1.0/4.0) * ( (1.0-kappa_scheme)*(loc_state[n]-nborloc_state[n]) + (1.0+kappa_scheme)*(nbor_state[n]-loc_state[n]) ); //left state
+    }
+
+  else {
+    cerr<<"ERROR: Unknown side # specified in GetFaceState!"<<endl;
+
+  }
+  
   return state;
 
 }
@@ -1093,7 +1140,7 @@ array<double,2> EulerBASE::ComputeFreeStreamNormalUnitVector(){
   return zeros;
 }
 //-----------------------------------------------------------
-array<double,2> EulerBASE::ComputeLiftAndDragForce(vector<array<double,4>>* &){
+array<double,2> EulerBASE::ComputeLiftAndDragCoefficient(vector<array<double,4>>* &){
   array<double,2> zeros{0.0,0.0};
   return zeros;
 }
@@ -2055,13 +2102,14 @@ Euler2D::Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,
     cerr<<"Unknown 2D Case!"<<endl;
   }
 
+  //Freestream variables
+  rho_bc = P_bc / (R*T_bc); //density - perfect gas EOS
+
   return;
 }
 //-----------------------------------------------------------
 void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
   
-  double rho_bc = P_bc / (R*T_bc); //boundary condition density
-
   double Gamma = GetGamma();
   double a_bc = sqrt(Gamma*R*T_bc); 
   double uvel_bc = Mach_bc * a_bc; //boundary condition x-velocity
@@ -2080,8 +2128,6 @@ void Euler2D::InitSolutions(vector<array<double,4>>* &field,int cellnum){
 //-----------------------------------------------------------
 void Euler2D::SetInitialConditions(vector<array<double,4>>* &field){
 
-  //using perfect gas EOS
-  double rho_bc = P_bc / (R*T_bc); //boundary condition density
 
   double Gamma = GetGamma();
   double a_bc = sqrt(Gamma*R*T_bc); 
@@ -2166,7 +2212,6 @@ void Euler2D::ApplyInflow(int side){
 
   //TODO: should only apply inflow to upper "slanted" part of domain
   //NOTE: boundary conditions are specified as only in the x-direction
-  double rho_bc = P_bc / (R*T_bc); //boundary condition density
 
   double Gamma = GetGamma();
   double a_bc = sqrt(Gamma*R*T_bc); 
@@ -2262,6 +2307,7 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
   [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; // for inlet case
   [[maybe_unused]] array<array<double,4>,2> pt_current;
   [[maybe_unused]] double x_max;
+  [[maybe_unused]] double x_min;
 
   //TOP SIDE
   if (side == 0){ //top side
@@ -2335,9 +2381,9 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
 
         i = (n < mesh->cell_imax) ? n : n - mesh->cell_imax;
         pt_current = mesh->GetGhostCellCoords(i,0,1); //coords of ghost cell
-        x_max = mesh->ComputeMaxCoords(pt_current)[0];
+        x_min = mesh->ComputeMinCoords(pt_current)[0];
 
-        if (x_max > airfoil_split[0] )
+        if (x_min >= airfoil_split[0] )
           continue;
 
       }
@@ -2488,7 +2534,7 @@ void Euler2D::ApplyPeriodic(vector<array<double,4>>* &field,int side){
 
   [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; // for inlet case
   [[maybe_unused]] array<array<double,4>,2> pt_current;
-  [[maybe_unused]] double max_x;
+  [[maybe_unused]] double x_min;
   int i,j;
 
   //TOP SIDE
@@ -2503,9 +2549,9 @@ void Euler2D::ApplyPeriodic(vector<array<double,4>>* &field,int side){
         j = (n < mesh->cell_imax) ? 0 : 1;
 
         pt_current = mesh->GetGhostCellCoords(i,0,1); //coords of ghost cell
-        max_x = mesh->ComputeMaxCoords(pt_current)[0];
+        x_min = mesh->ComputeMinCoords(pt_current)[0];
 
-        if (max_x < airfoil_split[0]) //skipping cell since it should be slip-wall
+        if (x_min < airfoil_split[0]) //skipping cell since it should be slip-wall
           continue;
 
         mesh->btm_cells[n] = fieldij(field,i,j,mesh->cell_imax);
@@ -2618,7 +2664,7 @@ double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
   //TOTAL PRESSURE LOSS COMPUTATION
   for (int j=0;j<mesh->cell_jmax;j++){
     
-    state_face = GetFaceState(field,i,j);
+    state_face = GetFaceState(field,i,j,3);
     P0_exit = ComputeTotalPressure(state_face);
     dy = mesh->GetInteriorCellArea(i,j,3);
 
@@ -2630,6 +2676,13 @@ double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
   return P0_loss;
 }
 
+//-----------------------------------------------------------
+double Euler2D::GetChordLength(){ 
+
+  array<double,2> airfoil_split{0.1524,0.0}; //TODO: this is hard-coded
+
+  return airfoil_split[0]; 
+}
 //-----------------------------------------------------------
 array<double,2> Euler2D::ComputeFreeStreamTangentUnitVector(){
 
@@ -2656,6 +2709,9 @@ array<double,2> Euler2D::ComputeFreeStreamNormalUnitVector(){
 array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field){
    
   int j = 0;
+  [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; // for inlet case
+  array<array<double,4>,2> cell_coords;
+  double x_min;
   array<double,4> face_state;
   array<double,2> cell_unit_normal;
   array<double,2> P_outwardvec; //pressure in outward vec. form
@@ -2670,9 +2726,15 @@ array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field
 
   //! NUMERICALLY INTEGRATING VIA MIDPOINT RULE AT SURFACE (BTM FACE)
   for (int i=0;i<cell_imax;i++){
+    cell_coords = mesh->GetCellCoords(i,j);
+    x_min = mesh->ComputeMinCoords(cell_coords)[0];
+ 
+    //ONLY COMPUTING W/ CELLS THAT ARE ATTACHED TO AIRFOIL
+    if (x_min >= airfoil_split[0]) //skipping cell if it isn't attached to the airfoil
+      continue;
 
     // COMPUTING PRESSURE AT SURFACE
-    face_state = GetFaceState(field,i,j); //TODO
+    face_state = GetFaceState(field,i,j,1); 
     cell_unit_normal = mesh->ComputeOutwardUnitVector(i,j,1); //outward unit normal of btm face of cell
     P_outwardvec[0] = face_state[3]*cell_unit_normal[0];
     P_outwardvec[1] = face_state[3]*cell_unit_normal[1];
@@ -2681,7 +2743,7 @@ array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field
     P_tang = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_tang[0],freestream_unit_tang[1]);
     P_normal = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_normal[0],freestream_unit_normal[1]);
 
-    // SUMMING LIFT AN DRAG
+    // SUMMING LIFT AND DRAG
     dx = mesh->GetInteriorCellArea(i,j,1); //differential area
     
     D_prime += P_tang * dx;
@@ -2693,6 +2755,31 @@ array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field
   return LAndD_prime;
 
 }
+
+//-----------------------------------------------------------
+array<double,2> Euler2D::ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field){
+
+  //Reference: project file
+
+  //FREESTREAM AND AIRFOIL CHORD LENGTH
+  double Gamma = GetGamma();
+  double a_bc = sqrt(Gamma*R*T_bc); 
+  double V_bc = Mach_bc * a_bc; //freestream velocity mag.
+  double chord_length = GetChordLength(); //chord length
+
+  //DRAG AND LIFT FORCE PER UNIT SPAN
+  array<double,2> aero_forces = ComputeLiftAndDragForce(field);
+  double D_prime = aero_forces[0];
+  double L_prime = aero_forces[1];
+
+  //DRAG AND LIFT COEFFICIENT
+  double denom = 0.5 * rho_bc * pow(V_bc,2.0) * chord_length;
+  double c_d = abs( D_prime / denom ); 
+  double c_l = abs( L_prime / denom ); 
+  
+  array<double,2> coeffs{c_d,c_l};
+  return coeffs;
+};
 
 //-----------------------------------------------------------
 Euler2D::~Euler2D(){}
