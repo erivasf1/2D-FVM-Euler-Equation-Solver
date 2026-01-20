@@ -2131,8 +2131,9 @@ void Euler2D::SetInitialConditions(vector<array<double,4>>* &field){
 
   double Gamma = GetGamma();
   double a_bc = sqrt(Gamma*R*T_bc); 
-  double uvel_bc = Mach_bc * a_bc; //boundary condition x-velocity
-  double vvel_bc = DBL_MIN; //boundary condition y-velocity
+  double V_inf = Mach_bc * a_bc;
+  double uvel_bc = V_inf * cos(alpha); //boundary condition x-velocity
+  double vvel_bc = (alpha == 0.0) ? DBL_MIN : V_inf * sin(alpha); //boundary condition y-velocity
   //double vvel_bc = 0.0; //boundary condition y-velocity
   int cellnum = cell_imax * cell_jmax;
 
@@ -2397,6 +2398,7 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
 
       //calculating outward unit normal vec. of corresponding interior cell
       unit_normal = mesh->ComputeOutwardUnitVector(i,j,1);//aligned in -j dir.
+      //unit_normal[0] *= -1.0; unit_normal[1] *= -1.0; //TODO
       //TODO:calculating tangential unit vec. of corresponding interior cell
       unit_tang = mesh->ComputeTangentialUnitVector(i,j,0);
 
@@ -2535,7 +2537,7 @@ void Euler2D::ApplyPeriodic(vector<array<double,4>>* &field,int side){
   [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; // for inlet case
   [[maybe_unused]] array<array<double,4>,2> pt_current;
   [[maybe_unused]] double x_min;
-  int i,j;
+  int i,j,i_interior;
 
   //TOP SIDE
   //BTM SIDE
@@ -2553,8 +2555,11 @@ void Euler2D::ApplyPeriodic(vector<array<double,4>>* &field,int side){
 
         if (x_min < airfoil_split[0]) //skipping cell since it should be slip-wall
           continue;
+   
+        //SETTING GHOST CELLS TO PERTAINING INTERIOR CELLS
 
-        mesh->btm_cells[n] = fieldij(field,i,j,mesh->cell_imax);
+        i_interior = (cell_imax-1) - i;
+        mesh->btm_cells[n] = fieldij(field,i_interior,j,mesh->cell_imax);
 
       }
       
@@ -2716,15 +2721,15 @@ array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field
   array<double,2> cell_unit_normal;
   array<double,2> P_outwardvec; //pressure in outward vec. form
   double dx;
-  double P_normal, P_tang;
-  double D_prime = 0.0;
-  double L_prime = 0.0;
+  array<double,2> P_total{0.0,0.0};
+  //double P_normal, P_tang;
+  double D_prime,L_prime;
 
-  //! COMPUTING UNIT NORMALS AND TANGENTS OF FREESTREAM
-  array<double,2> freestream_unit_tang = ComputeFreeStreamTangentUnitVector();
-  array<double,2> freestream_unit_normal = ComputeFreeStreamNormalUnitVector();
+  //! EXTRACTING UNIT NORMALS AND TANGENTS OF FREESTREAM
+  array<double,2> freestream_unit_tang{cos(alpha),sin(alpha)};
+  array<double,2> freestream_unit_norm{-sin(alpha),cos(alpha)};
 
-  //! NUMERICALLY INTEGRATING VIA MIDPOINT RULE AT SURFACE (BTM FACE)
+  //! SUMMING PRESSURE FORCE VECTOR ACTING ON SURFACE
   for (int i=0;i<cell_imax;i++){
     cell_coords = mesh->GetCellCoords(i,j);
     x_min = mesh->ComputeMinCoords(cell_coords)[0];
@@ -2733,23 +2738,23 @@ array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field
     if (x_min >= airfoil_split[0]) //skipping cell if it isn't attached to the airfoil
       continue;
 
-    // COMPUTING PRESSURE AT SURFACE
-    face_state = GetFaceState(field,i,j,1); 
+    // APPROXIMATING PRESSURE AT SURFACE
+    face_state = GetFaceState(field,i,j,1); //MUSCL extrapolation
     cell_unit_normal = mesh->ComputeOutwardUnitVector(i,j,1); //outward unit normal of btm face of cell
     P_outwardvec[0] = face_state[3]*cell_unit_normal[0];
     P_outwardvec[1] = face_state[3]*cell_unit_normal[1];
 
-    // COMPUTING PRESSURE FORCE FOR LIFT AND DRAG
-    P_tang = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_tang[0],freestream_unit_tang[1]);
-    P_normal = Tools::ComputeDotProduct(P_outwardvec[0],P_outwardvec[1],freestream_unit_normal[0],freestream_unit_normal[1]);
-
-    // SUMMING LIFT AND DRAG
+    // MULTIPLYING WITH CELL WIDTH
     dx = mesh->GetInteriorCellArea(i,j,1); //differential area
-    
-    D_prime += P_tang * dx;
-    L_prime += P_normal * dx;
+    P_total[0] += P_outwardvec[0] * dx;
+    P_total[1] += P_outwardvec[1] * dx;
 
   }
+  P_total[0] *= -1.0;  P_total[1] *= -1.0; // changing pressure sign to negative
+
+  //! PROJECTING PRESSURE FORCE VECTOR ON LIFT AND DRAG DIRECTIONS
+  D_prime = Tools::ComputeDotProduct(P_total[0],P_total[1],freestream_unit_tang[0],freestream_unit_tang[1]);
+  L_prime = Tools::ComputeDotProduct(P_total[0],P_total[1],freestream_unit_norm[0],freestream_unit_norm[1]);
 
   array<double,2> LAndD_prime{D_prime,L_prime};
   return LAndD_prime;
