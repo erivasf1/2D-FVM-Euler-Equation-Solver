@@ -13,8 +13,8 @@ using namespace std;
 int main(){
 
   Output Out;
-  const char* filename_read = "DiscretizationError.txt";
-  const char* filename_write = "ObservedOrderofAccuracy.dat";
+  const char* filename_read = "DiscretizationErrorNorms.txt";
+  const char* filename_write = "OOA_VanLeer_1stOrder_Super.txt";
 
   Out.CalculateOrderofAccuracy(filename_read,filename_write);
 

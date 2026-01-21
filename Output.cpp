@@ -60,21 +60,42 @@ void Output::PrintResidualNorm(int &cellnum,int &n){
 }
 */
 //-----------------------------------------------------------
-void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* &sols){
+void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<array<double,4>>* &exact_field,vector<array<double,4>>* &errors,SpaceVariables2D* &sols,MeshGenBASE* &mesh,const char* &filename){
 
   for (int n=0;n<(int)field->size();n++){ //calculating errors
-    for (int i=0;i<3;i++)
+    for (int i=0;i<4;i++)
       (*errors)[n][i] = (*field)[n][i] - (*exact_field)[n][i];
   }
   
   //L2 Norms of Error
-  array<double,3> ErrorNorms = sols->ComputeSolutionNorms(errors);
+  array<double,4> ErrorNorms = sols->ComputeSolutionNorms(errors);
 
+  //PRINTING TO SCREEN
   Tools::print("-------------------------\n");
   Tools::print("Discretization Error Norms\n");
   Tools::print("Density: %e\n",ErrorNorms[0]);
-  Tools::print("Velocity: %e\n",ErrorNorms[1]);
-  Tools::print("Pressure: %e\n",ErrorNorms[2]);
+  Tools::print("X-Velocity: %e\n",ErrorNorms[1]);
+  Tools::print("Y-Velocity: %e\n",ErrorNorms[2]);
+  Tools::print("Pressure: %e\n",ErrorNorms[3]);
+
+  //WRITING TO FILE
+  std::ofstream myfile(filename,ios::app); //true for append
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  myfile<<"-------------------------\n";
+  myfile<<"Discretization Error Norms\n";
+  myfile<<"Cell Number: "<<mesh->cellnumber<<endl;
+  myfile<<"I: "<<mesh->cell_imax<<"  "<<"J: "<<mesh->cell_jmax<<endl;
+  myfile<<"Density: "<<ErrorNorms[0]<<endl;
+  myfile<<"X-Velocity: "<<ErrorNorms[1]<<endl;
+  myfile<<"Y-Velocity: "<<ErrorNorms[2]<<endl;
+  myfile<<"Pressure: "<<ErrorNorms[3]<<endl;
+  
+  myfile.close();
 
   return;
 }
@@ -82,80 +103,105 @@ void Output::DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<arr
 //-----------------------------------------------------------
 void Output::CalculateOrderofAccuracy(const char *filename_read,const char *filename_write){
 
+  //NOTE: order of error norms top(coarsest mesh) - btm(finest mesh)
+
   ifstream myfileread(filename_read);
   ofstream myfilewrite(filename_write);
 
   if (!myfileread){ //Error Handling
-    cerr<<"Error Opening Discretization Error Norms File!"<<endl;
+    cerr<<"Error Opening Error Norms File to Eval. Order of Accuracy!"<<endl;
     return; 
   }
 
   std::string line;
 
-  vector<double> CellSize;
+  vector<double> CellNumber;
+  vector<double> I,J;
   vector<double> Density;
-  vector<double> Velocity;
+  vector<double> XVelocity;
+  vector<double> YVelocity;
   vector<double> Pressure;
 
-  // Reading Discreization Error File(.txt)
+  // READING DISCREIZATION ERROR FILE(.TXT)
   while (std::getline(myfileread,line)){ //reading the line as a string
 
     std::stringstream ss(line); //reading the line as a string
     std::string label;
-    double value;
+    double value,i,j;
 
-    if (line.find("Cell Size:") != std::string::npos) { //found Cell Size
+    if (line.find("Cell Number:") != std::string::npos) { //found Cell Number
 
       ss >> label >> label >> value; 
-      CellSize.push_back(static_cast<int>(value));
+      CellNumber.push_back(value);
     }
 
-    else if (line.find("Density:") != std::string::npos) { //found Cell Size
+    else if (line.find("I:") != std::string::npos) { //found I and J number
+      ss >> label >> i >> label >> j; 
+      I.push_back(i);
+      J.push_back(j);
+    }
+
+    else if (line.find("Density:") != std::string::npos) { //found Density
       ss >> label >> value; 
       Density.push_back(value);
     }
 
-    else if (line.find("Velocity:") != std::string::npos) { //found Cell Size
+    else if (line.find("X-Velocity:") != std::string::npos) { //found X-Vel.
       ss >> label >> value; 
-      Velocity.push_back(value);
+      XVelocity.push_back(value);
     }
-    else if (line.find("Pressure:") != std::string::npos) { //found Cell Size
+
+    else if (line.find("Y-Velocity:") != std::string::npos) { //found Y-Vel.
+      ss >> label >> value; 
+      YVelocity.push_back(value);
+    }
+    else if (line.find("Pressure:") != std::string::npos) { //found Pressure
       ss >> label >> value; 
       Pressure.push_back(value);
     }
 
   }
 
-  // Calculating Observed Order of Accuracy
-  //using Section 4 Slide 31 Notes to calc. order of accuracy (p)
-  // NOTE: arrangement of PHat lists start from coarsest and go to finest grids
+  // CALCULATING OBSERVED ORDER OF ACCURACY
+  //Reference: Section 4 Slide 31 Notes to calc. order of accuracy (p)
+  // NOTE: arrangement of PHat lists start from coarsest and go to finest grids!
 
-  vector<double> PHat_density((int)CellSize.size()-1,0); //order of accuracy value
-  vector<double> PHat_velocity((int)CellSize.size()-1,0); //order of accuracy value
-  vector<double> PHat_pressure((int)CellSize.size()-1,0); //order of accuracy value
+  vector<double> PHat_density((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_xvel((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_yvel((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_pressure((int)CellNumber.size()-1,0); //order of accuracy value
 
-  double r = 2.0; //mesh refinement factor
-  for (int n=0;n<(int)CellSize.size()-1;n++){ 
+  double r = I[1] / I[0]; //mesh refinement factor
+
+  for (int n=0;n<(int)CellNumber.size()-1;n++){ 
     PHat_density[n] = (log(Density[n]/Density[n+1])) / log(r);
-    PHat_velocity[n] = (log(Velocity[n]/Velocity[n+1])) / log(r);
+    PHat_xvel[n] = (log(XVelocity[n]/XVelocity[n+1])) / log(r);
+    PHat_yvel[n] = (log(YVelocity[n]/YVelocity[n+1])) / log(r);
     PHat_pressure[n] = (log(Pressure[n]/Pressure[n+1])) / log(r);
  }
 
   vector<double> h; //grid spacing 
   h.push_back(1.0); //1st element is the finest grid
-  for (int i=1;i<=(int)CellSize.size()-2;i++) //-2 b/c not evaluating coarsest mesh
+  for (int i=1;i<=(int)CellNumber.size()-2;i++) //-2 b/c not evaluating coarsest mesh
     h.push_back(h[i-1]*r); //r times the previous mesh spacing
 
 
   reverse(h.begin(),h.end()); //reversing order to match with phat calc.
 
 
-  // Outputting Observed Order of Accuracy in .dat format
+  // OUTPUTTING OBSERVED ORDER OF ACCURACY IN MATLAB-FRIENDLY FORMAT
   if (!myfilewrite){ //Error Handling
     cerr<<"Error Opening Output for Observed Order of Accuracy File!"<<endl;
     return; 
   }
 
+
+  for (int n=0;n<(int)h.size();n++)
+    myfilewrite<<h[n]<<" "<<PHat_density[n]<<" "<<PHat_xvel[n]<<" "<<PHat_yvel[n]<<" "<<PHat_pressure[n]<<endl;
+
+
+  //.DAT FORMAT
+  /*
   myfilewrite<<"variables= \"grid spacing(h)\" \"Phat(density)\" \"Phat(velocity)\"  \"Phat(Pressure)\""<<endl;
 
   myfilewrite<<"zone T= "<<"\""<<0<<"\""<<endl;
@@ -166,6 +212,7 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
   for (int n=0;n<(int)h.size();n++)
     myfilewrite<<h[n]<<"  "<<PHat_density[n]<<"  "<<PHat_velocity[n]<<"  "<<PHat_pressure[n]<<"  "<<endl;
 
+  */
   
   myfilewrite.close();
 

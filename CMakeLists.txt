@@ -94,7 +94,7 @@ set(OUTPUTHEADERS
 add_executable(nozzle ${SOURCES} ${HEADERS})
 #add_executable(testnozzle UnitTest.cpp)
 add_executable(testnozzle ${TESTSOURCES} ${TESTHEADERS})
-#add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
+add_executable(output ${OUTPUTSOURCES} ${OUTPUTHEADERS})
 
 # Include directories (if needed)
 #target_include_directories(NozzleSimulation PRIVATE ${CMAKE_SOURCE_DIR})

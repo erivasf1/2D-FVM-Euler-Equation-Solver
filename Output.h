@@ -24,7 +24,7 @@ class Output {
   
   void PrintResidualNorm(int &cellnum,int &n);
 
-  void DiscretizationErrorNorms(vector<array<double,3>>* &field,vector<array<double,3>>* &exact_field,vector<array<double,3>>* &errors,SpaceVariables1D* &sols);
+  void DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<array<double,4>>* &ms_field,vector<array<double,4>>* &errors,SpaceVariables2D* &sols,MeshGenBASE* &mesh,const char* &filename);
 
   void CalculateOrderofAccuracy(const char *filename_read,const char *filename_write); //creates a new file containing the order of accuracy value given the discretization error file.txt
  

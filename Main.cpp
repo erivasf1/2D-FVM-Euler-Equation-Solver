@@ -41,7 +41,7 @@ int main() {
   // Scenario
   int scenario = 3; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
   CASE_2D case_2d = AIRFOIL1;
-  CASE_MMS case_mms = SUBSONIC;
+  CASE_MMS case_mms = SUPERSONIC;
 
   // Constants for 1D case or True Cartesian 2D MMS case
   [[maybe_unused]]double xmin = 0.0; [[maybe_unused]]double xmax = 1.0;
@@ -84,13 +84,16 @@ int main() {
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+
   //[[maybe_unused]]const char* meshfile = NULL;
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 5e5;
-  int iterout = 50; //number of iterations per solution output
+  const int iter_max = 1e4;
+  int iterout = 100; //number of iterations per solution output
   const double CFL = 1.1; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
@@ -115,10 +118,10 @@ int main() {
   array<bool,4> check{false,false,false,false}; //false by default to check if under-relaxation is needed
 
   // Governing Eq. Residuals
-  double cont_tol = 1.0e-10;
-  double xmom_tol = 1.0e-10;
-  double ymom_tol = 1.0e-10;
-  double energy_tol = 1.0e-10;
+  double cont_tol = 1.0e-11;
+  double xmom_tol = 1.0e-11;
+  double ymom_tol = 1.0e-11;
+  double energy_tol = 1.0e-11;
 
   //! GENERATING MESH 
   MeshGenBASE* mesh; 
@@ -162,8 +165,8 @@ int main() {
   //Pointers to Field variables
   vector<array<double,4>>* field = &Field; //pointer to Field solutions
   vector<array<double,4>>* field_star = &FieldStar; //pointer to intermediate Field solutions
-  vector<array<double,4>>* field_stall = &FieldStall; //pointer to intermediate Field solutions
-  vector<array<double,4>>* field_ms = &FieldMS; //pointer to intermediate Field solutions
+  vector<array<double,4>>* field_stall = &FieldStall; //pointer to stalled field sols
+  vector<array<double,4>>* field_ms = &FieldMS; //pointer to manufactured sol. field
   [[maybe_unused]] vector<array<double,4>>* field_ms_source = &FieldMS_Source; //pointer to intermediate Field solutions
   vector<array<double,4>>* field_ms_error = &FieldMS_Error; //pointer to intermediate Field solutions
   [[maybe_unused]] vector<array<double,4>>* exact_sols = &ExactField; //pointer to exact solution field values
@@ -525,16 +528,27 @@ int main() {
     const char* filename_final = "ConvergedSolution.dat" ;
     error->OutputPrimitiveVariables(field,filename_final,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
 
-    //! INLET ONLY: COMPUTE TOTAL PRESSURE LOSS
-    if (case_2d == 0 && scenario == 2){
-      double P_loss = euler->ComputePressureLoss(field);
-      P_loss /= 1000.0;
-      Tools::print("Inlet Pressure loss = %f kPa\n",P_loss);
-    }
- 
+  }
+
+  //! INLET ONLY: COMPUTE TOTAL PRESSURE LOSS
+  if (case_2d == 0 && scenario == 2){
+    double P_loss = euler->ComputePressureLoss(field);
+    P_loss /= 1000.0;
+    Tools::print("Inlet Pressure loss = %f kPa\n",P_loss);
 
   }
 
+  //! MMS ONLY: EVALUATING ERROR NORMS FOR OBSERVED ORDER OF ACCURACY
+  if (scenario == 3){
+
+    vector<array<double,4>> Errors(mesh->cellnumber);
+    vector<array<double,4>>* errors = &Errors;
+    const char* file_errornorms = "DiscretizationErrorNorms.txt";
+
+    error->DiscretizationErrorNorms(field,field_ms,errors,sols,mesh,file_errornorms); //writing to file saving error norms
+  }
+
+  //AIRFOIL ONLY: COMPUTING LIFT AND DRAG COEFFICIENT
   if ((case_2d == 1 || case_2d == 2) && scenario == 2){
     array<double,2> Airfoil_coeffs = euler->ComputeLiftAndDragCoefficient(field);
     double C_D = Airfoil_coeffs[0];
@@ -547,16 +561,6 @@ int main() {
   myresids.close();
 
 
-  //TODO:! EVALUATE DISCRETIZATION NORMS FOR GRID CONVERGENCE AND PRINT OUT TO FILE
-  /*if (cond_bc == false){
-    field->erase(field->begin()); field->erase(field->begin()); //!< erasing ghost cells
-    field->erase(field->end()); field->erase(field->end());
-
-    vector<array<double,3>> Errors(Field);
-    vector<array<double,3>>* errors = &Errors;
-
-    error->DiscretizationErrorNorms(field,exact_sols,errors,sols);
-  }*/
 
   stop_time = MPI_Wtime();
   Tools::print("Elapsed time: %fs\n",stop_time-start_time);
