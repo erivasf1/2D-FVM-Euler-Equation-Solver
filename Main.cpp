@@ -39,9 +39,9 @@ int main() {
 
   //! INITIALIZATION
   // Scenario
-  int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
+  int scenario = 3; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
   CASE_2D case_2d = AIRFOIL1;
-  CASE_MMS case_2d = SUBSONIC;
+  CASE_MMS case_mms = SUBSONIC;
 
   // Constants for 1D case or True Cartesian 2D MMS case
   [[maybe_unused]]double xmin = 0.0; [[maybe_unused]]double xmax = 1.0;
@@ -81,10 +81,10 @@ int main() {
   [[maybe_unused]]bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  [[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = NULL;
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
@@ -144,7 +144,7 @@ int main() {
   vector<array<double,4>> FieldStar(mesh->cellnumber); //stores intermediate primitive variable sols.
   vector<array<double,4>> FieldStall(mesh->cellnumber); //stores primitive variable sols. before stall (if detected)
   vector<array<double,4>> FieldMS(mesh->cellnumber); //stores manufactured sol.
-  vector<array<double,4>> FieldMS_Source(mesh->cellnumber); //stores manufactured source term for all cells
+  [[maybe_unused]] vector<array<double,4>> FieldMS_Source(mesh->cellnumber); //stores manufactured source term for all cells
   vector<array<double,4>> FieldMS_Error(mesh->cellnumber); //stores manufactured sol. error
 
   vector<array<double,4>> ExactField(mesh->cellnumber); //stores exact cell-averaged primitve variable sols.
@@ -164,7 +164,7 @@ int main() {
   vector<array<double,4>>* field_star = &FieldStar; //pointer to intermediate Field solutions
   vector<array<double,4>>* field_stall = &FieldStall; //pointer to intermediate Field solutions
   vector<array<double,4>>* field_ms = &FieldMS; //pointer to intermediate Field solutions
-  vector<array<double,4>>* field_ms_source = &FieldMS_Source; //pointer to intermediate Field solutions
+  [[maybe_unused]] vector<array<double,4>>* field_ms_source = &FieldMS_Source; //pointer to intermediate Field solutions
   vector<array<double,4>>* field_ms_error = &FieldMS_Error; //pointer to intermediate Field solutions
   [[maybe_unused]] vector<array<double,4>>* exact_sols = &ExactField; //pointer to exact solution field values
   [[maybe_unused]] vector<array<double,4>>* exact_faces = &ExactFaces; //pointer to exact solution field values
@@ -182,9 +182,9 @@ int main() {
   EulerBASE* euler;
   //Temp -- will add scenario == 1 once 1D section is fixed!
   if (scenario == 2) 
-    euler = new Euler2D(case_2d,mesh->cell_imax,mesh->cell_jmax,flux_scheme,flux_limiter,epsilon,top_cond,btm_cond,left_cond,right_cond,mesh,field_ms_source);
+    euler = new Euler2D(case_2d,mesh->cell_imax,mesh->cell_jmax,flux_scheme,flux_limiter,epsilon,top_cond,btm_cond,left_cond,right_cond,mesh);
   else if ((scenario == 3) || (scenario == 4))
-    euler = new Euler2DMMS(mesh->cell_imax,mesh->cell_jmax,flux_scheme,flux_limiter,epsilon,top_cond,btm_cond,left_cond,right_cond,mesh,field_ms_source);
+    euler = new Euler2DMMS(mesh->cell_imax,mesh->cell_jmax,flux_scheme,flux_limiter,epsilon,top_cond,btm_cond,left_cond,right_cond,mesh,field_ms_source,field_ms,case_mms);
   else{
     cerr<<"Error: scenario # not recognized!"<<endl;
     return 0;
@@ -213,12 +213,12 @@ int main() {
   Output* error = &Error;
 
   //! PRINTING OUT SIMULATION INFO
-  // Title
+  // TITLE
   if (meshfile)
     Tools::print("2D EULER EQ. SOLVER\n");
   else
     Tools::print("1D EULER EQ. SOLVER\n");
-  // Case Spec
+  // CASE SPEC
   if (meshfile){
     Tools::print("-Mesh Selected: ");
     Tools::print("%s\n",meshfile);
@@ -231,11 +231,12 @@ int main() {
     Tools::print("-Case Selected: ");
     (cond_bc == true) ? Tools::print("Shock Wave Case\n") : Tools::print("Isentropic Case\n");
   }
-  // Spatial Stats
+  // SPATIAL STATS
   Tools::print("-Spatial Statistics:\n");
   Tools::print("--Cell Number: %d\n",mesh->cellnumber);
   //Tools::print("--Delta x: %f\n",dx);
-  // Temporal Stats
+
+  // TEMPORAL STATS
   Tools::print("-Temporal Statistics:\n");
   Tools::print("--CFL: %f\n",CFL);
   Tools::print("--Time Scheme: ");
@@ -246,7 +247,7 @@ int main() {
   else  //Runge-Kutta4 Time Scheme
     Tools::print("Runge-Kutta4\n");
 
-  // Flux Stats
+  // FLUX STATS
   Tools::print("-Flux Statistics:");
   if (flux_scheme == 1) //Van Leer Flux 
     (epsilon == 0.0) ? Tools::print(" 1st Order Van Leer Scheme\n") : Tools::print(" 2nd Order Van Leer Scheme\n");
@@ -261,9 +262,31 @@ int main() {
     Tools::print("Van Leer\n");
   else
     Tools::print("N/A\n");
+  
+  // AIRFOIL STATS
+  if (scenario == 2){
+    Tools::print("-Airfoil Stats:\n");
+    if (case_2d == AIRFOIL1)
+      Tools::print("--AOA = 0 degrees\n");
+    else if (case_2d == AIRFOIL2)
+      Tools::print("--AOA = 8 degrees\n");
+    else {}
+  }
+
+  // MMS STATS
+  if (scenario == 3){
+    Tools::print("-MMS Stats:\n");
+    if (case_mms == SUPERSONIC)
+      Tools::print("--Supersonic Conds. specified\n");
+    else if (case_mms == SUBSONIC)
+      Tools::print("--Subsonic Conds. specified\n");
+    else {}
+
+  }
 
   //! COMPUTING MANUFACTURED SOLUTION AND SOURCE TERMS (MMS ONLY)
   if ((scenario == 3) || (scenario == 4)){
+    euler->SetCoefficients(); //setting supersonic or subsonic coefficients here
     string mms_sol_filename = "ManufacturedSols.dat";
     string mms_source_filename = "SourceTerms.dat";
     euler->ManufacturedPrimitiveSols(field_ms,sols); //!< computing manufactured sol.
@@ -275,7 +298,6 @@ int main() {
 
   //! SETTING INITIAL CONDITIONS
   euler->SetInitialConditions(field);
-  //Field = FieldMS; //for now, setting field to manufactured sol.
 
   string val = error->zeroPad(0,4);
   string init_name = "Results/Iteration_";
@@ -513,11 +535,13 @@ int main() {
 
   }
 
+  if ((case_2d == 1 || case_2d == 2) && scenario == 2){
     array<double,2> Airfoil_coeffs = euler->ComputeLiftAndDragCoefficient(field);
     double C_D = Airfoil_coeffs[0];
     double C_L = Airfoil_coeffs[1];
     Tools::print("Airfoil Drag Coefficient = %f \n",C_D);
     Tools::print("Airfoil Lift Coefficient = %f \n",C_L);
+  }
 
   //Closing Residuals file
   myresids.close();

@@ -5,8 +5,8 @@
 // EULERBASE DEFINITIONS
 
 //-----------------------------------------------------------
-EulerBASE::EulerBASE(int &cell_inum,int &cell_jnum,int &scheme,int &limiter,double &accuracy,int &top,int &btm,int &left,int &right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source)
-  : cell_imax(cell_inum), cell_jmax(cell_jnum),flux_scheme(scheme),flux_limiter(limiter),epsilon(accuracy),top_cond(top),btm_cond(btm),left_cond(left), right_cond(right), mesh(mesh_ptr), mms_source(source) {}
+EulerBASE::EulerBASE(int &cell_inum,int &cell_jnum,int &scheme,int &limiter,double &accuracy,int &top,int &btm,int &left,int &right,MeshGenBASE* &mesh_ptr)
+  : cell_imax(cell_inum), cell_jmax(cell_jnum),flux_scheme(scheme),flux_limiter(limiter),epsilon(accuracy),top_cond(top),btm_cond(btm),left_cond(left), right_cond(right), mesh(mesh_ptr) {}
 
 //-----------------------------------------------------------
 array<double,4> EulerBASE::ComputeConserved(vector<array<double,4>>* &field,int &i,int &j){
@@ -64,6 +64,11 @@ void EulerBASE::SetInitialConditions([[maybe_unused]] vector<array<double,4>>* &
 
 //-----------------------------------------------------------
 void EulerBASE::EvalSourceTerms(SpaceVariables2D* &){
+  return;
+}
+
+//-----------------------------------------------------------
+void EulerBASE::SetCoefficients(){
   return;
 }
 
@@ -2075,7 +2080,7 @@ Euler1D::~Euler1D(){}
 
 // EULER2D DEFINITIONS
 //-----------------------------------------------------------
-Euler2D::Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm,int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source) : scenario_2d(case_2d), EulerBASE(cell_inum,cell_jnum,scheme,limiter,accuracy,top,btm,left,right,mesh_ptr,source){
+Euler2D::Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm,int left,int right,MeshGenBASE* &mesh_ptr) : scenario_2d(case_2d), EulerBASE(cell_inum,cell_jnum,scheme,limiter,accuracy,top,btm,left,right,mesh_ptr){
   //Case assignments
   if (case_2d == 0){ //30 deg inlet case
     Mach_bc = 4.0;
@@ -2792,10 +2797,48 @@ Euler2D::~Euler2D(){}
 
 // EULER2DMMS DEFINITIONS
 //-----------------------------------------------------------
-Euler2DMMS::Euler2DMMS(int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm, int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source) : EulerBASE(cell_inum,cell_jnum,scheme,limiter,accuracy,top,btm,left,right,mesh_ptr,source){}
+Euler2DMMS::Euler2DMMS(int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm, int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source,vector<array<double,4>>* &mms,int mms_case) : mms_source(source),mms_sol_field(mms) ,case_mms(mms_case) , EulerBASE(cell_inum,cell_jnum,scheme,limiter,accuracy,top,btm,left,right,mesh_ptr){}
+//-----------------------------------------------------------
+void Euler2DMMS::SetCoefficients(){
+
+  //Reference: Chris Roy et al. AIAA 2002
+
+  L = 1.0;
+  rho0 = 1.0;
+  press0 = 1.0e5;
+
+  rhox = 0.15; rhoy = -0.1;
+  pressx = 0.2e5; pressy = 0.5e5;
+  wvel0 = 0.0;
+  
+
+  if (case_mms == 0) { //SUPERSONIC
+
+    uvel0 = 800.0;
+    vvel0 = 800.0;
+
+    uvelx = 50.0; uvely = -30.0;
+    vvelx = -75.0; vvely = 40.0;
+    
+  }
+
+  else if (case_mms == 1) { //SUBSONIC
+
+    uvel0 = 70.0;
+    vvel0 = 90.0;
+
+    uvelx = 5.0; uvely = -7.0;
+    vvelx = -15.0; vvely = 8.5;
+
+  }
+
+  else{}  //Do nothing
+
+}
 //-----------------------------------------------------------
 void Euler2DMMS::SetInitialConditions(vector<array<double,4>>* &field){
 
+  /*
   int cellnum = cell_imax * cell_jmax;
 
   for (int i=0;i<cellnum;i++) {
@@ -2804,6 +2847,9 @@ void Euler2DMMS::SetInitialConditions(vector<array<double,4>>* &field){
     (*field)[i][2] = 2.0;
     (*field)[i][3] = 2.0;
   }
+  */
+
+  (*field) = (*mms_sol_field); //initializing field to ms
 
   return;
 }
@@ -3133,7 +3179,7 @@ double Euler2DMMS::EnergySourceTerm(double x,double y){
 }
 
 //-----------------------------------------------------------
-void Euler2DMMS::EvalSourceTerms(/*vector<array<double,4>>* &mms_source,*/SpaceVariables2D* &sols){
+void Euler2DMMS::EvalSourceTerms(SpaceVariables2D* &sols){
 
   double x,y;
   int cellid;

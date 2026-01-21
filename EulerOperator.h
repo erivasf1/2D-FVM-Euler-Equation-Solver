@@ -32,8 +32,6 @@ class EulerBASE {
 
   double R = Ru / MolMass; //specific gas constant
 
-  vector<array<double,4>>* mms_source; //pointer to source terms
-
   int flux_scheme; //flux scheme id (0=JST, 1=VanLeer, 2=Roe)
   int flux_limiter; //flux limiter
   double epsilon; //flux accuracy (0=1st order)
@@ -41,18 +39,20 @@ class EulerBASE {
   int cell_imax; //NUMBER of cells in the i dir!
   int cell_jmax; //NUMBER of cells in the j dir!
 
-  EulerBASE(int &cell_inum,int &cell_jnum,int &scheme,int &limiter,double &accuracy,int &top,int &btm,int &left,int &right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source);
+  EulerBASE(int &cell_inum,int &cell_jnum,int &scheme,int &limiter,double &accuracy,int &top,int &btm,int &left,int &right,MeshGenBASE* &mesh_ptr);
 
+  //SUPPLEMENTARY COMPUTATIONS - USING PERFECT GAS EOS
   double ComputeMachNumber(array<double,4> &sols);
   double ComputeSpeedofSound(array<double,4> &sols); //using perfect gas relationship
   double ComputeHTotal(array<double,4> &sols);
   double GetGamma();
   array<double,2> GetLambdaMax(vector<array<double,4>>* &field,int i,int j);
 
-  //Compute Conserved & Primitive Variables
+  //CONSERVED & PRIMITIVE VARIABLES CONVERSION
   array<double,4> ComputeConserved(vector<array<double,4>>* &field,int &i,int &j);
   array<double,4> ComputePrimitive(array<double,4> &conserved);
-  //Initial Conditions
+
+  //INITIAL CONDITIONS
   virtual void SetInitialConditions(vector<array<double,4>>* &field); //Complete (tested)
   //TODO:Boundary Conditions -- refer to this paper:https://arc-aiaa-org.ezproxy.lib.vt.edu/doi/10.2514/3.11983  
 
@@ -81,26 +81,32 @@ class EulerBASE {
   array<array<double,4>,4> ComputeRoeEigenVecs(array<double,5> &roe_vars,double nx,double ny); //rho-avg eigenvectors (2nd step)
   array<double,5> ComputeRoeAvgVars(array<double,4> &field_ltstate,array<double,4> &field_rtstate); //roe-avg. vars (1st step) - output:[rhobar,ubar,vbar,htbar,abar]
   array<double,4> ComputeFlux_CELL(array<double,4> &field_state,double nx,double ny); //computes flux vector of given primitive vars. vector in the outward normal dir.
-  //MUSCL Extrapolation (2nd order accuracy)
+
+  //MUSCL EXTRAPOLATION (2ND ORDER ACCURACY)
   array<Vector,2> MUSCLApprox(vector<array<double,4>>* &field,vector<array<double,4>>* &field_stall,int loci,int locj,int nbori,int nborj,int nborloc_i,int nborloc_j,int nbornbor_i,int nbornbor_j,bool resid_stall);
   //Flux Limiters
   array<array<double,4>,4> FluxLimiter(array<double,4> loc_state,array<double,4> nbor_state,array<double,4> nborloc_state,array<double,4> nbornbor_state);
   array<array<double,4>,4> VanLeerLimiter(array<double,4> loc_state,array<double,4> nbor_state,array<double,4> nborloc_state,array<double,4> nbornbor_state);
   array<array<double,4>,4> ComputeRVariation(array<double,4> loc_state,array<double,4> nbor_state,array<double,4> nborloc_state,array<double,4> nbornbor_state); //outputs r+ and r-
-  //Artificial Dissipation (JST Damping Only)
+
+  //ARTIFICIAL DISSIPATION (JST DAMPING ONLY)
   //Source Term
   virtual void EvalSourceTerms(SpaceVariables2D* &sols); //source terms for all governing equations
   //Residual
   virtual void ComputeResidual(vector<array<double,4>>* &resid,vector<array<double,4>>* &field,vector<array<double,4>>* &field_stall,bool resid_stall); 
-  //MMS
+
+  //MMS SPECIFIC
+  virtual void SetCoefficients();
   virtual void ManufacturedPrimitiveSols(vector<array<double,4>>* &field,SpaceVariables2D* &sols);
   virtual void ComputeMSError(vector<array<double,4>>* &field_ms_error,vector<array<double,4>>* &field,vector<array<double,4>>* &field_ms);
 
   array<double,4> GetFaceState(vector<array<double,4>>* &field,int loci,int locj,int side);
-  //INLET
+
+  //INLET SPECIFIC
   virtual double ComputeTotalPressure(array<double,4> &sols);
   virtual double ComputePressureLoss(vector<array<double,4>>* &field);
-  //AIRFOIL
+
+  //AIRFOIL SPECIFIC
   virtual array<double,2> ComputeFreeStreamTangentUnitVector();
   virtual array<double,2> ComputeFreeStreamNormalUnitVector();
   virtual array<double,2> ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field);
@@ -210,7 +216,7 @@ class Euler2D : public EulerBASE {
   public:
   double Mach_bc,T_bc,P_bc,alpha,rho_bc; //free-stream and initial conditions, assigned in constructor
   
-  Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm,int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source); //constructor determines val. of const. parameters (e.g. freestream Mach #, angle-of-attack)
+  Euler2D(int case_2d,int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm,int left,int right,MeshGenBASE* &mesh_ptr); //constructor determines val. of const. parameters (e.g. freestream Mach #, angle-of-attack)
 
   void InitSolutions(vector<array<double,4>>* &field,int cellnum);
   void SetInitialConditions(vector<array<double,4>>* &field) override;
@@ -240,23 +246,28 @@ class Euler2D : public EulerBASE {
 class Euler2DMMS : public EulerBASE {
 
   //Source Terms Constants
-  //Note: Manufactured Sol. from Mathematica!
+  //Note: Call SetCoefficients before doing anything!
   // Using Roy AIAA 2002 paper for constants -- Supersonic Condition
-  double L = 1.0;
-  double rho0 = 1.0;
-  double press0 = 1.0e5;
-  double uvel0 = 800.0;
-  double vvel0 = 800.0;
+  double L;
+  double rho0, press0, uvel0, vvel0;
+
+  double rhox, rhoy;
+  double uvelx, uvely;
+  double vvelx, vvely;
+  double pressx, pressy;
+  double wvel0;
 
   double Pi = M_PI;
-  double rhox = 0.15;double rhoy = -0.1;
-  double uvelx = 50.0;double uvely = -30.0;
-  double vvelx = -75.0;double vvely = 40.0;
-  double pressx = 0.2e5;double pressy = 0.5e5;
-  double wvel0 = 0.0;
+
+  int case_mms;
 
   public:
-  Euler2DMMS(int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm, int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source);
+  Euler2DMMS(int cell_inum,int cell_jnum,int scheme,int limiter,double accuracy,int top,int btm, int left,int right,MeshGenBASE* &mesh_ptr,vector<array<double,4>>* &source,vector<array<double,4>>* &mms,int mms_case);
+
+  vector<array<double,4>>* mms_source; //pointer to source terms field
+  vector<array<double,4>>* mms_sol_field; //pointer to source terms field
+
+  void SetCoefficients() override; //sets coeffs. depending on spec. case
 
   void SetInitialConditions(vector<array<double,4>>* &field) override; 
 
