@@ -164,8 +164,19 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
         mesh->top_cells[i][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
         mesh->top_cells[i+cell_imax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
       }
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int j=0;j<2;j++){
+        mesh->top_cells[i][index[j]] = (mesh->top_cells[i][index[j]] < 0.0) ? DBL_MIN : mesh->top_cells[i][index[j]];
+        mesh->top_cells[i+cell_imax][index[j]] = (mesh->top_cells[i+cell_imax][index[j]] < 0.0) ? DBL_MIN : mesh->top_cells[i+cell_imax][index[j]];
+
+      }
     
     }
+
+  
+
   }
 
   if (side==1){ //BTM GHOST CELLS
@@ -189,6 +200,14 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       for (int n=0;n<4;n++){
         mesh->btm_cells[i][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
         mesh->btm_cells[i+cell_imax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int j=0;j<2;j++){
+        mesh->btm_cells[i][index[j]] = (mesh->btm_cells[i][index[j]] < 0.0) ? DBL_MIN : mesh->btm_cells[i][index[j]];
+        mesh->btm_cells[i+cell_imax][index[j]] = (mesh->btm_cells[i+cell_imax][index[j]] < 0.0) ? DBL_MIN : mesh->btm_cells[i+cell_imax][index[j]];
+
       }
     
     }
@@ -218,6 +237,14 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
         mesh->left_cells[j][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
         mesh->left_cells[j+cell_jmax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
       }
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int i=0;i<2;i++){
+        mesh->left_cells[j][index[i]] = (mesh->left_cells[j][index[i]] < 0.0) ? DBL_MIN : mesh->left_cells[j][index[i]];
+        mesh->left_cells[j+cell_jmax][index[i]] = (mesh->left_cells[j+cell_jmax][index[i]] < 0.0) ? DBL_MIN : mesh->left_cells[j+cell_jmax][index[i]];
+
+      }
     
     }
 
@@ -245,6 +272,14 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       for (int n=0;n<4;n++){
         mesh->right_cells[j][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
         mesh->right_cells[j+cell_jmax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int i=0;i<2;i++){
+        mesh->right_cells[j][index[i]] = (mesh->right_cells[j][index[i]] < 0.0) ? DBL_MIN : mesh->right_cells[j][index[i]];
+        mesh->right_cells[j+cell_jmax][index[i]] = (mesh->right_cells[j+cell_jmax][index[i]] < 0.0) ? DBL_MIN : mesh->right_cells[j+cell_jmax][index[i]];
+
       }
     
     }
@@ -594,7 +629,7 @@ array<Vector,2> EulerBASE::MUSCLApprox(vector<array<double,4>>* &field,vector<ar
       nbor_state_freeze = fieldij(field_stall,nbori,nborj,cell_imax); 
   }
 
-    //!< neighbor to loc in (-) outward normal direction 
+  //!< neighbor to loc in (-) outward normal direction 
   if ( nborloc_i < 0 || nborloc_i >= cell_imax || nborloc_j < 0 || nborloc_j >= cell_jmax ) {
     if (nborloc_i<0){ //using 1st layer of left ghost cells (-i case)
       nborloc_state = mesh->left_cells[nborloc_j];
@@ -627,7 +662,7 @@ array<Vector,2> EulerBASE::MUSCLApprox(vector<array<double,4>>* &field,vector<ar
       nborloc_state_freeze = fieldij(field_stall,nborloc_i,nborloc_j,cell_imax);
   }
 
-    //!< neighbor to neighbor in (+) outward normal direction 
+  //!< neighbor to neighbor in (+) outward normal direction 
   if ( nbornbor_i < 0 || nbornbor_i >= cell_imax || nbornbor_j < 0 || nbornbor_j >= cell_jmax ){
     if (nbornbor_i<0){ //using 2nd layer of left ghost cells (-i case)
       nbornbor_state = mesh->left_cells[nbornbor_j+cell_jmax];
@@ -2423,7 +2458,7 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
       else if (epsilon > 0){
         p_nbor2 = (n < mesh->cell_imax) ? fieldij(field,i,j-1,mesh->cell_imax)[3] : fieldij(field,i,j+1,mesh->cell_imax)[3]; 
         mesh->top_cells[n][3] = p_nbor1 - 0.5*(p_nbor2-p_nbor1)*epsilon;
-        if (mesh->top_cells[n][3] < 0) //to avoid negative pressure
+        if (mesh->top_cells[n][3] < 0.0) //to avoid negative pressure
           mesh->top_cells[n][3] = DBL_MIN;
       }
       else //error handling
@@ -2483,7 +2518,7 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
       else if (epsilon > 0){
         p_nbor2 = (n < mesh->cell_imax) ? fieldij(field,i,j+1,mesh->cell_imax)[3] : fieldij(field,i,j-1,mesh->cell_imax)[3]; 
         mesh->btm_cells[n][3] = p_nbor1 - 0.5*(p_nbor2-p_nbor1)*epsilon;
-        if (mesh->btm_cells[n][3] < 0) //to avoid negative pressure
+        if (mesh->btm_cells[n][3] < 0.0) //to avoid negative pressure
           mesh->btm_cells[n][3] = DBL_MIN;
       }
       else //error handling
@@ -2529,7 +2564,7 @@ void Euler2D::ApplySlipWall(vector<array<double,4>>* &field,int side){
       else if (epsilon > 0){
         p_nbor2 = (n < mesh->cell_jmax) ? fieldij(field,i+1,j,mesh->cell_imax)[3] : fieldij(field,i-1,j,mesh->cell_imax)[3]; 
         mesh->left_cells[n][3] = p_nbor1 - 0.5*(p_nbor2-p_nbor1)*epsilon;
-        if (mesh->left_cells[n][3] < 0) // to avoid negative pressure
+        if (mesh->left_cells[n][3] < 0.0) // to avoid negative pressure
           mesh->left_cells[n][3] = DBL_MIN;
       }
       else //error handling
@@ -3286,6 +3321,7 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((top_cond==0) && (setup==true))
     ApplyMSInflow(0);
   //else if (top_cond==1)
+  //else if (top_cond==1) //temp: setup==true here for now
   else if (top_cond==1 && setup==true) //temp: setup==true here for now
     ApplyOutflow(field,0);
   else if (top_cond==2)
@@ -3296,6 +3332,7 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((btm_cond==0) && (setup==true))
     ApplyMSInflow(1);
   //else if (btm_cond==1)
+  //else if (btm_cond==1)//temp: setup==true here for now
   else if (btm_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,1);
   else if (btm_cond==2)
@@ -3306,6 +3343,7 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((left_cond==0) && (setup==true))
     ApplyMSInflow(2);
   //else if (left_cond==1)
+  //else if (left_cond==1)//temp: setup==true here for now
   else if (left_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,2);
   else if (left_cond==2)
@@ -3316,6 +3354,7 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if (right_cond==0 && (setup==true))
     ApplyMSInflow(3);
   //else if (right_cond==1)
+  //else if (right_cond==1)//temp: setup==true here for now
   else if (right_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,3);
   else if (right_cond==2)

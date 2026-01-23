@@ -853,7 +853,7 @@ double MeshGen2D::GetGhostCellArea(int i,int j,int side){ //retrieves the area o
   //side: top = 0, btm = 1, left = 2, right = 3
   double node1_x,node1_y,node2_x,node2_y;
   int node1_id,node2_id;
-  double area;
+  double area = DBL_MIN;
 
   node1_id = i + (j*Nx); node2_id = (i+1) + (j*Nx);
   if (side == 0){ //top side case
