@@ -14,7 +14,7 @@ find_package(Catch2 REQUIRED)
 
 # Set the default build type to Debug if not specified
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
 
 # use mpicc and mpicxx to compile

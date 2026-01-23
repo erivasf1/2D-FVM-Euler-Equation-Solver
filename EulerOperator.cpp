@@ -143,6 +143,7 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
   array<double,4> nbor_close,nbor_far;
 
   if (side==0){ //TOP GHOST CELLS
+    /*
     for (int m=0;m<(int)mesh->top_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_imax) ? fieldij(field,m,mesh->cell_jmax-1,mesh->cell_imax) : mesh->top_cells[m-mesh->cell_imax];
@@ -152,9 +153,23 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       for (int n=0;n<4;n++)
         mesh->top_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
     }
+    */
+    for (int i=0;i<cell_imax;i++){
+   
+      nbor_close = fieldij(field,i,cell_jmax-1,cell_imax); //interior cells only
+      nbor_far = fieldij(field,i,cell_jmax-2,cell_imax);
+ 
+      //applying second order extrapolation
+      for (int n=0;n<4;n++){
+        mesh->top_cells[i][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
+        mesh->top_cells[i+cell_imax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+    
+    }
   }
 
   if (side==1){ //BTM GHOST CELLS
+    /*
     for (int m=0;m<(int)mesh->btm_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_imax) ? fieldij(field,m,0,mesh->cell_imax) : mesh->btm_cells[m-mesh->cell_imax];
@@ -164,9 +179,24 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       for (int n=0;n<4;n++)
         mesh->btm_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
     }
+    */
+    for (int i=0;i<cell_imax;i++){
+   
+      nbor_close = fieldij(field,i,0,cell_imax); //interior cells only
+      nbor_far = fieldij(field,i,1,cell_imax);
+ 
+      //applying second order extrapolation
+      for (int n=0;n<4;n++){
+        mesh->btm_cells[i][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
+        mesh->btm_cells[i+cell_imax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+    
+    }
+
   }
 
   if (side==2){ //LEFT GHOST CELLS
+   /*
     for (int m=0;m<(int)mesh->left_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_jmax) ? fieldij(field,0,m,mesh->cell_imax) : mesh->left_cells[m-mesh->cell_jmax];
@@ -176,9 +206,25 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       for (int n=0;n<4;n++)
         mesh->left_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
     }
+    */
+
+    for (int j=0;j<cell_imax;j++){
+   
+      nbor_close = fieldij(field,0,j,cell_imax); //interior cells only
+      nbor_far = fieldij(field,1,j,cell_imax);
+ 
+      //applying second order extrapolation
+      for (int n=0;n<4;n++){
+        mesh->left_cells[j][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
+        mesh->left_cells[j+cell_jmax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+    
+    }
+
   }
 
   if (side==3){ //RIGHT GHOST CELLS
+    /*
     for (int m=0;m<(int)mesh->right_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_jmax) ? fieldij(field,mesh->cell_imax-1,m,mesh->cell_imax) : mesh->right_cells[m-mesh->cell_jmax];
@@ -187,6 +233,20 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       //applying first order extrapolation
       for (int n=0;n<4;n++)
         mesh->right_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
+    }
+   */
+
+    for (int j=0;j<cell_imax;j++){
+   
+      nbor_close = fieldij(field,cell_imax-1,j,cell_imax); //interior cells only
+      nbor_far = fieldij(field,cell_imax-2,j,cell_imax);
+ 
+      //applying second order extrapolation
+      for (int n=0;n<4;n++){
+        mesh->right_cells[j][n] = 2.0*nbor_close[n]-nbor_far[n]; //1st layer
+        mesh->right_cells[j+cell_jmax][n] = 3.0*nbor_close[n]-2.0*nbor_far[n]; //2nd layer
+      }
+    
     }
   }
 
@@ -640,6 +700,7 @@ array<Vector,2> EulerBASE::MUSCLApprox(vector<array<double,4>>* &field,vector<ar
 array<array<double,4>,4> EulerBASE::FluxLimiter(array<double,4> loc_state,array<double,4> nbor_state,array<double,4> nborloc_state,array<double,4> nbornbor_state){
 
   array<array<double,4>,4> Psi;
+
   if (flux_limiter == 1) //Van Leer Flux Limiter case 
     Psi = VanLeerLimiter(loc_state,nbor_state,nborloc_state,nbornbor_state); 
 

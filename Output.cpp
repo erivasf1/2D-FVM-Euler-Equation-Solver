@@ -67,16 +67,17 @@ void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<arr
       (*errors)[n][i] = (*field)[n][i] - (*exact_field)[n][i];
   }
   
-  //L2 Norms of Error
-  array<double,4> ErrorNorms = sols->ComputeSolutionNorms(errors);
+  //L1 and L2 Norms of Error
+  array<double,4> L1ErrorNorms = sols->ComputeL1SolutionNorms(errors);
+  array<double,4> L2ErrorNorms = sols->ComputeL2SolutionNorms(errors);
 
   //PRINTING TO SCREEN
   Tools::print("-------------------------\n");
   Tools::print("Discretization Error Norms\n");
-  Tools::print("Density: %e\n",ErrorNorms[0]);
-  Tools::print("X-Velocity: %e\n",ErrorNorms[1]);
-  Tools::print("Y-Velocity: %e\n",ErrorNorms[2]);
-  Tools::print("Pressure: %e\n",ErrorNorms[3]);
+  Tools::print("Density: L1 = %e | L2 = %e\n",L1ErrorNorms[0],L2ErrorNorms[0]);
+  Tools::print("X-Velocity: L1 = %e | L2 = %e\n",L1ErrorNorms[1],L2ErrorNorms[1]);
+  Tools::print("Y-Velocity: L1 = %e | L2 = %e\n",L1ErrorNorms[2],L2ErrorNorms[2]);
+  Tools::print("Pressure: L1 = %e | L2 = %e\n",L1ErrorNorms[3],L2ErrorNorms[3]);
 
   //WRITING TO FILE
   std::ofstream myfile(filename,ios::app); //true for append
@@ -90,10 +91,10 @@ void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<arr
   myfile<<"Discretization Error Norms\n";
   myfile<<"Cell Number: "<<mesh->cellnumber<<endl;
   myfile<<"I: "<<mesh->cell_imax<<"  "<<"J: "<<mesh->cell_jmax<<endl;
-  myfile<<"Density: "<<ErrorNorms[0]<<endl;
-  myfile<<"X-Velocity: "<<ErrorNorms[1]<<endl;
-  myfile<<"Y-Velocity: "<<ErrorNorms[2]<<endl;
-  myfile<<"Pressure: "<<ErrorNorms[3]<<endl;
+  myfile<<"Density: "<<L1ErrorNorms[0]<<" "<<L2ErrorNorms[0]<<endl;
+  myfile<<"X-Velocity: "<<L1ErrorNorms[1]<<" "<<L2ErrorNorms[1]<<endl;
+  myfile<<"Y-Velocity: "<<L1ErrorNorms[2]<<" "<<L2ErrorNorms[2]<<endl;
+  myfile<<"Pressure: "<<L1ErrorNorms[3]<<" "<<L2ErrorNorms[3]<<endl;
   
   myfile.close();
 
@@ -117,10 +118,10 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
 
   vector<double> CellNumber;
   vector<double> I,J;
-  vector<double> Density;
-  vector<double> XVelocity;
-  vector<double> YVelocity;
-  vector<double> Pressure;
+  vector<double> Density_L1, Density_L2;
+  vector<double> XVelocity_L1, XVelocity_L2;
+  vector<double> YVelocity_L1, YVelocity_L2;
+  vector<double> Pressure_L1, Pressure_L2;
 
   // READING DISCREIZATION ERROR FILE(.TXT)
   while (std::getline(myfileread,line)){ //reading the line as a string
@@ -142,22 +143,26 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
     }
 
     else if (line.find("Density:") != std::string::npos) { //found Density
-      ss >> label >> value; 
-      Density.push_back(value);
+      ss >> label >> i >> j; 
+      Density_L1.push_back(i);
+      Density_L2.push_back(j);
     }
 
     else if (line.find("X-Velocity:") != std::string::npos) { //found X-Vel.
-      ss >> label >> value; 
-      XVelocity.push_back(value);
+      ss >> label >> i >> j; 
+      XVelocity_L1.push_back(i);
+      XVelocity_L2.push_back(j);
     }
 
     else if (line.find("Y-Velocity:") != std::string::npos) { //found Y-Vel.
-      ss >> label >> value; 
-      YVelocity.push_back(value);
+      ss >> label >> i >> j; 
+      YVelocity_L1.push_back(i);
+      YVelocity_L2.push_back(j);
     }
     else if (line.find("Pressure:") != std::string::npos) { //found Pressure
-      ss >> label >> value; 
-      Pressure.push_back(value);
+      ss >> label >> i >> j; 
+      Pressure_L1.push_back(i);
+      Pressure_L2.push_back(j);
     }
 
   }
@@ -166,18 +171,33 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
   //Reference: Section 4 Slide 31 Notes to calc. order of accuracy (p)
   // NOTE: arrangement of PHat lists start from coarsest and go to finest grids!
 
-  vector<double> PHat_density((int)CellNumber.size()-1,0); //order of accuracy value
-  vector<double> PHat_xvel((int)CellNumber.size()-1,0); //order of accuracy value
-  vector<double> PHat_yvel((int)CellNumber.size()-1,0); //order of accuracy value
-  vector<double> PHat_pressure((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_density_L1((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_density_L2 = PHat_density_L1;
+
+  vector<double> PHat_xvel_L1((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_xvel_L2 = PHat_density_L1;
+
+  vector<double> PHat_yvel_L1((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_yvel_L2 = PHat_density_L1;
+  vector<double> PHat_pressure_L1((int)CellNumber.size()-1,0); //order of accuracy value
+  vector<double> PHat_pressure_L2 = PHat_density_L1;
 
   double r = I[1] / I[0]; //mesh refinement factor
 
+  //Observed order of accuracy calc. for L1
   for (int n=0;n<(int)CellNumber.size()-1;n++){ 
-    PHat_density[n] = (log(Density[n]/Density[n+1])) / log(r);
-    PHat_xvel[n] = (log(XVelocity[n]/XVelocity[n+1])) / log(r);
-    PHat_yvel[n] = (log(YVelocity[n]/YVelocity[n+1])) / log(r);
-    PHat_pressure[n] = (log(Pressure[n]/Pressure[n+1])) / log(r);
+    PHat_density_L1[n] = (log(Density_L1[n]/Density_L1[n+1])) / log(r);
+    PHat_xvel_L1[n] = (log(XVelocity_L1[n]/XVelocity_L1[n+1])) / log(r);
+    PHat_yvel_L1[n] = (log(YVelocity_L1[n]/YVelocity_L1[n+1])) / log(r);
+    PHat_pressure_L1[n] = (log(Pressure_L1[n]/Pressure_L1[n+1])) / log(r);
+ }
+
+  //Observed order of accuracy calc. for L2
+  for (int n=0;n<(int)CellNumber.size()-1;n++){ 
+    PHat_density_L2[n] = (log(Density_L2[n]/Density_L2[n+1])) / log(r);
+    PHat_xvel_L2[n] = (log(XVelocity_L2[n]/XVelocity_L2[n+1])) / log(r);
+    PHat_yvel_L2[n] = (log(YVelocity_L2[n]/YVelocity_L2[n+1])) / log(r);
+    PHat_pressure_L2[n] = (log(Pressure_L2[n]/Pressure_L2[n+1])) / log(r);
  }
 
   vector<double> h; //grid spacing 
@@ -197,7 +217,10 @@ void Output::CalculateOrderofAccuracy(const char *filename_read,const char *file
 
 
   for (int n=0;n<(int)h.size();n++)
-    myfilewrite<<h[n]<<" "<<PHat_density[n]<<" "<<PHat_xvel[n]<<" "<<PHat_yvel[n]<<" "<<PHat_pressure[n]<<endl;
+    myfilewrite<<h[n]<<" "<<PHat_density_L1[n]<<" "<<PHat_density_L2[n]<<" "
+                          <<PHat_xvel_L1[n]<<" "<<PHat_xvel_L2[n]<<" "
+                          <<PHat_yvel_L1[n]<<" "<<PHat_yvel_L2[n]<<" "
+                        <<PHat_pressure_L1[n]<<" "<<PHat_pressure_L2[n]<<endl;
 
 
   //.DAT FORMAT

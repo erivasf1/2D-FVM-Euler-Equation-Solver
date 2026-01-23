@@ -329,42 +329,71 @@ void SpaceVariables2D::ComputeGhostCellCenteredCoordinate(MeshGen2D* &mesh){
 
 }
 //---------------------------------------------------------
-array<double,4> SpaceVariables2D::ComputeSolutionNorms(vector<array<double,4>>* &resid){
+array<double,4> SpaceVariables2D::ComputeL1SolutionNorms(vector<array<double,4>>* &resid){
 
   array<double,4> norm{0.0,0.0,0.0,0.0};
 
-  double imax = (double)resid->size(); //number of interior nodes 
+  double cellnum = (double)resid->size(); //number of interior cells
 
-  //using L2 norm  
-  //Tools::print("Calculating Global Norm\n");
+  //L1 NORM COMPUTATION
   for (int i=0;i<(int)resid->size();i++){
-    //Tools::print("Cell number: %d\n",i);
-    //continuity
-    //Tools::print("continuity res.: %e\n",Resid[i][0]);
-    norm[0]+= pow((*resid)[i][0],2);
-    //x-mom
-    //Tools::print("x-mom. res.: %e\n",Resid[i][1]);
-    norm[1]+= pow((*resid)[i][1],2);
-    //y-mom
-    //Tools::print("y-mom. res.: %e\n",Resid[i][1]);
-    norm[2]+= pow((*resid)[i][2],2);
 
-    //energy
-    //Tools::print("energy res.: %e\n",Resid[i][2]);
-    norm[3]+= pow((*resid)[i][3],2);
+    //Continuity
+    norm[0] += abs((*resid)[i][0]);
+
+    //X-Momentum
+    norm[1] += abs((*resid)[i][1]);
+
+    //Y-Momentum
+    norm[2] += abs((*resid)[i][2]);
+
+    //Energy
+    norm[3] += abs((*resid)[i][3]);
 
   }
-  norm[0] = sqrt(norm[0]/imax); //normalizing by imax
-  norm[1] = sqrt(norm[1]/imax);
-  norm[2] = sqrt(norm[2]/imax);
-  norm[3] = sqrt(norm[3]/imax);
 
-  //Tools::print("Continuity res.: %e\n",norm[0]);
-  //Tools::print("X-Momentum res.: %e\n",norm[1]);
-  //Tools::print("Energy res.: %e\n",norm[2]);
+  //Normalizing by cell number
+  norm[0] /= cellnum;
+  norm[1] /= cellnum;
+  norm[2] /= cellnum;
+  norm[3] /= cellnum;
+
 
   return norm;
 
+}
+//---------------------------------------------------------
+array<double,4> SpaceVariables2D::ComputeL2SolutionNorms(vector<array<double,4>>* &resid){
+
+  array<double,4> norm{0.0,0.0,0.0,0.0};
+
+  double cellnum = (double)resid->size(); //number of interior cells
+
+  //L2 NORM COMPUTATION
+  for (int i=0;i<(int)resid->size();i++){
+
+    //continuity
+    norm[0]+= pow((*resid)[i][0],2);
+
+    //x-mom
+    norm[1]+= pow((*resid)[i][1],2);
+
+    //y-mom
+    norm[2]+= pow((*resid)[i][2],2);
+
+    //energy
+    norm[3]+= pow((*resid)[i][3],2);
+
+  }
+  
+  //Normalizing by cell number (imax)
+  norm[0] = sqrt(norm[0]/cellnum);
+  norm[1] = sqrt(norm[1]/cellnum);
+  norm[2] = sqrt(norm[2]/cellnum);
+  norm[3] = sqrt(norm[3]/cellnum);
+
+
+  return norm;
 
 }
 //---------------------------------------------------------

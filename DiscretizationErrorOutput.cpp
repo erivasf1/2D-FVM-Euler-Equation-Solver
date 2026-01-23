@@ -14,7 +14,7 @@ int main(){
 
   Output Out;
   const char* filename_read = "DiscretizationErrorNorms.txt";
-  const char* filename_write = "OOA_VanLeer_1stOrder_Super.txt";
+  const char* filename_write = "OOA_Roe_2ndOrder_Super.txt";
 
   Out.CalculateOrderofAccuracy(filename_read,filename_write);
 

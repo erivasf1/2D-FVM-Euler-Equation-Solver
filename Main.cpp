@@ -85,28 +85,32 @@ int main() {
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d33.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   //[[maybe_unused]]const char* meshfile = NULL;
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 1e4;
+  const int iter_max = 8e3;
   int iterout = 100; //number of iterations per solution output
-  const double CFL = 1.1; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.7; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
   bool timestep{false}; //true = local time stepping; false = global time stepping
   int time_scheme = 1; //0 for Euler Explicit, 1 for RungeKutta2, 2 for RungeKutta4
 
   // Flux Specifications
-  int flux_scheme{1}; //0=JST, 1=Van Leer, 2 = Roe 
-  double epsilon = 0.0; //0 for 1st order and 1 for 2nd order
+  int flux_scheme{2}; //0=JST, 1=Van Leer, 2 = Roe 
+  double epsilon = 1.0; //0 for 1st order and 1 for 2nd order
   bool epsilon_ramp = false; //true to enable ramp from 2nd order to 1st
   [[maybe_unused]] int ramp_start = 1.2e4; 
   [[maybe_unused]] int ramp_stop = 1.2e4;
 
-  int flux_limiter = 1; //1 for Van Leer
+  int flux_limiter = 0; //0 for disable & 1 for Van Leer
   bool freeze_limiter = false; //true/false for enabling/disabling limiter freeze
   [[maybe_unused]]bool resid_stall{false};//for detecting if residuals have stalled, NOTE: leave as false!
   [[maybe_unused]]int stall_count = 0;
@@ -118,10 +122,10 @@ int main() {
   array<bool,4> check{false,false,false,false}; //false by default to check if under-relaxation is needed
 
   // Governing Eq. Residuals
-  double cont_tol = 1.0e-11;
-  double xmom_tol = 1.0e-11;
-  double ymom_tol = 1.0e-11;
-  double energy_tol = 1.0e-11;
+  double cont_tol = 1.0e-15;
+  double xmom_tol = 1.0e-15;
+  double ymom_tol = 1.0e-15;
+  double energy_tol = 1.0e-15;
 
   //! GENERATING MESH 
   MeshGenBASE* mesh; 
@@ -358,7 +362,7 @@ int main() {
   const char* resid_file = "InitialResiduals.dat"; 
   error->OutputPrimitiveVariables(init_resid,resid_file,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
 
-  InitNorms = sols->ComputeSolutionNorms(init_resid); //computing L2 norm of residuals
+  InitNorms = sols->ComputeL2SolutionNorms(init_resid); //computing L2 norm of residuals
 
   Tools::print("-Initial Residual Norms\n");
   Tools::print("--Continuity:%e\n",InitNorms[0]);
@@ -419,7 +423,7 @@ int main() {
 
 
     euler->ComputeResidual(resid_star,field_star,field_stall,resid_stall);
-    ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
+    ResidualStarNorms = sols->ComputeL2SolutionNorms(resid_star);
     time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
 
@@ -435,7 +439,7 @@ int main() {
         time->SolutionLimiter(field_star); //temporarily reapplying the limiter
 
         euler->ComputeResidual(resid_star,field_star,field_stall,resid_stall);
-        ResidualStarNorms = sols->ComputeSolutionNorms(resid_star);
+        ResidualStarNorms = sols->ComputeL2SolutionNorms(resid_star);
 
         time->UnderRelaxationCheck(ResidualNorms,ResidualStarNorms,C,check);
 
@@ -563,7 +567,9 @@ int main() {
 
 
   stop_time = MPI_Wtime();
-  Tools::print("Elapsed time: %fs\n",stop_time-start_time);
+  double elapsed_min = (stop_time-start_time) / 60.0;
+  double elapsed_hr = elapsed_min / 60.0;
+  Tools::print("Elapsed time: %f s | %f min. | %f hrs.\n",stop_time-start_time,elapsed_min,elapsed_hr);
 
   //! CLEANUP
   delete euler;
