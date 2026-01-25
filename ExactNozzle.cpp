@@ -78,6 +78,15 @@ double Tools::ComputeDotProduct(double &x1,double &y1,double &x2,double &y2){
 
 }
 //-----------------------------------------------------------------------
+array<double,2> Tools::ComputeMidPointofLine(array<double,2> pt1,array<double,2> pt2){
+
+  double x_mid = (pt1[0] + pt2[0]) / 2.0;
+  double y_mid = (pt1[1] + pt2[1]) / 2.0;
+
+  array<double,2> mid_pt{x_mid,y_mid};
+  return mid_pt;
+}
+//-----------------------------------------------------------------------
 
 // SUPERSONICNOZZLE DEFINITIONS
 SuperSonicNozzle::SuperSonicNozzle(double &a,double &b,double &c,double &d,bool &e) //constructor

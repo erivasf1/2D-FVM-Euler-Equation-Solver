@@ -40,7 +40,7 @@ int main() {
   //! INITIALIZATION
   // Scenario
   int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
-  CASE_2D case_2d = INLET;
+  CASE_2D case_2d = AIRFOIL1;
   CASE_MMS case_mms = SUPERSONIC;
 
   // Constants for 1D case or True Cartesian 2D MMS case
@@ -81,9 +81,12 @@ int main() {
   [[maybe_unused]]bool cond_bc{true}; //true for subsonic & false for supersonic (FOR OUTFLOW BC)
 
   // Mesh Specifications
-  //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.fine.385x105.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+
+
+  //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
@@ -96,7 +99,7 @@ int main() {
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 1e5;
+  const int iter_max = 5e3;
   int iterout = 100; //number of iterations per solution output
   const double CFL = 0.9; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
@@ -559,6 +562,9 @@ int main() {
     double C_L = Airfoil_coeffs[1];
     Tools::print("Airfoil Drag Coefficient = %f \n",C_D);
     Tools::print("Airfoil Lift Coefficient = %f \n",C_L);
+
+    const char* file_surfacep = "AirfoilPressureDistribution.txt";
+    euler->ComputeSurfacePresssureCoefficient(file_surfacep,field);
   }
 
   //Closing Residuals file

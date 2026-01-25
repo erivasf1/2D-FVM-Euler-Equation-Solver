@@ -1246,6 +1246,10 @@ array<double,2> EulerBASE::ComputeLiftAndDragCoefficient(vector<array<double,4>>
   return zeros;
 }
 //-----------------------------------------------------------
+void EulerBASE::ComputeSurfacePresssureCoefficient(const char* ,vector<array<double,4>>* &){
+  return;
+} 
+//-----------------------------------------------------------
 EulerBASE::~EulerBASE(){}
 //-----------------------------------------------------------
 // EULER1D DEFINITIONS
@@ -2815,7 +2819,7 @@ array<double,2> Euler2D::ComputeFreeStreamNormalUnitVector(){
 array<double,2> Euler2D::ComputeLiftAndDragForce(vector<array<double,4>>* &field){
    
   int j = 0;
-  [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; // for inlet case
+  [[maybe_unused]] array<double,2> airfoil_split{0.1524,0.0}; 
   array<array<double,4>,2> cell_coords;
   double x_min;
   array<double,4> face_state;
@@ -2887,6 +2891,91 @@ array<double,2> Euler2D::ComputeLiftAndDragCoefficient(vector<array<double,4>>* 
   return coeffs;
 };
 
+//-----------------------------------------------------------
+void Euler2D::ComputeSurfacePresssureCoefficient(const char* filename,vector<array<double,4>>* &field){
+
+  //! PRESSURE COEFFICIENT COMPUTATION
+
+  //Reference: project file
+  double Gamma = GetGamma();
+  double a_bc = sqrt(Gamma*R*T_bc); 
+  double V_bc = Mach_bc * a_bc; //boundary condition velocity
+
+  vector<double> C_P_top, C_P_btm; //lists to save/write data
+  vector<double> X_upper,X_lower;
+  double c_p;
+
+  array<array<double,4>,2> cell_coords;
+  array<double,2> pt1,pt2,mid_pt;
+  double x_min,y_min,x_md_pt;
+
+  array<double,2> airfoil_split{0.1524,0.0};
+  double y_split = 0.0; //splits the top and btm half of airfoil
+
+  double P_surface;
+  double chord_length = GetChordLength();
+
+  double denom = 0.5 * rho_bc * pow(V_bc,2.0); //0.5*rho*V^2
+  
+  for (int i=0;i<cell_imax;i++){
+    cell_coords = mesh->GetCellCoords(i,0);
+    x_min = mesh->ComputeMinCoords(cell_coords)[0];
+    y_min = mesh->ComputeMinCoords(cell_coords)[1];
+ 
+    //ONLY COMPUTING W/ CELLS THAT ARE ATTACHED TO AIRFOIL
+    if (x_min >= airfoil_split[0]) //skipping cell if it isn't attached to the airfoil
+      continue;
+
+    // APPROXIMATING PRESSURE AT SURFACE
+    //face_state = GetFaceState(field,i,j,1); //MUSCL extrapolation
+    P_surface = GetFaceState(field,i,0,1)[3]; //MUSCL extrapolation
+
+    // COMPUTING PRESSURE COEFFICIENT
+    c_p = (P_surface - P_bc) / denom;
+
+    //NON-DIMENSIONALIZED W/ CHORD LENGTH MIDPOINT OF LINE-SEGMENT ON SURFACE
+    pt1[0] = cell_coords[0][0]; pt1[1] = cell_coords[1][0]; //"btm" line of cell
+    pt2[0] = cell_coords[0][1]; pt2[1] = cell_coords[1][1];
+    mid_pt = Tools::ComputeMidPointofLine(pt1,pt2);
+    x_md_pt = mid_pt[0] / chord_length;
+
+    //SAVING XCOORD AND PRESSURE COEFF. TO PERTAINING LISTS
+    if (y_min >= y_split){ //Upper surface of airfoil
+
+      C_P_top.push_back(c_p); //adding c_p to list
+      X_upper.push_back(x_md_pt);
+
+    }
+
+    else{ //Lower surface of airfoil
+      C_P_btm.push_back(c_p);
+      X_lower.push_back(x_md_pt);
+
+    }
+    
+  }
+
+
+  //! WRITING TO FILE
+  ofstream myfile(filename);
+  if (!myfile){ //Error Handling
+    cerr<<"Error Opening Error Norms File to Eval. Order of Accuracy!"<<endl;
+    return; 
+  }
+
+  if ((int)C_P_top.size() != (int)C_P_btm.size())
+    cerr<<"Warning: C_P_top is a different size than C_P_btm!"<<endl;
+
+  for (int n=0;n<(int)C_P_top.size();n++)
+
+    myfile<<X_upper[n]<<"  "<<C_P_top[n]<<"  "<<X_lower[n]<<"  "<<C_P_btm[n]<<endl;
+
+
+  myfile.close();  
+
+
+  return;
+}
 //-----------------------------------------------------------
 Euler2D::~Euler2D(){}
 //-----------------------------------------------------------

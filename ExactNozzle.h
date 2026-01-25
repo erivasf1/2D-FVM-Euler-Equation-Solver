@@ -26,6 +26,8 @@ class Tools{
 
     static double AreaVal(double x); // Returns the area val. at a specified x-location
     static double ComputeDotProduct(double &x1,double &y1,double &x2,double &y2);
+
+    static array<double,2> ComputeMidPointofLine(array<double,2> pt1,array<double,2> pt2);
   
 };
 

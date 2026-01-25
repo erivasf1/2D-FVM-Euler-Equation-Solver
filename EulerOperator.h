@@ -110,6 +110,7 @@ class EulerBASE {
   virtual array<double,2> ComputeFreeStreamTangentUnitVector();
   virtual array<double,2> ComputeFreeStreamNormalUnitVector();
   virtual array<double,2> ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field);
+  virtual void ComputeSurfacePresssureCoefficient(const char* filename,vector<array<double,4>>* &field);
 
   virtual ~EulerBASE();
 };
@@ -237,6 +238,7 @@ class Euler2D : public EulerBASE {
   array<double,2> ComputeFreeStreamNormalUnitVector() override;
   array<double,2> ComputeLiftAndDragForce(vector<array<double,4>>* &field);
   array<double,2> ComputeLiftAndDragCoefficient(vector<array<double,4>>* &field) override;
+  void ComputeSurfacePresssureCoefficient(const char* filename,vector<array<double,4>>* &field) override;
 
   ~Euler2D();
 
