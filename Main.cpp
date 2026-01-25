@@ -39,8 +39,8 @@ int main() {
 
   //! INITIALIZATION
   // Scenario
-  int scenario = 3; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
-  CASE_2D case_2d = AIRFOIL1;
+  int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
+  CASE_2D case_2d = INLET;
   CASE_MMS case_mms = SUPERSONIC;
 
   // Constants for 1D case or True Cartesian 2D MMS case
@@ -83,9 +83,9 @@ int main() {
   // Mesh Specifications
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
-  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d33.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
@@ -96,11 +96,11 @@ int main() {
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 1e4;
+  const int iter_max = 1e5;
   int iterout = 100; //number of iterations per solution output
-  const double CFL = 0.7; //CFL number (must <= 1 for Euler Explicit integration)
+  const double CFL = 0.9; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
-  bool timestep{true}; //true = local time stepping; false = global time stepping
+  bool timestep{false}; //true = local time stepping; false = global time stepping
   int time_scheme = 1; //0 for Euler Explicit, 1 for RungeKutta2, 2 for RungeKutta4
 
   // Flux Specifications
@@ -110,7 +110,7 @@ int main() {
   [[maybe_unused]] int ramp_start = 1.2e4; 
   [[maybe_unused]] int ramp_stop = 1.2e4;
 
-  int flux_limiter = 0; //0 for disable & 1 for Van Leer
+  int flux_limiter = 1; //0 for disable & 1 for Van Leer
   bool freeze_limiter = false; //true/false for enabling/disabling limiter freeze
   [[maybe_unused]]bool resid_stall{false};//for detecting if residuals have stalled, NOTE: leave as false!
   [[maybe_unused]]int stall_count = 0;
@@ -271,7 +271,7 @@ int main() {
     Tools::print("N/A\n");
   
   // AIRFOIL STATS
-  if (scenario == 2){
+  if (scenario == 2 && (case_2d == AIRFOIL1 || case_2d == AIRFOIL2)){
     Tools::print("-Airfoil Stats:\n");
     if (case_2d == AIRFOIL1)
       Tools::print("--AOA = 0 degrees\n");

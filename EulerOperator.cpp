@@ -227,7 +227,7 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
     }
     */
 
-    for (int j=0;j<cell_imax;j++){
+    for (int j=0;j<cell_jmax;j++){
    
       nbor_close = fieldij(field,0,j,cell_imax); //interior cells only
       nbor_far = fieldij(field,1,j,cell_imax);
@@ -263,7 +263,7 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
     }
    */
 
-    for (int j=0;j<cell_imax;j++){
+    for (int j=0;j<cell_jmax;j++){
    
       nbor_close = fieldij(field,cell_imax-1,j,cell_imax); //interior cells only
       nbor_far = fieldij(field,cell_imax-2,j,cell_imax);
