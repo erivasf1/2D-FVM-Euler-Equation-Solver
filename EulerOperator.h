@@ -104,7 +104,7 @@ class EulerBASE {
 
   //INLET SPECIFIC
   virtual double ComputeTotalPressure(array<double,4> &sols);
-  virtual double ComputePressureLoss(vector<array<double,4>>* &field);
+  virtual double ComputePressureLoss(const char* &filename,vector<array<double,4>>* &field);
 
   //AIRFOIL SPECIFIC
   virtual array<double,2> ComputeFreeStreamTangentUnitVector();
@@ -230,7 +230,7 @@ class Euler2D : public EulerBASE {
 
   //INLET 
   double ComputeTotalPressure(array<double,4> &sols) override; //INLET ONLY
-  double ComputePressureLoss(vector<array<double,4>>* &field) override; 
+  double ComputePressureLoss(const char* &filename,vector<array<double,4>>* &field) override; 
 
   //AIRFOIL
   double GetChordLength(); //TODO: rn this is hard-coded!

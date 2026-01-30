@@ -1227,7 +1227,7 @@ double EulerBASE::ComputeTotalPressure(array<double,4> &){
   return 0.0;
 }
 //-----------------------------------------------------------
-double EulerBASE::ComputePressureLoss(vector<array<double,4>>* &){
+double EulerBASE::ComputePressureLoss(const char* &,vector<array<double,4>>* &){
   return 0.0;
 }
 //-----------------------------------------------------------
@@ -2745,7 +2745,7 @@ double Euler2D::ComputeTotalPressure(array<double,4> &sols){
 }
 
 //-----------------------------------------------------------
-double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
+double Euler2D::ComputePressureLoss(const char* &filename,vector<array<double,4>>* &field){
 
   int i=mesh->cell_imax-1; //last layer of interior cells before outflow
   array<double,4> state_face; //extrapolated state at face
@@ -2783,6 +2783,25 @@ double Euler2D::ComputePressureLoss(vector<array<double,4>>* &field){
   }
 
   P0_loss = P0_diff / H;
+
+  //! WRITING TO FILE
+  std::ofstream myfile(filename,ios::app); //true for append
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return P0_loss;
+  }
+
+  myfile<<"-------------------------\n";
+  myfile<<"Inlet Total Pressure Loss\n";
+  myfile<<"I: "<<cell_imax<<"  "<<"J: "<<cell_jmax<<endl;
+  myfile<<"Loss: "<<P0_loss<<endl;
+  
+  myfile.close();
+  
+
+
+
   return P0_loss;
 }
 
