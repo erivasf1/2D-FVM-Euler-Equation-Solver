@@ -2792,10 +2792,11 @@ double Euler2D::ComputePressureLoss(const char* &filename,vector<array<double,4>
     return P0_loss;
   }
 
-  myfile<<"-------------------------\n";
-  myfile<<"Inlet Total Pressure Loss\n";
-  myfile<<"I: "<<cell_imax<<"  "<<"J: "<<cell_jmax<<endl;
-  myfile<<"Loss: "<<P0_loss<<endl;
+  //myfile<<"-------------------------\n";
+  //myfile<<"Inlet Total Pressure Loss\n";
+  //myfile<<"I: "<<cell_imax<<"  "<<"J: "<<cell_jmax<<endl;
+  //myfile<<"Loss: "<<P0_loss<<endl;
+  myfile<<cell_imax<<"  "<<cell_jmax<<"  "<<P0_loss<<endl;
   
   myfile.close();
   

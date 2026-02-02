@@ -40,7 +40,7 @@ int main() {
   //! INITIALIZATION
   // Scenario
   int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
-  CASE_2D case_2d = AIRFOIL2;
+  CASE_2D case_2d = INLET;
   CASE_MMS case_mms = SUPERSONIC;
 
   // Constants for 1D case or True Cartesian 2D MMS case
@@ -84,13 +84,13 @@ int main() {
   //AIRFOIL GRIDS
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.extra-coarse.27x14.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.medium.193x53.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.fine.385x105.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/AirfoilGrids/NACA64A006.fine.385x105.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   // INLET GRIDS
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.105x33.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.209x65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   //MMS GRIDS
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
