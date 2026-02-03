@@ -39,7 +39,7 @@ int main() {
 
   //! INITIALIZATION
   // Scenario
-  int scenario = 2; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
+  int scenario = 3; //1 = 1D, 2 = 2D, 3 = 2D MMS, 4 = TRUE CARTESIAN of MMS
   CASE_2D case_2d = INLET;
   CASE_MMS case_mms = SUPERSONIC;
 
@@ -90,7 +90,7 @@ int main() {
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.53x17.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.105x33.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.209x65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  [[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  //[[maybe_unused]]const char* meshfile = "Grids/InletGrids/Inlet.417x129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   //MMS GRIDS
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d9.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
@@ -98,13 +98,13 @@ int main() {
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d33.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d65.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
   //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d129.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
-  //[[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
+  [[maybe_unused]]const char* meshfile = "Grids/CurvilinearGrids/curv2d257.grd"; //name of 2D file -- Note: set to NULL if 1D case is to be ran
 
   //[[maybe_unused]]const char* meshfile = NULL;
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 1e5;
+  const int iter_max = 8e3;
   int iterout = 500; //number of iterations per solution output
   const double CFL = 0.98; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
@@ -112,7 +112,7 @@ int main() {
   int time_scheme = 1; //0 for Euler Explicit, 1 for RungeKutta2, 2 for RungeKutta4
 
   // Flux Specifications
-  int flux_scheme{1}; //0=JST, 1=Van Leer, 2 = Roe 
+  int flux_scheme{2}; //0=JST, 1=Van Leer, 2 = Roe 
   double epsilon = 1.0; //0 for 1st order and 1 for 2nd order
   bool epsilon_ramp = false; //true to enable ramp from 2nd order to 1st
   [[maybe_unused]] int ramp_start = 1.2e4; 

@@ -140,20 +140,33 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
 
   //1st Order implementation
   //u(ghost) = 2*u(nbor_close)-u(nbor_far)
-  array<double,4> nbor_close,nbor_far;
+
+  //2nd Order implementation
+  //u(ghost) = u_nbor_close + (u_nbor_farfar - 4*u_nborfar + 3*nbor_close) / 2.0
+  array<double,4> nbor_close,nbor_far,nbor_far_far;
 
   if (side==0){ //TOP GHOST CELLS
-    /*
+    
     for (int m=0;m<(int)mesh->top_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_imax) ? fieldij(field,m,mesh->cell_jmax-1,mesh->cell_imax) : mesh->top_cells[m-mesh->cell_imax];
       nbor_far = (m<mesh->cell_imax) ? fieldij(field,m,mesh->cell_jmax-2,mesh->cell_imax) : fieldij(field,m-mesh->cell_imax,mesh->cell_jmax-1,mesh->cell_imax);
+      nbor_far_far = (m<mesh->cell_imax) ? fieldij(field,m,mesh->cell_jmax-3,mesh->cell_imax) : fieldij(field,m-mesh->cell_imax,mesh->cell_jmax-2,mesh->cell_imax);
 
-      //applying first order extrapolation
+      //applying second order extrapolation
       for (int n=0;n<4;n++)
-        mesh->top_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
+        mesh->top_cells[m][n] = nbor_close[n] + (nbor_far_far[n] - 4.0*nbor_far[n] + 3.0*nbor_close[n])/ 2.0;
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int j=0;j<2;j++){
+        mesh->top_cells[m][index[j]] = (mesh->top_cells[m][index[j]] < 0.0) ? DBL_MIN : mesh->top_cells[m][index[j]];
+
+      }
     }
-    */
+
+    
+    /*
     for (int i=0;i<cell_imax;i++){
    
       nbor_close = fieldij(field,i,cell_jmax-1,cell_imax); //interior cells only
@@ -174,23 +187,35 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       }
     
     }
+    */
 
   
 
   }
 
   if (side==1){ //BTM GHOST CELLS
-    /*
+    
     for (int m=0;m<(int)mesh->btm_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_imax) ? fieldij(field,m,0,mesh->cell_imax) : mesh->btm_cells[m-mesh->cell_imax];
       nbor_far = (m<mesh->cell_imax) ? fieldij(field,m,1,mesh->cell_imax) : fieldij(field,m-mesh->cell_imax,0,mesh->cell_imax);
+      nbor_far_far = (m<mesh->cell_imax) ? fieldij(field,m,2,mesh->cell_imax) : fieldij(field,m-mesh->cell_imax,1,mesh->cell_imax);
 
-      //applying first order extrapolation
+      //applying second order extrapolation
       for (int n=0;n<4;n++)
-        mesh->btm_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
+        mesh->btm_cells[m][n] = nbor_close[n] + (nbor_far_far[n] - 4.0*nbor_far[n] + 3.0*nbor_close[n])/ 2.0;
+
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int j=0;j<2;j++){
+        mesh->btm_cells[m][index[j]] = (mesh->btm_cells[m][index[j]] < 0.0) ? DBL_MIN : mesh->btm_cells[m][index[j]];
+
+      }
+
     }
-    */
+    
+
+    /*
     for (int i=0;i<cell_imax;i++){
    
       nbor_close = fieldij(field,i,0,cell_imax); //interior cells only
@@ -211,22 +236,33 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       }
     
     }
+    */
 
   }
 
   if (side==2){ //LEFT GHOST CELLS
-   /*
+   
     for (int m=0;m<(int)mesh->left_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_jmax) ? fieldij(field,0,m,mesh->cell_imax) : mesh->left_cells[m-mesh->cell_jmax];
       nbor_far = (m<mesh->cell_jmax) ? fieldij(field,1,m,mesh->cell_imax) : fieldij(field,0,m-mesh->cell_jmax,mesh->cell_imax);
+      nbor_far_far = (m<mesh->cell_jmax) ? fieldij(field,2,m,mesh->cell_imax) : fieldij(field,1,m-mesh->cell_jmax,mesh->cell_imax);
 
       //applying first order extrapolation
       for (int n=0;n<4;n++)
-        mesh->left_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
-    }
-    */
+        mesh->left_cells[m][n] = nbor_close[n] + (nbor_far_far[n] - 4.0*nbor_far[n] + 3.0*nbor_close[n])/ 2.0;
+        //mesh->left_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
 
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int i=0;i<2;i++){
+        mesh->left_cells[m][index[i]] = (mesh->left_cells[m][index[i]] < 0.0) ? DBL_MIN : mesh->left_cells[m][index[i]];
+
+      }
+
+    }
+    
+    /*
     for (int j=0;j<cell_jmax;j++){
    
       nbor_close = fieldij(field,0,j,cell_imax); //interior cells only
@@ -247,22 +283,32 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       }
     
     }
+    */
 
   }
 
   if (side==3){ //RIGHT GHOST CELLS
-    /*
+    
     for (int m=0;m<(int)mesh->right_cells.size();m++){
       //retrieving the nbor cells
       nbor_close = (m<mesh->cell_jmax) ? fieldij(field,mesh->cell_imax-1,m,mesh->cell_imax) : mesh->right_cells[m-mesh->cell_jmax];
       nbor_far = (m<mesh->cell_jmax) ? fieldij(field,mesh->cell_imax-2,m,mesh->cell_imax) : fieldij(field,mesh->cell_imax-1,m-mesh->cell_jmax,mesh->cell_imax);
+      nbor_far_far = (m<mesh->cell_jmax) ? fieldij(field,mesh->cell_imax-3,m,mesh->cell_imax) : fieldij(field,mesh->cell_imax-2,m-mesh->cell_jmax,mesh->cell_imax);
 
       //applying first order extrapolation
       for (int n=0;n<4;n++)
-        mesh->right_cells[m][n] = 2.0*nbor_close[n]-nbor_far[n];
-    }
-   */
+        mesh->right_cells[m][n] = nbor_close[n] + (nbor_far_far[n] - 4.0*nbor_far[n] + 3.0*nbor_close[n])/ 2.0;
 
+      //negative density and pressure check
+      array<int,2> index{0,3};
+      for (int i=0;i<2;i++)
+        mesh->right_cells[m][index[i]] = (mesh->right_cells[m][index[i]] < 0.0) ? DBL_MIN : mesh->right_cells[m][index[i]];
+
+
+    }
+   
+
+    /*
     for (int j=0;j<cell_jmax;j++){
    
       nbor_close = fieldij(field,cell_imax-1,j,cell_imax); //interior cells only
@@ -283,6 +329,7 @@ void EulerBASE::ApplyOutflow(vector<array<double,4>>* &field,int side){
       }
     
     }
+    */
   }
 
   return;
@@ -3430,7 +3477,6 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((top_cond==0) && (setup==true))
     ApplyMSInflow(0);
   //else if (top_cond==1)
-  //else if (top_cond==1) //temp: setup==true here for now
   else if (top_cond==1 && setup==true) //temp: setup==true here for now
     ApplyOutflow(field,0);
   else if (top_cond==2)
@@ -3441,7 +3487,6 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((btm_cond==0) && (setup==true))
     ApplyMSInflow(1);
   //else if (btm_cond==1)
-  //else if (btm_cond==1)//temp: setup==true here for now
   else if (btm_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,1);
   else if (btm_cond==2)
@@ -3452,7 +3497,6 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if ((left_cond==0) && (setup==true))
     ApplyMSInflow(2);
   //else if (left_cond==1)
-  //else if (left_cond==1)//temp: setup==true here for now
   else if (left_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,2);
   else if (left_cond==2)
@@ -3463,7 +3507,6 @@ void Euler2DMMS::Enforce2DBoundaryConditions(vector<array<double,4>>* &field,boo
   if (right_cond==0 && (setup==true))
     ApplyMSInflow(3);
   //else if (right_cond==1)
-  //else if (right_cond==1)//temp: setup==true here for now
   else if (right_cond==1 && setup==true)//temp: setup==true here for now
     ApplyOutflow(field,3);
   else if (right_cond==2)
