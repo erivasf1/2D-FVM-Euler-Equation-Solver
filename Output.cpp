@@ -60,6 +60,27 @@ void Output::PrintResidualNorm(int &cellnum,int &n){
 }
 */
 //-----------------------------------------------------------
+void Output::OutputResidualNorms(const char* &filename,int iter,array<double,4> ResidualNorms){
+
+  std::ofstream myfile(filename,ios::app);
+  //Error handling
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  //WRITING RESIDUAL NORMS FOR PLOTTING
+  //col1: iter, col2: continuity, col3: x-mom, col4: y-mom, col5: energy
+  myfile<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "
+                                            <<ResidualNorms[2]<<"  "
+                                            <<ResidualNorms[3]<<endl;
+
+  myfile.close();
+
+  return;
+
+}
+//-----------------------------------------------------------
 void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<array<double,4>>* &exact_field,vector<array<double,4>>* &errors,SpaceVariables2D* &sols,MeshGenBASE* &mesh,const char* &filename){
 
   for (int n=0;n<(int)field->size();n++){ //calculating errors

@@ -378,6 +378,7 @@ int main() {
   Tools::print("--Y-Momentum:%e\n",InitNorms[2]);
   Tools::print("--Energy:%e\n\n",InitNorms[3]);
 
+  error->OutputResidualNorms(resid_file,0,InitNorms);
 
 
   string it,name; //used for outputting file name
@@ -500,6 +501,9 @@ int main() {
         euler->ComputeMSError(field_ms_error,field,field_ms);
         error->OutputPrimitiveVariables(field_ms_error,filename_mms_error,false,iter,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
       }
+ 
+      //writing residuals to resid file
+      error->OutputResidualNorms(resid_file,iter,ResidualNorms);
 
       
       //Printing to TECPLOT
