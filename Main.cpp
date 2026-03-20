@@ -46,7 +46,7 @@ int main() {
   // Constants for 1D case or True Cartesian 2D MMS case
   [[maybe_unused]]double xmin = 0.0; [[maybe_unused]]double xmax = 1.0;
   [[maybe_unused]]double ymin = 0.0; [[maybe_unused]]double ymax = 1.0;
-  [[maybe_unused]]int Nx = 9; [[maybe_unused]]int Ny = 9;
+  [[maybe_unused]]int Nx = 17; [[maybe_unused]]int Ny = 17;
 
   // Boundary Conditions Specification
   //FOR NOW: MMS case is initialized with MS & boundaries are set to outflow for extrapolating to ghost cells
@@ -112,7 +112,7 @@ int main() {
   int time_scheme = 1; //0 for Euler Explicit, 1 for RungeKutta2, 2 for RungeKutta4
 
   // Flux Specifications
-  int flux_scheme{2}; //0=JST, 1=Van Leer, 2 = Roe 
+  int flux_scheme{1}; //0=JST, 1=Van Leer, 2 = Roe 
   double epsilon = 1.0; //0 for 1st order and 1 for 2nd order
   bool epsilon_ramp = false; //true to enable ramp from 2nd order to 1st
   [[maybe_unused]] int ramp_start = 1.2e4; 
@@ -303,13 +303,11 @@ int main() {
   //! COMPUTING MANUFACTURED SOLUTION AND SOURCE TERMS (MMS ONLY)
   if ((scenario == 3) || (scenario == 4)){
     euler->SetCoefficients(); //setting supersonic or subsonic coefficients here
-    string mms_sol_filename = "ManufacturedSols.vts";
-    string mms_source_filename = "SourceTerms.vts";
+    string mms_sol_filename = "ManufacturedSols.vts"; string mms_source_filename = "SourceTerms.vts";
     euler->ManufacturedPrimitiveSols(field_ms,sols); //!< computing manufactured sol.
     euler->EvalSourceTerms(sols); //!< computing manufactured source terms
     error->OutputPrimitiveVariables_VTS(mms_sol_filename,field_ms,mesh);
-    error->OutputPrimitiveVariables_VTS(mms_source_filename,field_ms_source,mesh);
-    //error->OutputManufacturedSourceTerms(mms_source_filename,field_ms_source,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
+    error->OutputManufacturedSourceTerms(mms_source_filename,field_ms_source,mesh);
 
   }
 

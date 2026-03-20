@@ -444,156 +444,90 @@ void Output::OutputPrimitiveVariables_VTS(string filename,vector<array<double,4>
   myfile << "  </StructuredGrid>\n";
   myfile << "</VTKFile>\n";
 
-/*
-<?xml version="1.0"?>
-<VTKFile type="RectilinearGrid" version="0.1" byte_order="LittleEndian">
-  <RectilinearGrid WholeExtent="0 3 0 3 0 2">
-  <!--                               nx  ny  nz  (node counts, so cells = n-1) -->
-
-    <Piece Extent="0 3 0 3 0 2">
-
-      <!-- ============================================================ -->
-      <!--  CELL DATA (FVM solution lives here)                         -->
-      <!-- ============================================================ -->
-      <CellData Scalars="Pressure" Vectors="Velocity">
-
-        <DataArray type="Float64" Name="Pressure" NumberOfComponents="1" format="ascii">
-          <!-- One value per cell: (nx-1)*(ny-1)*(nz-1) = 3*3*2 = 18 values -->
-          <!-- Ordering: i varies fastest, then j, then k               -->
-          101325.0 101320.0 101315.0
-          101310.0 101305.0 101300.0
-          101295.0 101290.0 101285.0
-          101280.0 101275.0 101270.0
-          101265.0 101260.0 101255.0
-          101250.0 101245.0 101240.0
-        </DataArray>
-
-        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii">
-          <!-- (Ux Uy Uz) per cell, same ordering -->
-          1.5 0.0 0.0   1.4 0.0 0.0   1.3 0.0 0.0
-          1.2 0.0 0.0   1.1 0.0 0.0   1.0 0.0 0.0
-          0.9 0.0 0.0   0.8 0.0 0.0   0.7 0.0 0.0
-          0.6 0.0 0.0   0.5 0.0 0.0   0.4 0.0 0.0
-          0.3 0.0 0.0   0.2 0.0 0.0   0.1 0.0 0.0
-          0.0 0.0 0.0   0.0 0.0 0.0   0.0 0.0 0.0
-        </DataArray>
-
-      </CellData>
-
-      <!-- ============================================================ -->
-      <!--  MESH: Just three 1D coordinate arrays — no connectivity!    -->
-      <!-- ============================================================ -->
-      <Coordinates>
-        <!-- X node coordinates (nx+1 = 4 values) -->
-        <DataArray type="Float64" format="ascii">
-          0.0  0.5  1.5  3.0
-        </DataArray>
-
-        <!-- Y node coordinates (ny+1 = 4 values) -->
-        <DataArray type="Float64" format="ascii">
-          0.0  0.3  0.8  1.5
-        </DataArray>
-
-        <!-- Z node coordinates (nz+1 = 3 values) -->
-        <DataArray type="Float64" format="ascii">
-          0.0  0.5  1.0
-        </DataArray>
-      </Coordinates>
-
-    </Piece>
-  </RectilinearGrid>
-</VTKFile>
-*/
-
 
 }
 //-----------------------------------------------------------
-void Output::OutputManufacturedSourceTerms(vector<array<double,4>>* &field,string filename,bool cond,int iter,vector<double> &xcoords,vector<double> &ycoords,int cell_number,int imax,int jmax){
+void Output::OutputManufacturedSourceTerms(string filename,vector<array<double,4>>* &field,MeshGenBASE* &mesh){
 
-  std::ofstream myfile(filename,(cond==true) ? ios::app : ios::out); //true for append
-  //myfile.open(filename);
+
+  std::ofstream myfile(filename); 
 
   if (!myfile){ //checking if file opened successfully
     cerr<<"Error: Could Not Open File "<<filename<<endl;
     return;
   }
 
-  if (cond==false){ //start of .dat file -- printing initial parameters
-    myfile<<"TITLE = \" 2D Field Solutions \""<<endl;
-    myfile<<"VARIABLES = \"X\",\"Y\",\"Continuity\",\"X-Momentum\",\"Y-Momentum\",\"Energy\""<<endl;
+  int NI = mesh->cell_imax; int NJ = mesh->cell_jmax; //# of cells in each dir.
+  int NPI = mesh->cell_imax + 1; int NPJ = mesh->cell_jmax + 1; //# of pts. in each dir.
+
+  //-----------------------------HEADER-------------------------------
+  myfile<<"<?xml version=\"1.0\"?>"<<endl;
+  myfile<<"<VTKFile type=\"StructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">"<<endl;
+  myfile<<"  <StructuredGrid WholeExtent=\"0 "<<NI<<" 0 "<<NJ<<" 0 1\">"<<endl;
+  myfile<<"    <Piece Extent=\"0 "<<NI<<" 0 "<<NJ<<" 0 1\">"<<endl;
+
+
+  //-----------------------------POINT DATA-------------------------------
+  myfile<<"      <Points>"<<endl;
+  myfile<<"        <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">"<<endl;;
+  int id; //for indexing pts.
+  for (int k=0;k<2;k++){
+    for (int j=0;j<NPJ;j++){
+      for (int i=0;i<NPI;i++){
+       id = j * NPI + i;
+
+        myfile<<"          "<<mesh->xcoords[id]<<" "<<mesh->ycoords[id]<<" "<<k<<endl;
+
+      }
+    }
   }
+  myfile<<"        </DataArray>"<<endl;
+  myfile<<"      </Points>"<<endl;
 
-  myfile<<"ZONE T="<<"\""<<iter<<"\""<<endl; //Now adding zone specific info.
-  myfile<<"I="<<imax<<", "<<"J="<<jmax<<endl;
-  myfile<<"DATAPACKING=BLOCK"<<endl;
-  //myfile<<"DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE )"<<endl;
-  myfile<<"VARLOCATION=([3-6]=CELLCENTERED)"<<endl; //-> tells Tecplot this is cell-centered val (must be size (imax-1)*(jmax-1) size
+  //-----------------------------CELL DATA-------------------------------
+  myfile<<"      <CellData Scalars=\"Continuity Energy\" Vectors=\"Momentum\">"<<endl;
 
-
-  // Saving all primitive variables in their own corresponding vector
-  vector<double> cont,xmom,ymom,energy;
-
-  for (int i=0;i<cell_number;i++){
-    cont.push_back((*field)[i][0]);
-    xmom.push_back((*field)[i][1]);
-    ymom.push_back((*field)[i][2]);
-    energy.push_back((*field)[i][3]);
-  }
-
-  int count = 0;
-  // Writing Xcoords
-  for (int n=0;n<(int)xcoords.size();n++){
-    count++;
-    myfile<<std::setw(15)<<xcoords[n];
-    if (count % 4 == 0)
-      myfile<<endl;
-  }
-
-  // Writing Ycoords
-  for (int n=0;n<(int)ycoords.size();n++){
-    count++;
-    myfile<<std::setw(15)<<ycoords[n];
-    if (count % 4 == 0)
-      myfile<<endl;
-  }
-
-
-  // Writing Continuity
-  for (int n=0;n<(int)cont.size();n++){
-    count++;
-    myfile<<std::setw(15)<<cont[n];
-    if (count % 4 == 0)
-      myfile<<endl;
-  }
+  //DENSITY
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Continuity\" NumberOfComponents=\"1\" format=\"ascii\">"<<endl;;
   
-  // Writing X-Momentum
-  for (int n=0;n<(int)xmom.size();n++){
-    count++;
-    myfile<<std::setw(15)<<xmom[n];
-    if (count % 4 == 0)
-      myfile<<endl;
+  for (int n=0;n<mesh->cellnumber;n++){
+      myfile << (*field)[n][0] << " ";
+      if ((n + 1) % 3 == 0) myfile << "\n";
   }
+  if (mesh->cellnumber % 3 != 0) myfile << "\n";
 
-  // Writing Y-Momentum
-  for (int n=0;n<(int)ymom.size();n++){
-    count++;
-    myfile<<std::setw(15)<<ymom[n];
-    if (count % 4 == 0)
-      myfile<<endl;
+  myfile << "        </DataArray>"<<endl;
+  
+  //PRESSURE
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Energy\" NumberOfComponents=\"1\" format=\"ascii\">"<<endl;;
+  
+  for (int n=0;n<mesh->cellnumber;n++){
+      myfile << (*field)[n][3] << " ";
+      if ((n + 1) % 3 == 0) myfile << "\n";
   }
+  if (mesh->cellnumber % 3 != 0) myfile << "\n";
 
-  // Writing Energy
-  for (int n=0;n<(int)energy.size();n++){
-    count++;
-    myfile<<std::setw(15)<<energy[n];
-    if (count % 4 == 0)
-      myfile<<endl;
+  myfile << "        </DataArray>"<<endl;
+
+  //VELOCITY
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Momentum\" NumberOfComponents=\"3\" format=\"ascii\">"<<endl;;
+  
+  for (int n=0;n<mesh->cellnumber;n++){
+      myfile << (*field)[n][1] << " " << (*field)[n][2]<<" "<<0.0<<endl;
+      if ((n + 1) % 3 == 0) myfile << "\n";
   }
+  if (mesh->cellnumber % 3 != 0) myfile << "\n";
 
-  myfile.close(); //closing file writing to it
-  //myfile.flush();
+  myfile << "        </DataArray>"<<endl;
+  myfile << "      </CellData>"<<endl;
 
-  return;
+  //-----------------------------FOOTER-------------------------------
+  myfile << "    </Piece>\n";
+  myfile << "  </StructuredGrid>\n";
+  myfile << "</VTKFile>\n";
+
+
+
 }
 //-----------------------------------------------------------
 void Output::OutputGhostCoords(string filename,vector<double> &xcoords,vector<double> &ycoords,int Nx,int Ny){
