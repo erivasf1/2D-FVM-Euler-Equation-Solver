@@ -104,7 +104,7 @@ int main() {
   [[maybe_unused]]int cellnum = 100; //recommending an even number for cell face at the throat of nozzle (NOTE: will get reassigned val. if mesh is provided)
 
   // Temporal Specifications
-  const int iter_max = 100;
+  const int iter_max = 10;
   int iterout = 1; //number of iterations per solution output
   const double CFL = 0.98; //CFL number (must <= 1 for Euler Explicit integration)
   //const double CFL = 1e-2; //CFL number (must <= 1 for Euler Explicit integration)
@@ -128,6 +128,11 @@ int main() {
   array<double,4> Omega{1.0,1.0,1.0,1.0}; //FWD Advance Limiter
   int subiter_max = 0; //max number of relaxation sub-iterations
   array<bool,4> check{false,false,false,false}; //false by default to check if under-relaxation is needed
+
+  // Outputting results parameters
+  string results_prefix = "Results/";
+  string resids_prefix = "Residuals/";
+  string mmserror_prefix = "MMSError/";
 
   // Governing Eq. Residuals
   double cont_tol = 1.0e-15;
@@ -221,12 +226,12 @@ int main() {
 
   SpaceVariables2D Sols; //for operating on Field variables
 
-  Output Error; //for discretization error operations
+  Output Error(results_prefix,resids_prefix,mmserror_prefix,iterout,mesh); 
 
   //Pointers to Objects
   SpaceVariables2D* sols = &Sols;
 
-  Output* error = &Error;
+  Output* output = &Error;
 
   //! PRINTING OUT SIMULATION INFO
   // TITLE
@@ -306,31 +311,31 @@ int main() {
     string mms_sol_filename = "ManufacturedSols.vts"; string mms_source_filename = "SourceTerms.vts";
     euler->ManufacturedPrimitiveSols(field_ms,sols); //!< computing manufactured sol.
     euler->EvalSourceTerms(sols); //!< computing manufactured source terms
-    error->OutputPrimitiveVariables_VTS(mms_sol_filename,field_ms,mesh);
-    error->OutputManufacturedSourceTerms(mms_source_filename,field_ms_source,mesh);
+    output->OutputPrimitiveVariables_VTS(mms_sol_filename,field_ms);
+    output->OutputManufacturedSourceTerms(mms_source_filename,field_ms_source);
 
   }
 
   //! SETTING INITIAL CONDITIONS
   euler->SetInitialConditions(field);
 
-  string val = error->zeroPad(0,4);
+  string val = output->zeroPad(0,4);
   string init_name = "Results/Iteration_";
   init_name += val;
   init_name += ".vts";
   const char* filename_init = init_name.c_str();
-  error->OutputPrimitiveVariables_VTS(filename_init,field,mesh);
+  output->OutputPrimitiveVariables_VTS(filename_init,field);
   iter_visuals_primitive.push_back(val); //inserting initial sol. to iter_visuals for visualization
 
   //initial error w/ Manufacturd Sol.
   if ( (scenario == 3) || (scenario == 4) ){ 
-    string mms_val = error->zeroPad(0,4);
+    string mms_val = output->zeroPad(0,4);
     string text = "MMSError/Iteration_";
     text += mms_val;
     text += ".vts";
     const char* filename_mms_error = text.c_str();
     euler->ComputeMSError(field_ms_error,field,field_ms);
-    error->OutputPrimitiveVariables_VTS(filename_mms_error,field_ms_error,mesh);
+    output->OutputPrimitiveVariables_VTS(filename_mms_error,field_ms_error);
     iter_visuals_MMSerror.push_back(mms_val);
   }
 
@@ -358,8 +363,7 @@ int main() {
     time->RampEpsilon(ramp_start,ramp_stop,0);
 
   // SETTING BOUNDARY CONDITIONS
-  //generates ghost cells here too
-  euler->Setup2DBoundaryConditions(field,error); 
+  euler->Setup2DBoundaryConditions(field,output); 
 
   //time->SolutionLimiter(field_test);
 
@@ -373,7 +377,7 @@ int main() {
 
   //debug: Residual
   const char* resid_file = "Residuals/InitialResiduals.vts"; 
-  error->OutputPrimitiveVariables(init_resid,resid_file,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
+  output->OutputPrimitiveVariables(init_resid,resid_file,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
 
   InitNorms = sols->ComputeL2SolutionNorms(init_resid); //computing L2 norm of residuals
 
@@ -383,7 +387,7 @@ int main() {
   Tools::print("--Y-Momentum:%e\n",InitNorms[2]);
   Tools::print("--Energy:%e\n\n",InitNorms[3]);
 
-  error->OutputResidualNorms(resid_file,0,InitNorms);
+  output->OutputResidualNorms(resid_file,0,InitNorms);
 
 
   string it,name; //used for outputting file name
@@ -402,7 +406,7 @@ int main() {
 
   //Printing primitive vars. for TECPLOT visualization
   std::string filename_totalsols = "AllSolutions.dat";
-  error->OutputPrimitiveVariables(field,filename_totalsols,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
+  output->OutputPrimitiveVariables(field,filename_totalsols,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
 
   //Assigning Intermediate Field to Initial Field (including residuals)
   (*resid) = (*init_resid); //!< setting residual to initial
@@ -482,58 +486,8 @@ int main() {
     (*resid) = (*resid_star); ResidualNorms = ResidualStarNorms;
 
 
-    //! OUTPUT SOL. IN .DAT FILE EVERY "ITEROUT" STEPS -- TODO: this needs to be cleaned-up
-    //primitive variables
-    if (iter % iterout == 0) {
-      it = error->zeroPad(iter,4);
-      name = "Results/Iteration_";
-      name += it;
-      name += ".vts";
-      const char* filename_iter = name.c_str();
-      //writing all time-steps in unique files
-      //error->OutputPrimitiveVariables(field,filename_iter,false,iter,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
-      //writing in 1 file
-      //error->OutputPrimitiveVariables(field,filename_totalsols,true,iter,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
-      //writing in VTS file
-      error->OutputPrimitiveVariables_VTS(filename_iter,field,mesh);
-      //saving iter value to iter_visuals list
-
-      iter_visuals_primitive.push_back(it);
-  
-      //residuals
-      error->OutputResidualNorms(resid_file,iter,ResidualNorms); //saving in norms file
-      name = "Residuals/Iteration_";
-      name += it;
-      name += ".vts";
-      filename_iter = name.c_str();
-      error->OutputPrimitiveVariables_VTS(filename_iter,resid,mesh);
-      iter_visuals_resid.push_back(it);
-
-      //saving MMS error (MMS ONLY)
-      if (scenario == 3 || scenario == 4){
-        name = "MMSError/Iteration_";
-        name += it;
-        name += ".vts";
-        const char* filename_mms_error = name.c_str();
-        euler->ComputeMSError(field_ms_error,field,field_ms);
-        error->OutputPrimitiveVariables_VTS(filename_mms_error,field_ms_error,mesh);
-        iter_visuals_MMSerror.push_back(it);
-      }
- 
-
-      //! PRINTING RESIDUAL NORMS TO SCREEN
-      Tools::print("------Iteration #: %d----------\n",iter);
-      Tools::print("Continuity:%e\nX-Momentum:%e\nY-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2],ResidualNorms[3]);
-
-      Tools::print("Epsilon: %e\n",euler->epsilon);
-
-      if (resid_stall == true)
-        Tools::print("Residuals are detected to be stalled!\n"); //printing message is temp. for now
-
-      // Writing Residuals history to "SolResids.txt" file
-      myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
-
-    }
+    //! OUTPUTING SOL.
+    output->WriteSolutions(iter,field,resid,field_ms,field_ms_error,ResidualNorms,euler,scenario,resid_stall,iter_visuals_primitive,iter_visuals_resid,iter_visuals_MMSerror);
 
 
     //! CHECK FOR CONVERGENCE 
@@ -554,7 +508,7 @@ int main() {
     Tools::print("CONGRATS you converged!\n");
     Tools::print("Continuity: %e\nX-Momentum: %e\nY-Momentum: %e\nEnergy: %e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2],ResidualNorms[3]);
     const char* filename_final = "ConvergedSolution.dat" ;
-    error->OutputPrimitiveVariables(field,filename_final,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
+    output->OutputPrimitiveVariables(field,filename_final,false,0,mesh->xcoords,mesh->ycoords,mesh->cellnumber,mesh->Nx,mesh->Ny);
 
   }
 
@@ -563,9 +517,9 @@ int main() {
   const char* resid_pvd = "Residuals/resids.pvd";
   const char* mms_error_pvd = "MMSError/mms_error.pvd";
 
-  error->WritePVDFile(primitive_pvd,iter_visuals_primitive);
-  error->WritePVDFile(resid_pvd,iter_visuals_resid);
-  error->WritePVDFile(mms_error_pvd,iter_visuals_MMSerror);
+  output->WritePVDFile(primitive_pvd,iter_visuals_primitive);
+  output->WritePVDFile(resid_pvd,iter_visuals_resid);
+  output->WritePVDFile(mms_error_pvd,iter_visuals_MMSerror);
 
   //! INLET ONLY: COMPUTE TOTAL PRESSURE LOSS (SRQ)
   if (case_2d == 0 && scenario == 2){
@@ -583,7 +537,7 @@ int main() {
     vector<array<double,4>>* errors = &Errors;
     const char* file_errornorms = "DiscretizationErrorNorms.txt";
 
-    error->DiscretizationErrorNorms(field,field_ms,errors,sols,mesh,file_errornorms); //writing to file saving error norms
+    output->DiscretizationErrorNorms(field,field_ms,errors,sols,file_errornorms); //writing to file saving error norms
   }
 
   //AIRFOIL ONLY: COMPUTING LIFT AND DRAG COEFFICIENT (SRQ)

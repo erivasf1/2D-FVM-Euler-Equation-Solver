@@ -3,62 +3,13 @@
 
 // OUTPUT DEFINITIONS
 
-Output::Output(){}
-
-//Output::Output(array<double,3>* &f)
-  //: field(f) {}
-
 //-----------------------------------------------------------
+Output::Output()
+{}
+//-----------------------------------------------------------
+Output::Output(string &fresults, string &fresids, string &fmmserror,int iout, MeshGenBASE* m ) : results_prefix(fresults), resids_prefix(fresids), mms_error_prefix(fmmserror), iterout(iout), mesh(m)
+{}
 
-/*
-void Output::PrintResidualNorm(int &cellnum,int &n){
-
-  if (n==1 || n==2 || n==3){ 
-    array<double,3> norm = {0.0,0.0,0.0};
-    for (int i=0;i<cellnum;i++){
-
-      if (n==1){ //L1 norm case
-        norm[0] += abs(field[i][0]); //density
-        norm[1] += abs(field[i][1]); //velocity
-        norm[2] += abs(field[i][2]); //pressure
-      }
-      else if (n==2){ //L2 norm case
-        norm[0] += pow(field[i][0],2); //density
-        norm[1] += pow(field[i][1],2); //velocity
-        norm[2] += pow(field[i][2],2); //pressure
-      }
-      else{ //L inf. case
-        if(abs(field[i][0]) > norm[0]) norm[0] = abs(field[i][0]); //density
-        if(abs(field[i][1]) > norm[1]) norm[1] = abs(field[i][1]); //velocity
-        if(abs(field[i][2]) > norm[2]) norm[2] = abs(field[i][2]); //pressure
-      }
-
-    }
-
-    if (n==1){ //L2 norm case continued
-      norm[0] = sqrt(norm[0]);
-      norm[1] = sqrt(norm[1]);
-      norm[2] = sqrt(norm[2]);
-    }
-
-    if (n==1 | n==2) //!< Printing out norms
-      Tools::print("--L %d Norm Selected\n",n);
-    else
-      Tools::print("--L infinity Norm Selected\n");
-
-    Tools::print("Density:%f,Velocity:%f,Pressure:%f\n",norm[0],norm[1],norm[2]);
-
-    
-
-  }
-  
-
-  else {
-    Tools::print("Residual type unknown!\n");
-    exit(0); 
-  }
-}
-*/
 //-----------------------------------------------------------
 void Output::OutputResidualNorms(const char* &filename,int iter,array<double,4> ResidualNorms){
 
@@ -81,7 +32,7 @@ void Output::OutputResidualNorms(const char* &filename,int iter,array<double,4> 
 
 }
 //-----------------------------------------------------------
-void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<array<double,4>>* &exact_field,vector<array<double,4>>* &errors,SpaceVariables2D* &sols,MeshGenBASE* &mesh,const char* &filename){
+void Output::DiscretizationErrorNorms(vector<array<double,4>>* &field,vector<array<double,4>>* &exact_field,vector<array<double,4>>* &errors,SpaceVariables2D* &sols,const char* &filename){
 
   for (int n=0;n<(int)field->size();n++){ //calculating errors
     for (int i=0;i<4;i++)
@@ -365,7 +316,7 @@ write(40,*) 'DT=(DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE DOUBLE
 }
 
 //-----------------------------------------------------------
-void Output::OutputPrimitiveVariables_VTS(string filename,vector<array<double,4>>* &field,MeshGenBASE* &mesh){
+void Output::OutputPrimitiveVariables_VTS(string filename,vector<array<double,4>>* &field){
 
 
   std::ofstream myfile(filename); 
@@ -447,7 +398,7 @@ void Output::OutputPrimitiveVariables_VTS(string filename,vector<array<double,4>
 
 }
 //-----------------------------------------------------------
-void Output::OutputManufacturedSourceTerms(string filename,vector<array<double,4>>* &field,MeshGenBASE* &mesh){
+void Output::OutputManufacturedSourceTerms(string filename,vector<array<double,4>>* &field){
 
 
   std::ofstream myfile(filename); 
@@ -722,6 +673,67 @@ ofstream myfile(filename);
   </Collection>
 </VTKFile>
 */
+
+  return;
+
+}
+//-----------------------------------------------------------
+void Output::WriteSolutions(int iter,vector<array<double,4>>* &field,vector<array<double,4>>* &resid,[[maybe_unused]] vector<array<double,4>>* &field_ms,[[maybe_unused]] vector<array<double,4>>* &field_ms_error,array<double,4> &ResidualNorms,EulerBASE* &euler,int scenario,bool &resid_stall,vector<string> &iter_visuals_primitive,vector<string> &iter_visuals_resid,[[maybe_unused]] vector<string> &iter_visuals_MMSerror){
+
+  if (iter % iterout == 0) {
+  
+    //Outputting primitive variables
+    string full_filename = results_prefix;
+    string it = zeroPad(iter,4);
+
+    full_filename += "Iteration_";
+    full_filename += it;
+    full_filename += ".vts";
+    const char* full_filename_iter = full_filename.c_str();
+
+    OutputPrimitiveVariables_VTS(full_filename_iter,field);
+    iter_visuals_primitive.push_back(it); //saving iter value to iter_visuals list
+  
+    //Outputting residuals
+    //error->OutputResidualNorms(resid_file,iter,ResidualNorms); //saving in norms file
+    full_filename = resids_prefix;
+
+    full_filename += "Iteration_";
+    full_filename += it;
+    full_filename += ".vts";
+    full_filename_iter = full_filename.c_str();
+
+    OutputPrimitiveVariables_VTS(full_filename_iter,resid);
+    iter_visuals_resid.push_back(it);
+
+    //Outputting MMS (if applicable)
+    if (scenario == 3 || scenario == 4){
+      full_filename = mms_error_prefix;
+
+      full_filename += "Iteration_";
+      full_filename += it;
+      full_filename += ".vts";
+      full_filename_iter = full_filename.c_str();
+
+      euler->ComputeMSError(field_ms_error,field,field_ms);
+      OutputPrimitiveVariables_VTS(full_filename_iter,field_ms_error);
+      iter_visuals_MMSerror.push_back(it);
+    }
+ 
+
+    //! PRINTING RESIDUAL NORMS TO SCREEN
+    Tools::print("------Iteration #: %d----------\n",iter);
+    Tools::print("Continuity:%e\nX-Momentum:%e\nY-Momentum:%e\nEnergy:%e\n",ResidualNorms[0],ResidualNorms[1],ResidualNorms[2],ResidualNorms[3]);
+
+    Tools::print("Epsilon: %e\n",euler->epsilon);
+
+    if (resid_stall == true)
+      Tools::print("Residuals are detected to be stalled!\n"); //printing message is temp. for now
+
+    // Writing Residuals history to "SolResids.txt" file
+    //myresids<<iter<<"  "<<ResidualNorms[0]<<"  "<<ResidualNorms[1]<<"  "<<ResidualNorms[2]<<endl;
+
+  }
 
   return;
 
