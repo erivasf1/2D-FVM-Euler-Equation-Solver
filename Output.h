@@ -19,13 +19,13 @@ class EulerBASE;
 
 class Output {
 
-  string results_prefix, resids_prefix, mms_error_prefix;
+  string results_prefix, ghostcells_prefix, resids_prefix, mms_error_prefix;
   int iterout;
   MeshGenBASE* mesh;
 
   public:
   Output();
-  Output(string &fresults, string &fresids, string &fmmserror,int iout, MeshGenBASE* m);
+  Output(string &fresults, string &fghostcells, string &fresids, string &fmmserror,int iout, MeshGenBASE* m);
   
   void PrintResidualNorm(int &cellnum,int &n);
 
@@ -41,6 +41,9 @@ class Output {
 
   void OutputManufacturedSourceTerms(string filename,vector<array<double,4>>* &field); //outputs primitive variables in .vts format for ParaView visualization
 
+  void WriteAllGhostCellSolutions(const char* &filename_btm,const char* &filename_top,const char* &filename_left,const char* &filename_right); //calls WriteGhostCellSolution for all ghost cells
+  void WriteGhostCellSolution_PVD(const char* &filename,int tag);
+
   void OutputGhostCoords(string filename,vector<double> &xcoords,vector<double> &ycoords,int Nx,int Ny); //for visualizing the ghost cells
   void OutputGhostCells(vector<array<double,4>>* &ghost_cell,string filename,vector<double> &xcoords,vector<double> &ycoords,vector<double> &ghost_xcoords,vector<double> &ghost_ycoords,int Nx,int Ny,int ghost_Nx,int ghost_Ny,int side); //for visualizing the ghost cells
 
@@ -48,6 +51,7 @@ class Output {
 
   void WritePVDFile(const char* &filename,vector<string> &iter_visuals);
   //void ConvertToDatFile(const char*filename_read,const char *filename_write); //TODO: creates a .dat file of a given .txt file
+  void WriteGhostCellPVDFile(const char* &filename,vector<string> &iter_visuals);
 
   string zeroPad(int number, int padWidth);
 

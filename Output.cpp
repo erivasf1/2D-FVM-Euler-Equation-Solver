@@ -7,7 +7,7 @@
 Output::Output()
 {}
 //-----------------------------------------------------------
-Output::Output(string &fresults, string &fresids, string &fmmserror,int iout, MeshGenBASE* m ) : results_prefix(fresults), resids_prefix(fresids), mms_error_prefix(fmmserror), iterout(iout), mesh(m)
+Output::Output(string &fresults,string &fghostcells ,string &fresids, string &fmmserror,int iout, MeshGenBASE* m ) : results_prefix(fresults), ghostcells_prefix(fghostcells), resids_prefix(fresids), mms_error_prefix(fmmserror), iterout(iout), mesh(m)
 {}
 
 //-----------------------------------------------------------
@@ -481,6 +481,151 @@ void Output::OutputManufacturedSourceTerms(string filename,vector<array<double,4
 
 }
 //-----------------------------------------------------------
+void Output::WriteAllGhostCellSolutions(const char* &filename_btm,const char* &filename_top,const char* &filename_left,const char* &filename_right){
+
+  WriteGhostCellSolution_PVD(filename_btm,0); //bottom cells
+  WriteGhostCellSolution_PVD(filename_top,1); //top cells
+  WriteGhostCellSolution_PVD(filename_left,2); //left cells
+  WriteGhostCellSolution_PVD(filename_right,3); //right cells
+
+  return;
+}
+//-----------------------------------------------------------
+void Output::WriteGhostCellSolution_PVD(const char* &filename,int tag){
+
+  std::ofstream myfile(filename); 
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  int NI,NJ,NPI,NPJ;
+
+  if (tag == 0 || tag == 1){ //top & btm cells
+    NI = mesh->cell_imax; NJ = 2; //# of cells in each dir.
+  }
+
+  else if (tag == 2 || tag == 3) { //right & left cells
+    NI = 2; NJ = mesh->cell_jmax; //# of cells in each dir.
+  }
+
+  else{
+    cerr<<"Error: Unkown ID specified in WriteGhostCellSolution fcn."<<endl;
+    return;
+  }
+
+  NPI = NI + 1; NPJ = NJ + 1; //# of pts. in each dir.
+  int cellnum = NI * NJ; //# of cells
+
+  //-----------------------------HEADER-------------------------------
+  myfile<<"<?xml version=\"1.0\"?>"<<endl;
+  myfile<<"<VTKFile type=\"StructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">"<<endl;
+  myfile<<"  <StructuredGrid WholeExtent=\"0 "<<NI<<" 0 "<<NJ<<" 0 1\">"<<endl;
+  myfile<<"    <Piece Extent=\"0 "<<NI<<" 0 "<<NJ<<" 0 1\">"<<endl;
+
+
+  //-----------------------------POINT DATA-------------------------------
+  myfile<<"      <Points>"<<endl;
+  myfile<<"        <DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">"<<endl;;
+  int id{0}; //for indexing pts.
+  for (int k=0;k<2;k++){
+    for (int j=0;j<NPJ;j++){
+      for (int i=0;i<NPI;i++){
+       id = j * NPI + i;
+
+        if (tag == 0) //btm cells 
+          myfile<<"          "<<mesh->btm_xcoords[id]<<" "<<mesh->btm_ycoords[id]<<" "<<k<<endl;
+        else if (tag == 1) //top cells 
+          myfile<<"          "<<mesh->top_xcoords[id]<<" "<<mesh->top_ycoords[id]<<" "<<k<<endl;
+        else if (tag == 2) //left cells
+          myfile<<"          "<<mesh->left_xcoords[id]<<" "<<mesh->left_ycoords[id]<<" "<<k<<endl;
+        else //right cells
+          myfile<<"          "<<mesh->right_xcoords[id]<<" "<<mesh->right_ycoords[id]<<" "<<k<<endl;
+
+      }
+    }
+  }
+  myfile<<"        </DataArray>"<<endl;
+  myfile<<"      </Points>"<<endl;
+
+  //-----------------------------CELL DATA-------------------------------
+  myfile<<"      <CellData Scalars=\"Density Pressure\" Vectors=\"Velocity\">"<<endl;
+
+  //DENSITY
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Density\" NumberOfComponents=\"1\" format=\"ascii\">"<<endl;;
+  
+  for (int n=0;n<cellnum;n++){
+    if (tag == 0)
+      myfile << mesh->btm_cells[n][0] << " ";
+    else if (tag == 1)
+      myfile << mesh->top_cells[n][0] << " ";
+    else if (tag == 2)
+      myfile << mesh->left_cells[n][0] << " ";
+    else 
+      myfile << mesh->right_cells[n][0] << " ";
+
+    if ((n + 1) % 3 == 0) myfile << "\n";
+  }
+  if (cellnum % 3 != 0) myfile << "\n";
+
+  myfile << "        </DataArray>"<<endl;
+  
+  //PRESSURE
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Pressure\" NumberOfComponents=\"1\" format=\"ascii\">"<<endl;;
+  
+  for (int n=0;n<cellnum;n++){
+    if (tag == 0)
+      myfile << mesh->btm_cells[n][3] << " ";
+    else if (tag == 1)
+      myfile << mesh->top_cells[n][3] << " ";
+    else if (tag == 2)
+      myfile << mesh->left_cells[n][3] << " ";
+    else 
+      myfile << mesh->right_cells[n][3] << " ";
+
+    if ((n + 1) % 3 == 0) myfile << "\n";
+  }
+  if (cellnum % 3 != 0) myfile << "\n";
+
+
+  myfile << "        </DataArray>"<<endl;
+
+  //VELOCITY
+  myfile<<"        <DataArray type=\"Float64\" Name=\"Velocity\" NumberOfComponents=\"3\" format=\"ascii\">"<<endl;;
+  
+  for (int n=0;n<cellnum;n++){
+    if (tag == 0){
+      myfile << mesh->btm_cells[n][1] << " " << mesh->btm_cells[n][2]<<" "<<0.0<<endl;
+    }
+    else if (tag == 1){
+      myfile << mesh->top_cells[n][1] << " " << mesh->top_cells[n][2]<<" "<<0.0<<endl;
+    }
+    else if (tag == 2){
+      myfile << mesh->left_cells[n][1] << " " << mesh->left_cells[n][2]<<" "<<0.0<<endl;
+    }
+    else {
+      myfile << mesh->right_cells[n][1] << " " << mesh->right_cells[n][2]<<" "<<0.0<<endl;
+    }
+
+      if ((n + 1) % 3 == 0) myfile << "\n";
+  }
+
+
+  if (cellnum % 3 != 0) myfile << "\n";
+
+  myfile << "        </DataArray>"<<endl;
+  myfile << "      </CellData>"<<endl;
+
+  //-----------------------------FOOTER-------------------------------
+  myfile << "    </Piece>\n";
+  myfile << "  </StructuredGrid>\n";
+  myfile << "</VTKFile>\n";
+
+
+  return;
+}
+//-----------------------------------------------------------
 void Output::OutputGhostCoords(string filename,vector<double> &xcoords,vector<double> &ycoords,int Nx,int Ny){
 
   std::ofstream myfile(filename); //true for append
@@ -678,11 +823,55 @@ ofstream myfile(filename);
 
 }
 //-----------------------------------------------------------
+void Output::WriteGhostCellPVDFile(const char* &filename,vector<string> &iter_visuals){
+
+  ofstream myfile(filename);
+
+  if (!myfile){ //checking if file opened successfully
+    cerr<<"Error: Could Not Open File "<<filename<<endl;
+    return;
+  }
+
+  //TITLE
+  myfile<<"<?xml version=\"1.0\"?>"<<endl;
+  myfile<<"<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">"<<endl;
+  myfile<<"  <Collection>"<<endl;
+  //Writing file names
+  for (int n=0;n<(int)iter_visuals.size();n++){
+    myfile<<"    <DataSet timestep=\""<<iter_visuals[n]<<"\""<<" group="<<"\"\""<<" part=\"0\""<<" file=\"BTM_Iteration_"<<iter_visuals[n]<<".vts\"/>"<<endl;
+
+    myfile<<"    <DataSet timestep=\""<<iter_visuals[n]<<"\""<<" group="<<"\"\""<<" part=\"1\""<<" file=\"TOP_Iteration_"<<iter_visuals[n]<<".vts\"/>"<<endl;
+
+    myfile<<"    <DataSet timestep=\""<<iter_visuals[n]<<"\""<<" group="<<"\"\""<<" part=\"2\""<<" file=\"LEFT_Iteration_"<<iter_visuals[n]<<".vts\"/>"<<endl;
+
+    myfile<<"    <DataSet timestep=\""<<iter_visuals[n]<<"\""<<" group="<<"\"\""<<" part=\"3\""<<" file=\"RIGHT_Iteration_"<<iter_visuals[n]<<".vts\"/>"<<endl;
+
+
+  }
+
+  myfile<<"  </Collection>"<<endl;
+  myfile<<"</VTKFile>"<<endl;
+/*
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+  <Collection>
+    <DataSet timestep="0" part="0" file="solution_0.vtu"/>
+    <DataSet timestep="1" part="0" file="solution_1.vtu"/>
+    <DataSet timestep="2" part="0" file="solution_2.vtu"/>
+    <DataSet timestep="3" part="0" file="solution_3.vtu"/>
+    <!-- Add more timesteps here -->
+  </Collection>
+</VTKFile>
+*/
+
+  return;
+ 
+}
+//-----------------------------------------------------------
 void Output::WriteSolutions(int iter,vector<array<double,4>>* &field,vector<array<double,4>>* &resid,[[maybe_unused]] vector<array<double,4>>* &field_ms,[[maybe_unused]] vector<array<double,4>>* &field_ms_error,array<double,4> &ResidualNorms,EulerBASE* &euler,int scenario,bool &resid_stall,vector<string> &iter_visuals_primitive,vector<string> &iter_visuals_resid,[[maybe_unused]] vector<string> &iter_visuals_MMSerror){
 
   if (iter % iterout == 0) {
   
-    //Outputting primitive variables
+    //Outputting primitive variables in field
     string full_filename = results_prefix;
     string it = zeroPad(iter,4);
 
@@ -693,6 +882,28 @@ void Output::WriteSolutions(int iter,vector<array<double,4>>* &field,vector<arra
 
     OutputPrimitiveVariables_VTS(full_filename_iter,field);
     iter_visuals_primitive.push_back(it); //saving iter value to iter_visuals list
+
+    //Outputting ghost cell solutions
+    full_filename = ghostcells_prefix;
+
+    string full_filename_btm = full_filename + "BTM_Iteration_";
+    string full_filename_top = full_filename + "TOP_Iteration_";
+    string full_filename_left = full_filename + "LEFT_Iteration_";
+    string full_filename_right = full_filename + "RIGHT_Iteration_";
+
+    full_filename_btm += it; full_filename_top += it;
+    full_filename_left += it; full_filename_right += it;
+
+    full_filename_btm += ".vts"; full_filename_top += ".vts";
+    full_filename_left += ".vts"; full_filename_right += ".vts";
+
+    const char* full_filename_iter_btm = full_filename_btm.c_str();
+    const char* full_filename_iter_top = full_filename_top.c_str();
+    const char* full_filename_iter_left = full_filename_left.c_str();
+    const char* full_filename_iter_right = full_filename_right.c_str();
+
+    WriteAllGhostCellSolutions(full_filename_iter_btm,full_filename_iter_top,full_filename_iter_left,full_filename_iter_right);
+
   
     //Outputting residuals
     //error->OutputResidualNorms(resid_file,iter,ResidualNorms); //saving in norms file

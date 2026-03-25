@@ -131,6 +131,7 @@ int main() {
 
   // Outputting results parameters
   string results_prefix = "Results/";
+  string ghostcells_prefix = "GhostCells/";
   string resids_prefix = "Residuals/";
   string mmserror_prefix = "MMSError/";
 
@@ -226,7 +227,7 @@ int main() {
 
   SpaceVariables2D Sols; //for operating on Field variables
 
-  Output Error(results_prefix,resids_prefix,mmserror_prefix,iterout,mesh); 
+  Output Error(results_prefix,ghostcells_prefix,resids_prefix,mmserror_prefix,iterout,mesh); 
 
   //Pointers to Objects
   SpaceVariables2D* sols = &Sols;
@@ -514,10 +515,12 @@ int main() {
 
   //Writing PVD file
   const char* primitive_pvd = "Results/solution.pvd";
+  const char* ghostcells_pvd = "GhostCells/ghostcells.pvd";
   const char* resid_pvd = "Residuals/resids.pvd";
   const char* mms_error_pvd = "MMSError/mms_error.pvd";
 
   output->WritePVDFile(primitive_pvd,iter_visuals_primitive);
+  output->WriteGhostCellPVDFile(ghostcells_pvd,iter_visuals_primitive);
   output->WritePVDFile(resid_pvd,iter_visuals_resid);
   output->WritePVDFile(mms_error_pvd,iter_visuals_MMSerror);
 
